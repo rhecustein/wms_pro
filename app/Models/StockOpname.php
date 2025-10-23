@@ -77,4 +77,9 @@ class StockOpname extends Model
     {
         return $this->belongsTo(User::class, 'scheduled_by');
     }
+
+    public function completedBy()
+    {
+        return $this->belongsTo(User::class, 'completed_by');
+    }
 }
