@@ -83,4 +83,29 @@ class DeliveryOrder extends Model
     {
         return $this->hasMany(ReturnOrder::class);
     }
+
+    // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'prepared' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-box mr-1"></i>Prepared</span>',
+            'loaded' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"><i class="fas fa-truck-loading mr-1"></i>Loaded</span>',
+            'in_transit' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-shipping-fast mr-1"></i>In Transit</span>',
+            'delivered' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Delivered</span>',
+            'returned' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><i class="fas fa-undo mr-1"></i>Returned</span>',
+            'cancelled' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">Unknown</span>';
+    }
+
+    // Generate DO Number
+    public static function generateDoNumber()
+    {
+        $lastDo = self::withTrashed()->orderBy('id', 'desc')->first();
+        $lastNumber = $lastDo ? intval(substr($lastDo->do_number, 3)) : 0;
+        $newNumber = $lastNumber + 1;
+        
+        return 'DO-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
 }

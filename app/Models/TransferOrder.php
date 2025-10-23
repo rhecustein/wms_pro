@@ -69,4 +69,38 @@ class TransferOrder extends Model
     {
         return $this->hasMany(TransferOrderItem::class);
     }
+
+    // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'draft' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"><i class="fas fa-file-alt mr-1"></i>Draft</span>',
+            'approved' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-check mr-1"></i>Approved</span>',
+            'in_transit' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-truck mr-1"></i>In Transit</span>',
+            'received' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"><i class="fas fa-inbox mr-1"></i>Received</span>',
+            'completed' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Completed</span>',
+            'cancelled' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $badges['draft'];
+    }
+
+    public function getTransferTypeBadgeAttribute()
+    {
+        $badges = [
+            'inter_warehouse' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800"><i class="fas fa-exchange-alt mr-1"></i>Inter Warehouse</span>',
+            'internal_bin' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800"><i class="fas fa-layer-group mr-1"></i>Internal Bin</span>',
+            'consolidation' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><i class="fas fa-compress mr-1"></i>Consolidation</span>',
+        ];
+
+        return $badges[$this->transfer_type] ?? $badges['inter_warehouse'];
+    }
+
+    // Generate transfer number
+    public static function generateTransferNumber()
+    {
+        $lastTransfer = self::withTrashed()->latest('id')->first();
+        $number = $lastTransfer ? intval(substr($lastTransfer->transfer_number, 4)) + 1 : 1;
+        return 'TRF-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
 }

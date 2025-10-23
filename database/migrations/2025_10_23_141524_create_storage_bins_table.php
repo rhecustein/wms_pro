@@ -11,6 +11,7 @@ return new class extends Migration
     {
         Schema::create('storage_bins', function (Blueprint $table) {
             $table->id();
+            $table->boolean('is_occupied')->default(false);
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->foreignId('storage_area_id')->nullable()->constrained()->nullOnDelete();
             $table->string('code')->unique(); // AA0101A
@@ -24,6 +25,8 @@ return new class extends Migration
             $table->decimal('max_volume_cbm', 10, 2)->nullable();
             $table->decimal('current_volume_cbm', 10, 2)->default(0);
             $table->decimal('current_quantity', 10, 2)->default(0);
+            $table->decimal('min_quantity', 10, 2)->default(0);
+            $table->decimal('max_quantity', 10, 2)->nullable();
             $table->enum('bin_type', ['pick_face', 'high_rack', 'staging', 'quarantine'])->default('high_rack');
             $table->enum('packaging_restriction', ['none', 'drum', 'carton', 'pallet'])->nullable();
             $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();

@@ -322,24 +322,24 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('operations')->name('operations.')->group(function () {
         
-        // Replenishment Tasks
-        Route::resource('replenishments', ReplenishmentTaskController::class);
+          // Replenishment Tasks
         Route::get('replenishments/suggestions', [ReplenishmentTaskController::class, 'suggestions'])->name('replenishments.suggestions');
         Route::post('replenishments/generate-suggestions', [ReplenishmentTaskController::class, 'generateSuggestions'])->name('replenishments.generate-suggestions');
-        Route::post('replenishments/{replenishmentTask}/assign', [ReplenishmentTaskController::class, 'assign'])->name('replenishments.assign');
-        Route::post('replenishments/{replenishmentTask}/start', [ReplenishmentTaskController::class, 'start'])->name('replenishments.start');
-        Route::post('replenishments/{replenishmentTask}/complete', [ReplenishmentTaskController::class, 'complete'])->name('replenishments.complete');
-        Route::post('replenishments/{replenishmentTask}/cancel', [ReplenishmentTaskController::class, 'cancel'])->name('replenishments.cancel');
-        Route::get('replenishments/{replenishmentTask}/execute', [ReplenishmentTaskController::class, 'execute'])->name('replenishments.execute');
+        Route::get('replenishments/{replenishment}/execute', [ReplenishmentTaskController::class, 'execute'])->name('replenishments.execute');
+        Route::post('replenishments/{replenishment}/assign', [ReplenishmentTaskController::class, 'assign'])->name('replenishments.assign');
+        Route::post('replenishments/{replenishment}/start', [ReplenishmentTaskController::class, 'start'])->name('replenishments.start');
+        Route::post('replenishments/{replenishment}/complete', [ReplenishmentTaskController::class, 'complete'])->name('replenishments.complete');
+        Route::post('replenishments/{replenishment}/cancel', [ReplenishmentTaskController::class, 'cancel'])->name('replenishments.cancel');
+        Route::resource('replenishments', ReplenishmentTaskController::class);
         
         // Transfer Orders
-        Route::resource('transfers', TransferOrderController::class);
-        Route::post('transfers/{transferOrder}/approve', [TransferOrderController::class, 'approve'])->name('transfers.approve');
-        Route::post('transfers/{transferOrder}/ship', [TransferOrderController::class, 'ship'])->name('transfers.ship');
-        Route::post('transfers/{transferOrder}/receive', [TransferOrderController::class, 'receive'])->name('transfers.receive');
-        Route::post('transfers/{transferOrder}/complete', [TransferOrderController::class, 'complete'])->name('transfers.complete');
-        Route::post('transfers/{transferOrder}/cancel', [TransferOrderController::class, 'cancel'])->name('transfers.cancel');
-        Route::get('transfers/{transferOrder}/print', [TransferOrderController::class, 'print'])->name('transfers.print');
+        Route::resource('transfer-orders', TransferOrderController::class);
+        Route::post('transfer-orders/{transferOrder}/approve', [TransferOrderController::class, 'approve'])->name('transfer-orders.approve');
+        Route::post('transfer-orders/{transferOrder}/ship', [TransferOrderController::class, 'ship'])->name('transfer-orders.ship');
+        Route::post('transfer-orders/{transferOrder}/receive', [TransferOrderController::class, 'receive'])->name('transfer-orders.receive');
+        Route::post('transfer-orders/{transferOrder}/complete', [TransferOrderController::class, 'complete'])->name('transfer-orders.complete');
+        Route::post('transfer-orders/{transferOrder}/cancel', [TransferOrderController::class, 'cancel'])->name('transfer-orders.cancel');
+        Route::get('transfer-orders/{transferOrder}/print', [TransferOrderController::class, 'print'])->name('transfer-orders.print');
         
         // Cross Docking
         Route::resource('cross-docking', CrossDockingOrderController::class);

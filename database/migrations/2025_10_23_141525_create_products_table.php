@@ -33,6 +33,13 @@ return new class extends Migration
             $table->boolean('is_hazmat')->default(false);
             $table->decimal('temperature_min', 5, 2)->nullable();
             $table->decimal('temperature_max', 5, 2)->nullable();
+            //current_stock will be managed in stock movements
+            
+            $table->decimal('current_stock', 15, 2)->default(0);
+            $table->decimal('stock_value', 15, 2)->default(0);
+            $table->decimal('cost_price', 15, 2)->default(0);
+            $table->decimal('selling_price', 15, 2)->default(0);
+            $table->text('notes')->nullable();
             $table->boolean('is_active')->default(true);
             $table->string('image')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();

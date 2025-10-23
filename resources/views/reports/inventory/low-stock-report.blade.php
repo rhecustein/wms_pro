@@ -1,7 +1,7 @@
-{{-- resources/views/reports/inventory/expiry-report.blade.php --}}
+{{-- resources/views/reports/inventory/low-stock-report.blade.php --}}
 @extends('layouts.app')
 
-@section('title', 'Product Expiry Report')
+@section('title', 'Low Stock Report')
 
 @section('content')
 <div class="container-fluid px-4 py-6">
@@ -10,10 +10,10 @@
     <div class="flex items-center justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">
-                <i class="fas fa-calendar-times text-blue-600 mr-2"></i>
-                Product Expiry Report
+                <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                Low Stock Report
             </h1>
-            <p class="text-sm text-gray-600 mt-1">Monitor product expiration dates and shelf life</p>
+            <p class="text-sm text-gray-600 mt-1">Products below reorder point that need restocking</p>
         </div>
         <div class="flex space-x-2">
             <button onclick="window.print()" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition">
@@ -25,13 +25,25 @@
         </div>
     </div>
 
+    {{-- Alert Message --}}
+    @if($criticalStock > 0)
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center">
+            <i class="fas fa-exclamation-triangle mr-3 text-xl"></i>
+            <div>
+                <p class="font-semibold">Critical Stock Alert!</p>
+                <p class="text-sm">You have {{ $criticalStock }} product(s) that are out of stock and need immediate attention.</p>
+            </div>
+        </div>
+    @endif
+
     {{-- Statistics Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 mb-1">Expired</p>
-                    <p class="text-2xl font-bold text-red-600">{{ number_format($expired) }}</p>
+                    <p class="text-sm text-gray-500 mb-1">Critical Stock</p>
+                    <p class="text-sm text-gray-400 mb-1">(Out of Stock)</p>
+                    <p class="text-2xl font-bold text-red-600">{{ number_format($criticalStock) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
                     <i class="fas fa-times-circle text-xl text-red-600"></i>
@@ -42,24 +54,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 mb-1">Expiring Soon</p>
-                    <p class="text-sm text-gray-400 mb-1">(30 days)</p>
-                    <p class="text-2xl font-bold text-orange-600">{{ number_format($expiringSoon) }}</p>
-                </div>
-                <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-triangle text-xl text-orange-600"></i>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div class="flex items-center justify-between">
-                <div>
-                    <p class="text-sm text-gray-500 mb-1">Expiring 3 Months</p>
-                    <p class="text-2xl font-bold text-yellow-600">{{ number_format($expiring3Months) }}</p>
+                    <p class="text-sm text-gray-500 mb-1">Low Stock Items</p>
+                    <p class="text-2xl font-bold text-yellow-600">{{ number_format($lowStock) }}</p>
                 </div>
                 <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-exclamation-circle text-xl text-yellow-600"></i>
+                    <i class="fas fa-exclamation-triangle text-xl text-yellow-600"></i>
                 </div>
             </div>
         </div>
@@ -67,11 +66,11 @@
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
             <div class="flex items-center justify-between">
                 <div>
-                    <p class="text-sm text-gray-500 mb-1">Good Condition</p>
-                    <p class="text-2xl font-bold text-green-600">{{ number_format($goodCondition) }}</p>
+                    <p class="text-sm text-gray-500 mb-1">Total Value at Risk</p>
+                    <p class="text-2xl font-bold text-blue-600">Rp {{ number_format($totalValue, 0, ',', '.') }}</p>
                 </div>
-                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                    <i class="fas fa-check-circle text-xl text-green-600"></i>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-xl text-blue-600"></i>
                 </div>
             </div>
         </div>
@@ -79,8 +78,14 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('reports.inventory.expiry-report') }}">
+        <form method="GET" action="{{ route('reports.inventory.low-stock-report') }}">
             <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                {{-- Search --}}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Product name, SKU..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                </div>
+
                 {{-- Warehouse Filter --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Warehouse</label>
@@ -94,22 +99,9 @@
                     </select>
                 </div>
 
-                {{-- Expiry Status Filter --}}
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Expiry Status</label>
-                    <select name="expiry_status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                        <option value="">All Status</option>
-                        @foreach($expiryStatuses as $key => $label)
-                            <option value="{{ $key }}" {{ request('expiry_status') === $key ? 'selected' : '' }}>
-                                {{ $label }}
-                            </option>
-                        @endforeach
-                    </select>
-                </div>
-
                 {{-- Category Filter --}}
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Product Category</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
                     <select name="category_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="">All Categories</option>
                         {{-- Add categories loop here --}}
@@ -121,7 +113,7 @@
                     <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                         <i class="fas fa-filter mr-2"></i>Filter
                     </button>
-                    <a href="{{ route('reports.inventory.expiry-report') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    <a href="{{ route('reports.inventory.low-stock-report') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
                         <i class="fas fa-redo"></i>
                     </a>
                 </div>
@@ -129,7 +121,7 @@
         </form>
     </div>
 
-    {{-- Expiry Report Table --}}
+    {{-- Low Stock Table --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div class="overflow-x-auto">
             <table class="w-full">
@@ -139,19 +131,17 @@
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Stock</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Expiry Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Days to Expiry</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reorder Point</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shortage</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit Price</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Value</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     @forelse($products as $product)
                         @php
-                            $daysToExpiry = now()->diffInDays($product->expiry_date, false);
-                            $isExpired = $daysToExpiry < 0;
-                            $isExpiringSoon = $daysToExpiry >= 0 && $daysToExpiry <= 30;
-                            $isExpiring3Months = $daysToExpiry > 30 && $daysToExpiry <= 90;
+                            $shortage = $product->reorder_point - $product->current_stock;
                         @endphp
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4">
@@ -171,63 +161,53 @@
                                 <span class="text-sm text-gray-600">{{ $product->category->name ?? 'N/A' }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-semibold text-gray-900">{{ number_format($product->current_stock) }}</span>
+                                <span class="text-sm font-semibold {{ $product->current_stock == 0 ? 'text-red-600' : 'text-gray-900' }}">
+                                    {{ number_format($product->current_stock) }}
+                                </span>
                                 <span class="text-xs text-gray-500">{{ $product->unit }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm text-gray-900">
-                                    {{ $product->expiry_date->format('d M Y') }}
-                                </div>
+                                <span class="text-sm text-gray-600">{{ number_format($product->reorder_point) }}</span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($isExpired)
-                                    <span class="text-sm font-semibold text-red-600">
-                                        Expired {{ abs($daysToExpiry) }} days ago
+                                <span class="text-sm font-semibold text-red-600">
+                                    {{ number_format($shortage) }} {{ $product->unit }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm text-gray-900">Rp {{ number_format($product->unit_price, 0, ',', '.') }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if($product->current_stock == 0)
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        <span class="w-2 h-2 bg-current rounded-full mr-2 animate-pulse"></span>
+                                        Out of Stock
                                     </span>
                                 @else
-                                    <span class="text-sm font-semibold text-gray-900">
-                                        {{ number_format($daysToExpiry) }} days
-                                    </span>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                @if($isExpired)
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                        <span class="w-2 h-2 bg-current rounded-full mr-2"></span>
-                                        Expired
-                                    </span>
-                                @elseif($isExpiringSoon)
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                                        <span class="w-2 h-2 bg-current rounded-full mr-2"></span>
-                                        Expiring Soon
-                                    </span>
-                                @elseif($isExpiring3Months)
                                     <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
                                         <span class="w-2 h-2 bg-current rounded-full mr-2"></span>
-                                        Expiring 3 Months
-                                    </span>
-                                @else
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                        <span class="w-2 h-2 bg-current rounded-full mr-2"></span>
-                                        Good
+                                        Low Stock
                                     </span>
                                 @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-semibold text-green-600">
-                                    Rp {{ number_format($product->current_stock * $product->unit_price, 0, ',', '.') }}
-                                </span>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <a href="#" class="text-blue-600 hover:text-blue-900 mr-3" title="Create Purchase Order">
+                                    <i class="fas fa-shopping-cart"></i>
+                                </a>
+                                <a href="#" class="text-green-600 hover:text-green-900" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
                             </td>
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="8" class="px-6 py-12 text-center">
+                            <td colspan="9" class="px-6 py-12 text-center">
                                 <div class="flex flex-col items-center">
                                     <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fas fa-inbox text-4xl text-gray-400"></i>
+                                        <i class="fas fa-check-circle text-4xl text-green-400"></i>
                                     </div>
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">No Data Found</h3>
-                                    <p class="text-gray-600">Try adjusting your filters</p>
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">All Stock Levels Good!</h3>
+                                    <p class="text-gray-600">No products below reorder point</p>
                                 </div>
                             </td>
                         </tr>

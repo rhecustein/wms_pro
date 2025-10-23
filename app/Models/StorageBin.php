@@ -12,6 +12,7 @@ class StorageBin extends Model
 
     protected $fillable = [
         'warehouse_id',
+        'is_occupied',
         'storage_area_id',
         'bin_code',
         'aisle',
@@ -24,6 +25,8 @@ class StorageBin extends Model
         'width_cm',
         'depth_cm',
         'height_cm',
+        'min_quantity',
+        'max_quantity',
         'is_active',
         'is_occupied',
         'current_stock_qty',

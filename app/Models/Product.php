@@ -34,6 +34,10 @@ class Product extends Model
         'shelf_life_days',
         'is_hazmat',
         'is_fragile',
+        'current_stock',
+        'cost_price',
+        'selling_price',
+        'stock_value',
         'is_active',
         'notes',
         'created_by',
@@ -60,6 +64,12 @@ class Product extends Model
     ];
 
     // RELASI
+
+    //stockMovements
+    public function stockMovements()
+    {
+        return $this->hasMany(StockMovement::class);
+    }
     public function category()
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');

@@ -43,30 +43,30 @@
         }
         
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f1f1;
+            background: #1f2937;
             border-radius: 10px;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #888;
+            background: #4b5563;
             border-radius: 10px;
         }
         
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #555;
+            background: #6b7280;
         }
 
-        /* Sidebar Transition */
-        .sidebar-enter {
-            transform: translateX(-100%);
+        /* Menu Active State */
+        .menu-active {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
         }
-        
-        .sidebar-enter-active {
-            transition: transform 0.3s ease-out;
-        }
-        
-        .sidebar-enter-to {
-            transform: translateX(0);
+
+        /* Submenu Active State */
+        .submenu-active {
+            background-color: #374151;
+            color: #60a5fa;
+            border-left: 3px solid #3b82f6;
         }
     </style>
 
@@ -95,7 +95,7 @@
             <!-- Logo -->
             <div class="flex items-center justify-between h-20 px-6 border-b border-gray-800 bg-gray-900">
                 <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-                    <div class="w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-105 transition-transform duration-200">
+                    <div class="w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
                         <i class="fas fa-warehouse text-white text-xl"></i>
                     </div>
                     <div class="text-white">
@@ -111,42 +111,62 @@
             <!-- Navigation -->
             <nav class="px-3 py-6 space-y-1">
                 <!-- Dashboard -->
-                <a href="{{ route('dashboard') }}" class="flex items-center px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg' : '' }}">
-                    <i class="fas fa-home w-5 text-center mr-3 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-white' }}"></i>
+                <a href="{{ route('dashboard') }}" 
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'menu-active text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                    <i class="fas fa-home w-5 text-center mr-3 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                     <span>Dashboard</span>
                 </a>
 
                 <!-- Master Data -->
                 <div x-data="{ open: {{ request()->is('master*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('master*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-database w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                            <i class="fas fa-database w-5 text-center mr-3 {{ request()->is('master*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                             <span>Master Data</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" 
                          x-cloak 
                          x-transition:enter="transition ease-out duration-200"
                          x-transition:enter-start="opacity-0 transform -translate-y-2"
                          x-transition:enter-end="opacity-100 transform translate-y-0"
-                         class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('master.warehouses.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                         class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('master.users.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.users.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-users-cog w-4 mr-2"></i> Users
+                        </a>
+                        <a href="{{ route('master.roles.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.roles.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-user-shield w-4 mr-2"></i> Roles
+                        </a>
+                        <a href="{{ route('master.warehouses.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.warehouses.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-warehouse w-4 mr-2"></i> Warehouses
                         </a>
-                        <a href="{{ route('master.storage-areas.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('master.storage-areas.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.storage-areas.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-map-marked-alt w-4 mr-2"></i> Storage Areas
                         </a>
-                        <a href="{{ route('master.storage-bins.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('master.storage-bins.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.storage-bins.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-th w-4 mr-2"></i> Storage Bins
                         </a>
-                        <a href="{{ route('master.products.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('master.product-categories.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.product-categories.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-tags w-4 mr-2"></i> Product Categories
+                        </a>
+                        <a href="{{ route('master.products.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.products.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-box w-4 mr-2"></i> Products
                         </a>
-                        <a href="{{ route('master.customers.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('master.customers.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.customers.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-users w-4 mr-2"></i> Customers
                         </a>
-                        <a href="{{ route('master.vendors.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('master.vendors.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.vendors.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-truck w-4 mr-2"></i> Vendors
                         </a>
                     </div>
@@ -154,52 +174,63 @@
 
                 <!-- Inventory -->
                 <div x-data="{ open: {{ request()->is('inventory*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('inventory*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-cubes w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                            <i class="fas fa-cubes w-5 text-center mr-3 {{ request()->is('inventory*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                             <span>Inventory</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('inventory.stocks.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('inventory.stocks.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inventory.stocks.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-list w-4 mr-2"></i> Stock List
                         </a>
-                        <a href="{{ route('inventory.movements.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inventory.pallets.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inventory.pallets.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-pallet w-4 mr-2"></i> Pallets
+                        </a>
+                        <a href="{{ route('inventory.movements.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inventory.movements.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-exchange-alt w-4 mr-2"></i> Movements
                         </a>
-                        <a href="{{ route('inventory.adjustments.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inventory.adjustments.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inventory.adjustments.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-edit w-4 mr-2"></i> Adjustments
                         </a>
-                        <a href="{{ route('inventory.opnames.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inventory.opnames.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inventory.opnames.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-clipboard-check w-4 mr-2"></i> Stock Opname
-                        </a>
-                        <a href="{{ route('inventory.pallets.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
-                            <i class="fas fa-pallet w-4 mr-2"></i> Pallets
                         </a>
                     </div>
                 </div>
 
                 <!-- Inbound -->
                 <div x-data="{ open: {{ request()->is('inbound*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('inbound*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-arrow-down w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                            <i class="fas fa-arrow-down w-5 text-center mr-3 {{ request()->is('inbound*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                             <span>Inbound</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('inbound.purchase-orders.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('inbound.purchase-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inbound.purchase-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-shopping-cart w-4 mr-2"></i> Purchase Orders
                         </a>
-                        <a href="{{ route('inbound.shipments.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inbound.shipments.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inbound.shipments.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-ship w-4 mr-2"></i> Shipments
                         </a>
-                        <a href="{{ route('inbound.good-receivings.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inbound.good-receivings.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inbound.good-receivings.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-inbox w-4 mr-2"></i> Good Receiving
                         </a>
-                        <a href="{{ route('inbound.putaway-tasks.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('inbound.putaway-tasks.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('inbound.putaway-tasks.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-dolly w-4 mr-2"></i> Putaway Tasks
                         </a>
                     </div>
@@ -207,27 +238,33 @@
 
                 <!-- Outbound -->
                 <div x-data="{ open: {{ request()->is('outbound*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('outbound*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-arrow-up w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                            <i class="fas fa-arrow-up w-5 text-center mr-3 {{ request()->is('outbound*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                             <span>Outbound</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('outbound.sales-orders.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('outbound.sales-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('outbound.sales-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-file-invoice w-4 mr-2"></i> Sales Orders
                         </a>
-                        <a href="{{ route('outbound.picking-orders.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('outbound.picking-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('outbound.picking-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-hand-paper w-4 mr-2"></i> Picking Orders
                         </a>
-                        <a href="{{ route('outbound.packing-orders.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('outbound.packing-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('outbound.packing-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-box-open w-4 mr-2"></i> Packing Orders
                         </a>
-                        <a href="{{ route('outbound.delivery-orders.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('outbound.delivery-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('outbound.delivery-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-shipping-fast w-4 mr-2"></i> Delivery Orders
                         </a>
-                        <a href="{{ route('outbound.returns.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('outbound.returns.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('outbound.returns.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-undo w-4 mr-2"></i> Returns
                         </a>
                     </div>
@@ -235,62 +272,124 @@
 
                 <!-- Operations -->
                 <div x-data="{ open: {{ request()->is('operations*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('operations*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-cogs w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                            <i class="fas fa-cogs w-5 text-center mr-3 {{ request()->is('operations*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                             <span>Operations</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('operations.replenishments.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('operations.replenishments.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('operations.replenishments.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-sync-alt w-4 mr-2"></i> Replenishment
                         </a>
-                        <a href="{{ route('operations.transfers.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('operations.transfer-orders.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('operations.transfer-orders.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-exchange-alt w-4 mr-2"></i> Transfers
                         </a>
-                        <a href="{{ route('operations.cross-docking.index') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
+                        <a href="{{ route('operations.cross-docking.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('operations.cross-docking.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-random w-4 mr-2"></i> Cross Docking
                         </a>
                     </div>
                 </div>
 
-                <!-- Reports -->
-                <div x-data="{ open: {{ request()->is('reports*') ? 'true' : 'false' }} }">
-                    <button @click="open = !open" class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
+                <!-- Equipment -->
+                <div x-data="{ open: {{ request()->is('equipment*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('equipment*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
-                            <i class="fas fa-chart-bar w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
-                            <span>Reports</span>
+                            <i class="fas fa-tools w-5 text-center mr-3 {{ request()->is('equipment*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
+                            <span>Equipment</span>
                         </div>
-                        <i class="fas fa-chevron-down text-xs transition-transform duration-200" :class="open ? 'rotate-180' : ''"></i>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" x-cloak x-transition class="ml-11 mt-2 space-y-1">
-                        <a href="{{ route('reports.inventory.stock-summary') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
-                            <i class="fas fa-file-alt w-4 mr-2"></i> Inventory Reports
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('equipment.vehicles.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('equipment.vehicles.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-truck-moving w-4 mr-2"></i> Vehicles
                         </a>
-                        <a href="{{ route('reports.inbound.receiving-report') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
-                            <i class="fas fa-file-download w-4 mr-2"></i> Inbound Reports
-                        </a>
-                        <a href="{{ route('reports.outbound.picking-report') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
-                            <i class="fas fa-file-upload w-4 mr-2"></i> Outbound Reports
-                        </a>
-                        <a href="{{ route('reports.kpi.dashboard') }}" class="block px-4 py-2 text-sm text-gray-400 rounded-lg hover:bg-gray-800 hover:text-white transition-colors">
-                            <i class="fas fa-tachometer-alt w-4 mr-2"></i> KPI Dashboard
+                        <a href="{{ route('equipment.equipments.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('equipment.equipments.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-tools w-4 mr-2"></i> Equipments
                         </a>
                     </div>
                 </div>
 
+                <!-- Reports -->
+                <!-- <div x-data="{ open: {{ request()->is('reports*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('reports*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                        <div class="flex items-center">
+                            <i class="fas fa-chart-bar w-5 text-center mr-3 {{ request()->is('reports*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
+                            <span>Reports</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('reports.inventory.stock-summary') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.inventory.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-file-alt w-4 mr-2"></i> Inventory Reports
+                        </a>
+                        <a href="{{ route('reports.inbound.receiving-report') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.inbound.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-file-download w-4 mr-2"></i> Inbound Reports
+                        </a>
+                        <a href="{{ route('reports.outbound.picking-report') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.outbound.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-file-upload w-4 mr-2"></i> Outbound Reports
+                        </a>
+                        <a href="{{ route('reports.operations.daily-summary') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.operations.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-calendar-day w-4 mr-2"></i> Operations Reports
+                        </a>
+                        <a href="{{ route('reports.kpi.dashboard') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.kpi.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-tachometer-alt w-4 mr-2"></i> KPI Dashboard
+                        </a>
+                    </div>
+                </div> -->
+
                 <!-- Mobile App -->
-                <a href="{{ route('mobile.good-receiving.index') }}" class="flex items-center px-4 py-3 text-sm font-medium text-gray-300 rounded-lg hover:bg-gray-800 hover:text-white transition-all duration-200 group">
-                    <i class="fas fa-mobile-alt w-5 text-center mr-3 text-gray-400 group-hover:text-white"></i>
+                <!-- <a href="{{ route('mobile.good-receiving.index') }}" 
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('mobile*') ? 'menu-active text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                    <i class="fas fa-mobile-alt w-5 text-center mr-3 {{ request()->is('mobile*') ? 'text-white' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                     <span>Mobile App</span>
-                </a>
+                </a> -->
+
+                <!-- System -->
+                <div x-data="{ open: {{ request()->is('system*') ? 'true' : 'false' }} }">
+                    <button @click="open = !open" 
+                            class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('system*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
+                        <div class="flex items-center">
+                            <i class="fas fa-cog w-5 text-center mr-3 {{ request()->is('system*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
+                            <span>System</span>
+                        </div>
+                        <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
+                    </button>
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
+                        <a href="{{ route('system.settings.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.settings.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-sliders-h w-4 mr-2"></i> Settings
+                        </a>
+                        <a href="{{ route('system.activity-logs.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.activity-logs.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-history w-4 mr-2"></i> Activity Logs
+                        </a>
+                        <a href="{{ route('system.notifications.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.notifications.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-bell w-4 mr-2"></i> Notifications
+                        </a>
+                    </div>
+                </div>
             </nav>
 
             <!-- User Info -->
             <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
-                <div class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-colors cursor-pointer">
-                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg">
+                <div class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-all cursor-pointer group">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-105 transition-transform">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
                     </div>
                     <div class="flex-1 min-w-0">

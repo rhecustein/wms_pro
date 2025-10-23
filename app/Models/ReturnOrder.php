@@ -67,4 +67,31 @@ class ReturnOrder extends Model
     {
         return $this->hasMany(ReturnOrderItem::class);
     }
+
+    // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'pending' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>Pending</span>',
+            'received' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-box mr-1"></i>Received</span>',
+            'inspected' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"><i class="fas fa-search mr-1"></i>Inspected</span>',
+            'restocked' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Restocked</span>',
+            'disposed' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-trash mr-1"></i>Disposed</span>',
+            'cancelled' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"><i class="fas fa-times mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $this->status;
+    }
+
+    public function getReturnTypeBadgeAttribute()
+    {
+        $badges = [
+            'customer_return' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-undo mr-1"></i>Customer Return</span>',
+            'damaged' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-exclamation-triangle mr-1"></i>Damaged</span>',
+            'expired' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-orange-100 text-orange-800"><i class="fas fa-calendar-times mr-1"></i>Expired</span>',
+            'wrong_item' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"><i class="fas fa-exchange-alt mr-1"></i>Wrong Item</span>',
+        ];
+
+        return $badges[$this->return_type] ?? $this->return_type;
+    }
 }
