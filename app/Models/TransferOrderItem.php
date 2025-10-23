@@ -7,6 +7,46 @@ use Illuminate\Database\Eloquent\Model;
 
 class TransferOrderItem extends Model
 {
-    /** @use HasFactory<\Database\Factories\TransferOrderItemFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'transfer_order_id',
+        'product_id',
+        'from_storage_bin_id',
+        'to_storage_bin_id',
+        'batch_number',
+        'serial_number',
+        'quantity_requested',
+        'quantity_shipped',
+        'quantity_received',
+        'unit_of_measure',
+        'status',
+        'notes',
+    ];
+
+    protected $casts = [
+        'quantity_requested' => 'decimal:2',
+        'quantity_shipped' => 'decimal:2',
+        'quantity_received' => 'decimal:2',
+    ];
+
+    public function transferOrder()
+    {
+        return $this->belongsTo(TransferOrder::class);
+    }
+
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
+
+    public function fromStorageBin()
+    {
+        return $this->belongsTo(StorageBin::class, 'from_storage_bin_id');
+    }
+
+    public function toStorageBin()
+    {
+        return $this->belongsTo(StorageBin::class, 'to_storage_bin_id');
+    }
 }

@@ -7,6 +7,21 @@ use Illuminate\Database\Eloquent\Model;
 
 class Role extends Model
 {
-    /** @use HasFactory<\Database\Factories\RoleFactory> */
     use HasFactory;
+
+    protected $fillable = [
+        'name',
+        'slug',
+        'description',
+        'permissions',
+    ];
+
+    protected $casts = [
+        'permissions' => 'array',
+    ];
+
+    public function users()
+    {
+        return $this->belongsToMany(User::class, 'user_roles');
+    }
 }
