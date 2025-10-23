@@ -60,4 +60,12 @@ class Vehicle extends Model
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
+
+    // Generate vehicle number
+    public static function generateVehicleNumber()
+    {
+        $lastVehicle = self::withTrashed()->latest('id')->first();
+        $number = $lastVehicle ? intval(substr($lastVehicle->vehicle_number, 4)) + 1 : 1;
+        return 'VEH-' . str_pad($number, 4, '0', STR_PAD_LEFT);
+    }
 }

@@ -59,4 +59,10 @@ class StockMovement extends Model
     {
         return $this->belongsTo(User::class, 'performed_by');
     }
+
+    //performedBy
+    public function performedBy()
+    {
+        return $this->belongsTo(User::class, 'performed_by');
+    }
 }

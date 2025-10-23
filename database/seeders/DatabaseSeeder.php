@@ -20,6 +20,15 @@ class DatabaseSeeder extends Seeder
             ProductSeeder::class,
             CustomerSeeder::class,
             VendorSeeder::class,
+            VehicleSeeder::class,
+            EquipmentSeeder::class,
+            PalletSeeder::class,
+            InventoryStockSeeder::class,
+            StockMovementSeeder::class,
+            StockAdjustmentSeeder::class,      // Jalankan ini dulu
+            StockAdjustmentItemSeeder::class,
+            StockOpnameSeeder::class,        // Jalankan ini dulu
+            StockOpnameItemSeeder::class,  
         ]);
     }
 }

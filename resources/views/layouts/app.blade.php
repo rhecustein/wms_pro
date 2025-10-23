@@ -360,7 +360,7 @@
                 </a> -->
 
                 <!-- System -->
-                <div x-data="{ open: {{ request()->is('system*') ? 'true' : 'false' }} }">
+                <!-- <div x-data="{ open: {{ request()->is('system*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('system*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
@@ -383,7 +383,7 @@
                             <i class="fas fa-bell w-4 mr-2"></i> Notifications
                         </a>
                     </div>
-                </div>
+                </div> -->
             </nav>
 
             <!-- User Info -->

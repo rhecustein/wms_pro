@@ -44,4 +44,21 @@ class StockAdjustment extends Model
     {
         return $this->hasMany(StockAdjustmentItem::class);
     }
+
+    //createdBy
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+    //updatedBy
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    //approvedBy
+    public function approvedBy()
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
 }
