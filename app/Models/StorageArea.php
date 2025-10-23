@@ -1,4 +1,5 @@
 <?php
+// app/Models/StorageArea.php
 
 namespace App\Models;
 
@@ -21,13 +22,13 @@ class StorageArea extends Model
         'is_active',
         'description',
         'created_by',
-        'updated_by',
+        'updated_by'
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
         'area_sqm' => 'decimal:2',
-        'height_meters' => 'decimal:2',
+        'height_meters' => 'decimal:2'
     ];
 
     public function warehouse()
@@ -38,5 +39,43 @@ class StorageArea extends Model
     public function storageBins()
     {
         return $this->hasMany(StorageBin::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function getTypeNameAttribute()
+    {
+        $types = [
+            'spr' => 'SPR (Standard Pallet Rack)',
+            'bulky' => 'Bulky Storage',
+            'quarantine' => 'Quarantine Area',
+            'staging_1' => 'Staging Area 1',
+            'staging_2' => 'Staging Area 2',
+            'virtual' => 'Virtual Storage'
+        ];
+
+        return $types[$this->type] ?? $this->type;
+    }
+
+    public function getTypeBadgeColorAttribute()
+    {
+        $colors = [
+            'spr' => 'blue',
+            'bulky' => 'purple',
+            'quarantine' => 'red',
+            'staging_1' => 'yellow',
+            'staging_2' => 'orange',
+            'virtual' => 'gray'
+        ];
+
+        return $colors[$this->type] ?? 'gray';
     }
 }

@@ -175,16 +175,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('inventory')->name('inventory.')->group(function () {
         
         // Inventory Stocks
-        Route::get('stocks', [InventoryStockController::class, 'index'])->name('stocks.index');
-        Route::get('stocks/{inventoryStock}', [InventoryStockController::class, 'show'])->name('stocks.show');
-        Route::get('stocks/product/{product}', [InventoryStockController::class, 'byProduct'])->name('stocks.by-product');
-        Route::get('stocks/warehouse/{warehouse}', [InventoryStockController::class, 'byWarehouse'])->name('stocks.by-warehouse');
-        Route::get('stocks/bin/{storageBin}', [InventoryStockController::class, 'byBin'])->name('stocks.by-bin');
-        Route::get('stocks/expiring', [InventoryStockController::class, 'expiring'])->name('stocks.expiring');
-        Route::get('stocks/expired', [InventoryStockController::class, 'expired'])->name('stocks.expired');
-        Route::get('stocks/low-stock', [InventoryStockController::class, 'lowStock'])->name('stocks.low-stock');
-        Route::get('stocks/{product}/card', [InventoryStockController::class, 'stockCard'])->name('stocks.card');
-        
+        Route::prefix('stocks')->name('stocks.')->group(function () {
+            // Routes dengan keyword harus di atas route dengan parameter
+            Route::get('/', [InventoryStockController::class, 'index'])->name('index');
+            Route::get('expiring', [InventoryStockController::class, 'expiring'])->name('expiring');
+            Route::get('expired', [InventoryStockController::class, 'expired'])->name('expired');
+            Route::get('low-stock', [InventoryStockController::class, 'lowStock'])->name('low-stock');
+            
+            // Routes dengan parameter product, warehouse, bin
+            Route::get('product/{product}', [InventoryStockController::class, 'byProduct'])->name('by-product');
+            Route::get('product/{product}/card', [InventoryStockController::class, 'stockCard'])->name('card');
+            Route::get('warehouse/{warehouse}', [InventoryStockController::class, 'byWarehouse'])->name('by-warehouse');
+            Route::get('bin/{storageBin}', [InventoryStockController::class, 'byBin'])->name('by-bin');
+            
+            // Route detail stock - harus paling bawah
+            Route::get('{inventoryStock}', [InventoryStockController::class, 'show'])->name('show');
+        });
         // Pallets Management
         Route::resource('pallets', PalletController::class);
         Route::post('pallets/{pallet}/activate', [PalletController::class, 'activate'])->name('pallets.activate');
@@ -205,13 +211,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('adjustments/{stockAdjustment}/post', [StockAdjustmentController::class, 'post'])->name('adjustments.post');
         Route::post('adjustments/{stockAdjustment}/cancel', [StockAdjustmentController::class, 'cancel'])->name('adjustments.cancel');
         
-        // Stock Opname (Cycle Count)
+        // Stock Opnames
         Route::resource('opnames', StockOpnameController::class);
-        Route::post('opnames/{stockOpname}/start', [StockOpnameController::class, 'start'])->name('opnames.start');
-        Route::post('opnames/{stockOpname}/complete', [StockOpnameController::class, 'complete'])->name('opnames.complete');
-        Route::post('opnames/{stockOpname}/cancel', [StockOpnameController::class, 'cancel'])->name('opnames.cancel');
-        Route::get('opnames/{stockOpname}/count', [StockOpnameController::class, 'count'])->name('opnames.count');
-        Route::post('opnames/{stockOpname}/items/{item}/update-count', [StockOpnameController::class, 'updateCount'])->name('opnames.update-count');
+        Route::post('opnames/{opname}/start', [StockOpnameController::class, 'start'])->name('opnames.start');
+        Route::post('opnames/{opname}/complete', [StockOpnameController::class, 'complete'])->name('opnames.complete');
+        Route::post('opnames/{opname}/cancel', [StockOpnameController::class, 'cancel'])->name('opnames.cancel');
+        Route::get('opnames/{opname}/count', [StockOpnameController::class, 'count'])->name('opnames.count');
+        Route::post('opnames/{opname}/items/{item}/update-count', [StockOpnameController::class, 'updateCount'])->name('opnames.update-count');
+        Route::get('warehouses/{warehouse}/storage-areas', [StockOpnameController::class, 'getStorageAreas'])->name('warehouses.storage-areas');
+        Route::get('warehouses/{warehouse}/storage-bins', [StockOpnameController::class, 'getStorageBins'])->name('warehouses.storage-bins');
     });
 
     // ============================================
@@ -240,14 +248,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('good-receivings/{goodReceiving}/cancel', [GoodReceivingController::class, 'cancel'])->name('good-receivings.cancel');
         Route::get('good-receivings/{goodReceiving}/print', [GoodReceivingController::class, 'print'])->name('good-receivings.print');
         
-        // Putaway Tasks
-        Route::resource('putaway-tasks', PutawayTaskController::class);
         Route::get('putaway-tasks/pending', [PutawayTaskController::class, 'pending'])->name('putaway-tasks.pending');
+        Route::get('putaway-tasks/{putawayTask}/execute', [PutawayTaskController::class, 'execute'])->name('putaway-tasks.execute');
         Route::post('putaway-tasks/{putawayTask}/assign', [PutawayTaskController::class, 'assign'])->name('putaway-tasks.assign');
         Route::post('putaway-tasks/{putawayTask}/start', [PutawayTaskController::class, 'start'])->name('putaway-tasks.start');
         Route::post('putaway-tasks/{putawayTask}/complete', [PutawayTaskController::class, 'complete'])->name('putaway-tasks.complete');
         Route::post('putaway-tasks/{putawayTask}/cancel', [PutawayTaskController::class, 'cancel'])->name('putaway-tasks.cancel');
-        Route::get('putaway-tasks/{putawayTask}/execute', [PutawayTaskController::class, 'execute'])->name('putaway-tasks.execute');
+        
+        // Resource routes
+        Route::resource('putaway-tasks', PutawayTaskController::class);
     });
 
     // ============================================
@@ -261,18 +270,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])->name('sales-orders.cancel');
         Route::post('sales-orders/{salesOrder}/generate-picking', [SalesOrderController::class, 'generatePicking'])->name('sales-orders.generate-picking');
         Route::get('sales-orders/{salesOrder}/print', [SalesOrderController::class, 'print'])->name('sales-orders.print');
+
+        // Wave Picking - Harus di atas resource route
+        Route::get('picking-orders/wave', [PickingOrderController::class, 'wave'])->name('picking-orders.wave');
+        Route::post('picking-orders/batch-generate', [PickingOrderController::class, 'batchGenerate'])->name('picking-orders.batch-generate');
         
-        // Picking Orders
-        Route::resource('picking-orders', PickingOrderController::class);
+        // Other routes
         Route::get('picking-orders/pending', [PickingOrderController::class, 'pending'])->name('picking-orders.pending');
+        Route::get('picking-orders/{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('picking-orders.execute');
+        Route::get('picking-orders/{pickingOrder}/print', [PickingOrderController::class, 'print'])->name('picking-orders.print');
         Route::post('picking-orders/{pickingOrder}/assign', [PickingOrderController::class, 'assign'])->name('picking-orders.assign');
         Route::post('picking-orders/{pickingOrder}/start', [PickingOrderController::class, 'start'])->name('picking-orders.start');
         Route::post('picking-orders/{pickingOrder}/complete', [PickingOrderController::class, 'complete'])->name('picking-orders.complete');
         Route::post('picking-orders/{pickingOrder}/cancel', [PickingOrderController::class, 'cancel'])->name('picking-orders.cancel');
-        Route::get('picking-orders/{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('picking-orders.execute');
-        Route::get('picking-orders/wave', [PickingOrderController::class, 'wave'])->name('picking-orders.wave');
-        Route::post('picking-orders/batch-generate', [PickingOrderController::class, 'batchGenerate'])->name('picking-orders.batch-generate');
-        Route::get('picking-orders/{pickingOrder}/print', [PickingOrderController::class, 'print'])->name('picking-orders.print');
+        
+        // Resource route terakhir
+        Route::resource('picking-orders', PickingOrderController::class);
         
         // Packing Orders
         Route::resource('packing-orders', PackingOrderController::class);

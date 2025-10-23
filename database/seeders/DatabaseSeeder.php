@@ -4,6 +4,7 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
+use Pest\ArchPresets\Custom;
 
 class DatabaseSeeder extends Seeder
 {
@@ -12,6 +13,13 @@ class DatabaseSeeder extends Seeder
         $this->call([
             RoleSeeder::class,
             UserSeeder::class,
+            WarehouseSeeder::class,
+            StorageAreaSeeder::class,
+            StorageBinSeeder::class,
+            ProductCategorySeeder::class,
+            ProductSeeder::class,
+            CustomerSeeder::class,
+            VendorSeeder::class,
         ]);
     }
 }

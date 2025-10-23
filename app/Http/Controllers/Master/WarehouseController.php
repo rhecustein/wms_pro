@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Master;
 use App\Http\Controllers\Controller;
 use App\Models\Warehouse;
 use App\Models\User;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class WarehouseController extends Controller
@@ -21,7 +23,7 @@ class WarehouseController extends Controller
             ->withCount('storageBins');
 
         // Search
-        if ($request->has('search') && $request->search != '') {
+        if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function($q) use ($search) {
                 $q->where('code', 'like', "%{$search}%")
@@ -31,12 +33,12 @@ class WarehouseController extends Controller
         }
 
         // Filter by status
-        if ($request->has('status') && $request->status != '') {
-            $query->where('is_active', $request->status == 'active');
+        if ($request->filled('status')) {
+            $query->where('is_active', $request->status === 'active');
         }
 
         // Filter by city
-        if ($request->has('city') && $request->city != '') {
+        if ($request->filled('city')) {
             $query->where('city', $request->city);
         }
 
@@ -51,6 +53,7 @@ class WarehouseController extends Controller
         $cities = Warehouse::select('city')
             ->distinct()
             ->whereNotNull('city')
+            ->orderBy('city')
             ->pluck('city');
 
         return view('master.warehouses.index', compact('warehouses', 'cities'));
@@ -61,11 +64,21 @@ class WarehouseController extends Controller
      */
     public function create()
     {
-        $managers = User::role(['warehouse_manager', 'admin'])
-            ->orderBy('name')
-            ->get();
+        try {
+            $managers = User::withRoles(['warehouse-manager', 'warehouse_manager', 'super-admin'])
+                ->active()
+                ->orderBy('name')
+                ->get();
 
-        return view('master.warehouses.create', compact('managers'));
+            return view('master.warehouses.create', compact('managers'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading warehouse create form: ' . $e->getMessage());
+            
+            return redirect()
+                ->route('master.warehouses.index')
+                ->with('error', 'Failed to load create form.');
+        }
     }
 
     /**
@@ -98,6 +111,7 @@ class WarehouseController extends Controller
 
             $warehouse = Warehouse::create($validated);
 
+            // Log activity
             activity()
                 ->performedOn($warehouse)
                 ->causedBy(Auth::user())
@@ -106,42 +120,75 @@ class WarehouseController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('warehouses.index')
+                ->route('master.warehouses.index')
                 ->with('success', 'Warehouse created successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            Log::error('Failed to create warehouse', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'user_id' => Auth::id(),
+                'data' => $request->except(['_token'])
+            ]);
+            
             return back()
                 ->withInput()
                 ->with('error', 'Failed to create warehouse: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
+    // app/Http/Controllers/Master/WarehouseController.php
     public function show(Warehouse $warehouse)
     {
-        $warehouse->load(['manager', 'creator', 'updater', 'storageAreas.storageBins']);
-        
-        // Get statistics
-        $stats = [
-            'total_bins' => $warehouse->storageBins()->count(),
-            'occupied_bins' => $warehouse->storageBins()->where('status', 'occupied')->count(),
-            'available_bins' => $warehouse->storageBins()->where('status', 'available')->count(),
-            'reserved_bins' => $warehouse->storageBins()->where('status', 'reserved')->count(),
-            'total_stock' => $warehouse->storageBins()->sum('current_quantity'),
-            'utilization' => $warehouse->utilization,
-        ];
+        try {
+            $warehouse->load(['manager', 'creator', 'updater']);
+            
+            // Load storage areas dan bins jika ada
+            if (Schema::hasTable('storage_areas') && Schema::hasColumn('storage_areas', 'warehouse_id')) {
+                $warehouse->load('storageAreas.storageBins');
+            }
+            
+            // Get statistics
+            $stats = [
+                'total_bins' => 0,
+                'occupied_bins' => 0,
+                'available_bins' => 0,
+                'reserved_bins' => 0,
+                'total_stock' => 0,
+                'utilization' => 0,
+            ];
 
-        // Get recent activities
-        $activities = activity()
-            ->performedOn($warehouse)
-            ->latest()
-            ->limit(10)
-            ->get();
+            // Hitung statistics jika tabel storage_bins ada
+            if (Schema::hasTable('storage_bins') && Schema::hasColumn('storage_bins', 'warehouse_id')) {
+                $stats = [
+                    'total_bins' => $warehouse->storageBins()->count(),
+                    'occupied_bins' => $warehouse->storageBins()->where('status', 'occupied')->count(),
+                    'available_bins' => $warehouse->storageBins()->where('status', 'available')->count(),
+                    'reserved_bins' => $warehouse->storageBins()->where('status', 'reserved')->count(),
+                    'total_stock' => $warehouse->storageBins()->sum('current_quantity'),
+                    'utilization' => $warehouse->utilization ?? 0,
+                ];
+            }
 
-        return view('master.warehouses.show', compact('warehouse', 'stats', 'activities'));
+            // ✅ PERBAIKAN: Get recent activities dengan cara yang benar
+            $activities = \Spatie\Activitylog\Models\Activity::query()
+                ->where('subject_type', Warehouse::class)
+                ->where('subject_id', $warehouse->id)
+                ->latest()
+                ->limit(10)
+                ->get();
+
+            return view('master.warehouses.show', compact('warehouse', 'stats', 'activities'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error showing warehouse: ' . $e->getMessage());
+            
+            return redirect()
+                ->route('master.warehouses.index')
+                ->with('error', 'Failed to load warehouse details.');
+        }
     }
 
     /**
@@ -149,11 +196,21 @@ class WarehouseController extends Controller
      */
     public function edit(Warehouse $warehouse)
     {
-        $managers = User::role(['warehouse_manager', 'admin'])
-            ->orderBy('name')
-            ->get();
+        try {
+            $managers = User::withRoles(['warehouse-manager', 'warehouse_manager', 'super-admin'])
+                ->active()
+                ->orderBy('name')
+                ->get();
 
-        return view('master.warehouses.edit', compact('warehouse', 'managers'));
+            return view('master.warehouses.edit', compact('warehouse', 'managers'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading warehouse edit form: ' . $e->getMessage());
+            
+            return redirect()
+                ->route('master.warehouses.index')
+                ->with('error', 'Failed to load edit form.');
+        }
     }
 
     /**
@@ -194,11 +251,17 @@ class WarehouseController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('warehouses.index')
+                ->route('master.warehouses.index')
                 ->with('success', 'Warehouse updated successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            Log::error('Failed to update warehouse', [
+                'warehouse_id' => $warehouse->id,
+                'error' => $e->getMessage()
+            ]);
+            
             return back()
                 ->withInput()
                 ->with('error', 'Failed to update warehouse: ' . $e->getMessage());
@@ -227,11 +290,17 @@ class WarehouseController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('warehouses.index')
+                ->route('master.warehouses.index')
                 ->with('success', 'Warehouse deleted successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            
+            Log::error('Failed to delete warehouse', [
+                'warehouse_id' => $warehouse->id,
+                'error' => $e->getMessage()
+            ]);
+            
             return back()->with('error', 'Failed to delete warehouse: ' . $e->getMessage());
         }
     }
@@ -289,19 +358,28 @@ class WarehouseController extends Controller
      */
     public function layout(Warehouse $warehouse)
     {
-        $warehouse->load(['storageAreas.storageBins']);
+        try {
+            $warehouse->load(['storageAreas.storageBins']);
 
-        // Group bins by aisle
-        $aisles = $warehouse->storageAreas()
-            ->with(['storageBins' => function($query) {
-                $query->orderBy('aisle')
-                      ->orderBy('row')
-                      ->orderBy('column')
-                      ->orderBy('level');
-            }])
-            ->get()
-            ->groupBy('type');
+            // Group bins by aisle
+            $aisles = $warehouse->storageAreas()
+                ->with(['storageBins' => function($query) {
+                    $query->orderBy('aisle')
+                          ->orderBy('row')
+                          ->orderBy('column')
+                          ->orderBy('level');
+                }])
+                ->get()
+                ->groupBy('type');
 
-        return view('master.warehouses.layout', compact('warehouse', 'aisles'));
+            return view('master.warehouses.layout', compact('warehouse', 'aisles'));
+            
+        } catch (\Exception $e) {
+            Log::error('Error loading warehouse layout: ' . $e->getMessage());
+            
+            return redirect()
+                ->route('master.warehouses.show', $warehouse)
+                ->with('error', 'Failed to load warehouse layout.');
+        }
     }
 }

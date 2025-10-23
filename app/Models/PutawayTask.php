@@ -72,4 +72,29 @@ class PutawayTask extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
+    // Accessors
+    public function getStatusBadgeAttribute(): string
+    {
+        $badges = [
+            'pending' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"><i class="fas fa-clock mr-1"></i>Pending</span>',
+            'assigned' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-user-check mr-1"></i>Assigned</span>',
+            'in_progress' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-spinner mr-1"></i>In Progress</span>',
+            'completed' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Completed</span>',
+            'cancelled' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $badges['pending'];
+    }
+
+    public function getPriorityBadgeAttribute(): string
+    {
+        $badges = [
+            'high' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-exclamation-circle mr-1"></i>High</span>',
+            'medium' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-minus-circle mr-1"></i>Medium</span>',
+            'low' => '<span class="px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-arrow-down mr-1"></i>Low</span>',
+        ];
+
+        return $badges[$this->priority] ?? $badges['medium'];
+    }
 }

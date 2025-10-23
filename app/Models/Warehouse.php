@@ -26,8 +26,11 @@ class Warehouse extends Model
         'email',
         'manager_id',
         'total_area_sqm',
+        'storage_capacity_cbm',
         'height_meters',
+        'number_of_docks',
         'is_active',
+        'notes',
         'created_by',
         'updated_by',
     ];
@@ -36,52 +39,199 @@ class Warehouse extends Model
         'latitude' => 'decimal:8',
         'longitude' => 'decimal:8',
         'total_area_sqm' => 'decimal:2',
+        'storage_capacity_cbm' => 'decimal:2',
         'height_meters' => 'decimal:2',
         'is_active' => 'boolean',
     ];
 
-    // Relationships
+    // ==========================================
+    // ACTIVITY LOG CONFIGURATION
+    // ==========================================
+    
+    /**
+     * Configure activity log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly([
+                'code',
+                'name',
+                'address',
+                'city',
+                'province',
+                'manager_id',
+                'is_active'
+            ])
+            ->logOnlyDirty()
+            ->dontSubmitEmptyLogs()
+            ->setDescriptionForEvent(fn(string $eventName) => "Warehouse has been {$eventName}")
+            ->useLogName('warehouse');
+    }
+
+    // ==========================================
+    // RELATIONSHIPS
+    // ==========================================
+    
+    /**
+     * Warehouse manager
+     */
     public function manager()
     {
         return $this->belongsTo(User::class, 'manager_id');
     }
 
+    /**
+     * User who created this warehouse
+     */
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /**
+     * User who last updated this warehouse
+     */
     public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
+    /**
+     * Storage areas in this warehouse
+     */
     public function storageAreas()
     {
         return $this->hasMany(StorageArea::class);
     }
 
+    /**
+     * Storage bins in this warehouse
+     */
     public function storageBins()
     {
-        return $this->hasManyThrough(StorageBin::class, StorageArea::class);
+        return $this->hasMany(StorageBin::class);
     }
 
-    // Scopes
-    public function scopeActive($query)
+    /**
+     * Sales orders from this warehouse
+     */
+    public function salesOrders()
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(SalesOrder::class);
     }
 
-    // Activity Log
-    public function getActivitylogOptions(): LogOptions
+    /**
+     * Purchase orders for this warehouse
+     */
+    public function purchaseOrders()
     {
-        return LogOptions::defaults()
-            ->logOnly(['code', 'name', 'address', 'city', 'is_active'])
-            ->logOnlyDirty()
-            ->dontSubmitEmptyLogs();
+        return $this->hasMany(PurchaseOrder::class);
     }
 
-    // Accessors
+    /**
+     * Transfer orders from this warehouse
+     */
+    public function transfersFrom()
+    {
+        return $this->hasMany(TransferOrder::class, 'from_warehouse_id');
+    }
+
+    /**
+     * Transfer orders to this warehouse
+     */
+    public function transfersTo()
+    {
+        return $this->hasMany(TransferOrder::class, 'to_warehouse_id');
+    }
+
+    /**
+     * Inbound shipments to this warehouse
+     */
+    public function inboundShipments()
+    {
+        return $this->hasMany(InboundShipment::class);
+    }
+
+    /**
+     * Good receivings at this warehouse
+     */
+    public function goodReceivings()
+    {
+        return $this->hasMany(GoodReceiving::class);
+    }
+
+    /**
+     * Picking orders from this warehouse
+     */
+    public function pickingOrders()
+    {
+        return $this->hasMany(PickingOrder::class);
+    }
+
+    /**
+     * Packing orders from this warehouse
+     */
+    public function packingOrders()
+    {
+        return $this->hasMany(PackingOrder::class);
+    }
+
+    /**
+     * Delivery orders from this warehouse
+     */
+    public function deliveryOrders()
+    {
+        return $this->hasMany(DeliveryOrder::class);
+    }
+
+    /**
+     * Return orders to this warehouse
+     */
+    public function returnOrders()
+    {
+        return $this->hasMany(ReturnOrder::class);
+    }
+
+    /**
+     * Inventory stocks in this warehouse
+     */
+    public function inventoryStocks()
+    {
+        return $this->hasMany(InventoryStock::class);
+    }
+
+    /**
+     * Pallets in this warehouse
+     */
+    public function pallets()
+    {
+        return $this->hasMany(Pallet::class);
+    }
+
+    // ==========================================
+    // ACCESSORS & MUTATORS
+    // ==========================================
+    
+    /**
+     * Get warehouse utilization percentage
+     */
+    public function getUtilizationAttribute()
+    {
+        $totalBins = $this->storageBins()->count();
+        
+        if ($totalBins === 0) {
+            return 0;
+        }
+
+        $occupiedBins = $this->storageBins()->where('status', 'occupied')->count();
+        
+        return round(($occupiedBins / $totalBins) * 100, 2);
+    }
+
+    /**
+     * Get formatted address
+     */
     public function getFullAddressAttribute()
     {
         $parts = array_filter([
@@ -89,17 +239,45 @@ class Warehouse extends Model
             $this->city,
             $this->province,
             $this->postal_code,
-            $this->country
+            $this->country,
         ]);
-        
+
         return implode(', ', $parts);
     }
 
-    public function getUtilizationAttribute()
+    // ==========================================
+    // SCOPES
+    // ==========================================
+    
+    /**
+     * Scope for active warehouses
+     */
+    public function scopeActive($query)
     {
-        $totalBins = $this->storageBins()->count();
-        $occupiedBins = $this->storageBins()->where('status', 'occupied')->count();
-        
-        return $totalBins > 0 ? round(($occupiedBins / $totalBins) * 100, 2) : 0;
+        return $query->where('is_active', true);
+    }
+
+    /**
+     * Scope for inactive warehouses
+     */
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
+    }
+
+    /**
+     * Scope for warehouses by city
+     */
+    public function scopeByCity($query, $city)
+    {
+        return $query->where('city', $city);
+    }
+
+    /**
+     * Scope for warehouses by province
+     */
+    public function scopeByProvince($query, $province)
+    {
+        return $query->where('province', $province);
     }
 }

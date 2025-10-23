@@ -11,20 +11,20 @@ class Vehicle extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'vehicle_number',
-        'license_plate',
-        'vehicle_type',
+        'code',
+        'type',
         'brand',
         'model',
         'year',
+        'license_plate',
         'capacity_kg',
         'capacity_cbm',
+        'fuel_type',
         'status',
-        'ownership',
         'last_maintenance_date',
         'next_maintenance_date',
-        'odometer_km',
-        'fuel_type',
+        'insurance_expiry',
+        'is_active',
         'notes',
         'created_by',
         'updated_by',
@@ -33,17 +33,31 @@ class Vehicle extends Model
     protected $casts = [
         'capacity_kg' => 'decimal:2',
         'capacity_cbm' => 'decimal:2',
+        'year' => 'integer',
         'last_maintenance_date' => 'date',
         'next_maintenance_date' => 'date',
+        'insurance_expiry' => 'date',
+        'is_active' => 'boolean',
     ];
+
+    // RELASI
+    public function transferOrders()
+    {
+        return $this->hasMany(TransferOrder::class);
+    }
 
     public function deliveryOrders()
     {
         return $this->hasMany(DeliveryOrder::class);
     }
 
-    public function transferOrders()
+    public function createdBy()
     {
-        return $this->hasMany(TransferOrder::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

@@ -15,6 +15,7 @@ return new class extends Migration
             $table->foreignId('purchase_order_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
             $table->foreignId('vendor_id')->constrained()->cascadeOnDelete();
+            $table->dateTime('shipment_date')->nullable();
             $table->dateTime('arrival_date')->nullable();
             $table->integer('expected_pallets')->nullable();
             $table->integer('received_pallets')->default(0);

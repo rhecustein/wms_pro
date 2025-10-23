@@ -11,6 +11,7 @@ class StorageBin extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'warehouse_id',
         'storage_area_id',
         'bin_code',
         'aisle',
@@ -47,6 +48,22 @@ class StorageBin extends Model
     public function storageArea()
     {
         return $this->belongsTo(StorageArea::class);
+    }
+
+    public function warehouse()
+    {
+        return $this->belongsTo(Warehouse::class);
+    }
+
+    public function pallets()
+    {
+        return $this->hasMany(Pallet::class);
+    }
+
+    //customer
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 
     public function inventoryStocks()

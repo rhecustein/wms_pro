@@ -23,11 +23,11 @@ class PackingOrderItem extends Model
     ];
 
     protected $casts = [
-        'quantity_packed' => 'decimal:2',
-        'box_weight_kg' => 'decimal:2',
         'packed_at' => 'datetime',
+        'box_weight_kg' => 'decimal:2',
     ];
 
+    // Relationships
     public function packingOrder()
     {
         return $this->belongsTo(PackingOrder::class);
@@ -43,7 +43,7 @@ class PackingOrderItem extends Model
         return $this->belongsTo(Product::class);
     }
 
-    public function packedByUser()
+    public function packedBy()
     {
         return $this->belongsTo(User::class, 'packed_by');
     }

@@ -28,12 +28,13 @@ class PackingOrder extends Model
     ];
 
     protected $casts = [
-        'packing_date' => 'date',
+        'packing_date' => 'datetime',
         'started_at' => 'datetime',
         'completed_at' => 'datetime',
         'total_weight_kg' => 'decimal:2',
     ];
 
+    // Relationships
     public function pickingOrder()
     {
         return $this->belongsTo(PickingOrder::class);
@@ -59,8 +60,26 @@ class PackingOrder extends Model
         return $this->hasMany(PackingOrderItem::class);
     }
 
-    public function deliveryOrders()
+    public function createdBy()
     {
-        return $this->hasMany(DeliveryOrder::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'pending' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800"><i class="fas fa-clock mr-1"></i>Pending</span>',
+            'in_progress' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><i class="fas fa-spinner mr-1"></i>In Progress</span>',
+            'completed' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Completed</span>',
+            'cancelled' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $this->status;
     }
 }

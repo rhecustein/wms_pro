@@ -29,11 +29,10 @@ class PickingOrderItem extends Model
 
     protected $casts = [
         'expiry_date' => 'date',
-        'quantity_requested' => 'decimal:2',
-        'quantity_picked' => 'decimal:2',
         'picked_at' => 'datetime',
     ];
 
+    // Relationships
     public function pickingOrder()
     {
         return $this->belongsTo(PickingOrder::class);
@@ -54,8 +53,21 @@ class PickingOrderItem extends Model
         return $this->belongsTo(StorageBin::class);
     }
 
-    public function pickedByUser()
+    public function pickedBy()
     {
         return $this->belongsTo(User::class, 'picked_by');
+    }
+
+    // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'pending' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">Pending</span>',
+            'picked' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">Picked</span>',
+            'short' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-yellow-100 text-yellow-800">Short</span>',
+            'cancelled' => '<span class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800">Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $badges['pending'];
     }
 }

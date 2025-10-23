@@ -14,6 +14,7 @@ class Vendor extends Model
         'code',
         'name',
         'company_name',
+        'tax_number',
         'email',
         'phone',
         'address',
@@ -21,10 +22,11 @@ class Vendor extends Model
         'province',
         'postal_code',
         'country',
-        'tax_id',
-        'payment_terms_days',
         'contact_person',
         'contact_phone',
+        'contact_email',
+        'payment_terms',
+        'rating',
         'is_active',
         'notes',
         'created_by',
@@ -32,11 +34,38 @@ class Vendor extends Model
     ];
 
     protected $casts = [
+        'rating' => 'integer',
         'is_active' => 'boolean',
     ];
 
+    // RELASI
     public function purchaseOrders()
     {
         return $this->hasMany(PurchaseOrder::class);
+    }
+
+    public function inboundShipments()
+    {
+        return $this->hasMany(InboundShipment::class);
+    }
+
+    public function goodReceivings()
+    {
+        return $this->hasMany(GoodReceiving::class);
+    }
+
+    public function inventoryStocks()
+    {
+        return $this->hasMany(InventoryStock::class);
+    }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
     }
 }

@@ -43,23 +43,98 @@ class SalesOrder extends Model
         'total_amount' => 'decimal:2',
     ];
 
-    public function warehouse()
+    public function packingOrders()
     {
-        return $this->belongsTo(Warehouse::class);
+        return $this->hasMany(PackingOrder::class);
     }
 
-    public function customer()
+    public function deliveryOrders()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->hasMany(DeliveryOrder::class);
     }
 
-    public function items()
+    public function returnOrders()
     {
-        return $this->hasMany(SalesOrderItem::class);
+        return $this->hasMany(ReturnOrder::class);
     }
 
-    public function pickingOrders()
+    public function createdBy()
     {
-        return $this->hasMany(PickingOrder::class);
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+     // Accessors
+    public function getStatusBadgeAttribute()
+    {
+        $badges = [
+            'draft' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-800"><i class="fas fa-file-alt mr-1"></i>Draft</span>',
+            'confirmed' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-800"><i class="fas fa-check-circle mr-1"></i>Confirmed</span>',
+            'picking' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-800"><i class="fas fa-hand-paper mr-1"></i>Picking</span>',
+            'packing' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-orange-100 text-orange-800"><i class="fas fa-box mr-1"></i>Packing</span>',
+            'shipped' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-purple-100 text-purple-800"><i class="fas fa-shipping-fast mr-1"></i>Shipped</span>',
+            'delivered' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800"><i class="fas fa-check-double mr-1"></i>Delivered</span>',
+            'cancelled' => '<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+        ];
+
+        return $badges[$this->status] ?? $this->status;
+    }
+
+    public function getPaymentStatusBadgeAttribute()
+    {
+        $badges = [
+            'pending' => '<span class="px-2 py-1 rounded text-xs font-semibold bg-yellow-100 text-yellow-800">Pending</span>',
+            'partial' => '<span class="px-2 py-1 rounded text-xs font-semibold bg-blue-100 text-blue-800">Partial</span>',
+            'paid' => '<span class="px-2 py-1 rounded text-xs font-semibold bg-green-100 text-green-800">Paid</span>',
+        ];
+
+        return $badges[$this->payment_status] ?? $this->payment_status;
+    }
+
+    // Methods
+    public static function generateSONumber()
+    {
+        $lastSO = self::withTrashed()
+            ->whereYear('created_at', date('Y'))
+            ->orderBy('id', 'desc')
+            ->first();
+
+        if ($lastSO) {
+            $lastNumber = intval(substr($lastSO->so_number, -5));
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        return 'SO-' . date('Y') . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
+    }
+
+    public function canEdit()
+    {
+        return in_array($this->status, ['draft', 'confirmed']);
+    }
+
+    public function canDelete()
+    {
+        return $this->status === 'draft';
+    }
+
+    public function canConfirm()
+    {
+        return $this->status === 'draft';
+    }
+
+    public function canCancel()
+    {
+        return !in_array($this->status, ['delivered', 'cancelled']);
+    }
+
+    public function canGeneratePicking()
+    {
+        return $this->status === 'confirmed';
     }
 }
