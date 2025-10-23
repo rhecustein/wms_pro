@@ -61,4 +61,20 @@ class StockOpname extends Model
     {
         return $this->hasMany(StockOpnameItem::class);
     }
+
+    //scheduledBy
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    //updatedBy
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+    public function scheduledBy()
+    {
+        return $this->belongsTo(User::class, 'scheduled_by');
+    }
 }
