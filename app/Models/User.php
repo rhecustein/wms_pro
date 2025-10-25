@@ -1,21 +1,26 @@
 <?php
+// app/Models/User.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'name',
         'email',
         'password',
         'phone',
+        'avatar',
         'is_active',
+        'last_login_at',
+        'email_verified_at',
         'created_by',
         'updated_by',
     ];
@@ -27,157 +32,49 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed',
+        'last_login_at' => 'datetime',
         'is_active' => 'boolean',
+        'password' => 'hashed',
     ];
 
-    // ==========================================
-    // SCOPES
-    // ==========================================
-    
-    /**
-     * Scope untuk filter user berdasarkan role slug
-     */
-    public function scopeWithRoles($query, $roles)
-    {
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
-
-        return $query->whereHas('roles', function ($q) use ($roles) {
-            $q->whereIn('slug', $roles);
-        });
-    }
-
-    /**
-     * Scope untuk filter user aktif
-     */
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    // ==========================================
-    // RELATIONSHIPS
-    // ==========================================
-    
-    /**
-     * User memiliki banyak roles (Many-to-Many)
-     */
-    public function roles()
-    {
-        return $this->belongsToMany(Role::class, 'user_roles');
-    }
-
-    /**
-     * Warehouse yang di-manage oleh user ini
-     */
-    public function managedWarehouses()
-    {
-        return $this->hasMany(Warehouse::class, 'manager_id');
-    }
-
-    /**
-     * Records yang dibuat oleh user ini
-     */
-    public function createdBy()
+    // Relationships
+    public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
-    /**
-     * Records yang diupdate oleh user ini
-     */
-    public function updatedBy()
+    public function updater()
     {
         return $this->belongsTo(User::class, 'updated_by');
     }
 
-    /**
-     * Transfer orders sebagai driver
-     */
-    public function driverTransferOrders()
+    // Accessors
+    public function getStatusBadgeAttribute()
     {
-        return $this->hasMany(TransferOrder::class, 'driver_id');
-    }
-
-    /**
-     * Delivery orders sebagai driver
-     */
-    public function driverDeliveryOrders()
-    {
-        return $this->hasMany(DeliveryOrder::class, 'driver_id');
-    }
-
-    /**
-     * Transfer orders yang diapprove
-     */
-    public function approvedTransferOrders()
-    {
-        return $this->hasMany(TransferOrder::class, 'approved_by');
-    }
-
-    /**
-     * Picking orders yang diassign
-     */
-    public function assignedPickingOrders()
-    {
-        return $this->hasMany(PickingOrder::class, 'assigned_to');
-    }
-
-    /**
-     * Packing orders yang diassign
-     */
-    public function assignedPackingOrders()
-    {
-        return $this->hasMany(PackingOrder::class, 'assigned_to');
-    }
-
-    /**
-     * Good receivings yang diterima
-     */
-    public function receivedGoodReceivings()
-    {
-        return $this->hasMany(GoodReceiving::class, 'received_by');
-    }
-
-    /**
-     * Return orders yang diinspeksi
-     */
-    public function inspectedReturnOrders()
-    {
-        return $this->hasMany(ReturnOrder::class, 'inspected_by');
-    }
-
-    // ==========================================
-    // HELPER METHODS
-    // ==========================================
-    
-    /**
-     * Check apakah user memiliki role tertentu
-     */
-    public function hasRole($roleSlug)
-    {
-        return $this->roles()->where('slug', $roleSlug)->exists();
-    }
-
-    /**
-     * Check apakah user memiliki salah satu dari roles
-     */
-    public function hasAnyRole($roles)
-    {
-        if (is_string($roles)) {
-            $roles = [$roles];
+        if ($this->trashed()) {
+            return '<span class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800">
+                        <i class="fas fa-trash mr-1"></i>Deleted
+                    </span>';
         }
 
-        return $this->roles()->whereIn('slug', $roles)->exists();
+        if ($this->is_active) {
+            return '<span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle mr-1"></i>Active
+                    </span>';
+        }
+
+        return '<span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">
+                    <i class="fas fa-times-circle mr-1"></i>Inactive
+                </span>';
     }
 
-    /**
-     * Get semua role slugs dari user
-     */
-    public function getRoleNames()
+    public function getAvatarUrlAttribute()
     {
-        return $this->roles->pluck('slug')->toArray();
+        if ($this->avatar) {
+            return asset('storage/' . $this->avatar);
+        }
+        
+        // Default avatar using UI Avatars
+        return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=3b82f6&background=dbeafe';
     }
 }

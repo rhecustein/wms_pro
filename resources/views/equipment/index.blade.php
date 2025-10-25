@@ -15,7 +15,7 @@
             </h1>
             <p class="text-sm text-gray-600 mt-1">Manage warehouse equipment and maintenance schedules</p>
         </div>
-        <a href="{{ route('equipment.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+        <a href="{{ route('equipment.equipments.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
             <i class="fas fa-plus mr-2"></i>New Equipment
         </a>
     </div>
@@ -104,7 +104,7 @@
 
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <form method="GET" action="{{ route('equipment.index') }}">
+        <form method="GET" action="{{ route('equipment.equipments.index') }}">
             <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
                 {{-- Search --}}
                 <div class="md:col-span-2">
@@ -156,7 +156,7 @@
                     <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                         <i class="fas fa-filter mr-2"></i>Filter
                     </button>
-                    <a href="{{ route('equipment.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    <a href="{{ route('equipment.equipments.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
                         <i class="fas fa-redo"></i>
                     </a>
                 </div>
@@ -229,13 +229,13 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('equipment.show', $equipment) }}" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                    <a href="{{ route('equipment.equipments.show', $equipment) }}" class="text-blue-600 hover:text-blue-900" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('equipment.edit', $equipment) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                                    <a href="{{ route('equipment.equipments.edit', $equipment) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('equipment.destroy', $equipment) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this equipment?')">
+                                    <form action="{{ route('equipment.equipments.destroy', $equipment) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this equipment?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
@@ -254,7 +254,7 @@
                                     </div>
                                     <h3 class="text-lg font-semibold text-gray-800 mb-2">No Equipment Found</h3>
                                     <p class="text-gray-600 mb-4">Get started by adding your first equipment</p>
-                                    <a href="{{ route('equipment.create') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                    <a href="{{ route('equipment.equipments.create') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                                         <i class="fas fa-plus mr-2"></i>New Equipment
                                     </a>
                                 </div>

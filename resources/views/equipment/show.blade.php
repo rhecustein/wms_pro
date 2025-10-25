@@ -16,10 +16,10 @@
             <p class="text-sm text-gray-600 mt-1">View complete equipment information</p>
         </div>
         <div class="flex space-x-2">
-            <a href="{{ route('equipment.edit', $equipment) }}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
+            <a href="{{ route('equipment.equipment.edit', $equipment) }}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
                 <i class="fas fa-edit mr-2"></i>Edit
             </a>
-            <a href="{{ route('equipment.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+            <a href="{{ route('equipment.equipment.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
                 <i class="fas fa-arrow-left mr-2"></i>Back to List
             </a>
         </div>
@@ -268,7 +268,7 @@
                 <h3 class="text-lg font-semibold text-gray-800 mb-4">Quick Actions</h3>
                 
                 <div class="space-y-3">
-                    <a href="{{ route('equipment.edit', $equipment) }}" class="w-full px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition flex items-center justify-center">
+                    <a href="{{ route('equipment.equipment.edit', $equipment) }}" class="w-full px-4 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition flex items-center justify-center">
                         <i class="fas fa-edit mr-2"></i>
                         Edit Equipment
                     </a>
@@ -278,7 +278,7 @@
                         Print Details
                     </button>
                     
-                    <form action="{{ route('equipment.destroy', $equipment) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this equipment? This action cannot be undone.')">
+                    <form action="{{ route('equipment.equipment.destroy', $equipment) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this equipment? This action cannot be undone.')">
                         @csrf
                         @method('DELETE')
                         <button type="submit" class="w-full px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition flex items-center justify-center">

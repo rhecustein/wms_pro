@@ -137,10 +137,10 @@
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.users.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-users-cog w-4 mr-2"></i> Users
                         </a>
-                        <a href="{{ route('master.roles.index') }}" 
+                        <!-- <a href="{{ route('master.roles.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.roles.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-user-shield w-4 mr-2"></i> Roles
-                        </a>
+                        </a> -->
                         <a href="{{ route('master.warehouses.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.warehouses.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-warehouse w-4 mr-2"></i> Warehouses
