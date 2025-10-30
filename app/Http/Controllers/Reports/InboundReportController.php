@@ -361,4 +361,6 @@ class InboundReportController extends Controller
 
         return view('reports.inbound.receiving-accuracy', compact('items', 'stats', 'suppliers'));
     }
+
+    
 }

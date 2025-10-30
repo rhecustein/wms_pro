@@ -528,4 +528,6 @@ class InventoryReportController extends Controller
             'topByValue'
         ));
     }
+
+    
 }
