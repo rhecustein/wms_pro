@@ -1,0 +1,136 @@
+# WMS Pro - License Agreement
+
+## Copyright Notice
+© 2025 Bintang Wijaya. All rights reserved.
+
+This product is licensed under the Envato Market License Terms.
+
+---
+
+## License Types Available
+
+### Regular License
+One license grants the right to use WMS Pro for a single end product (domain/site).
+
+**You CAN:**
+- Use the item to create a single end product for yourself or for a client
+- Modify or manipulate the item
+- Combine the item with other works to make a derivative work
+- Use the item to create an end product where the end user is NOT charged
+- Use the item in a commercial project for a client
+
+**You CANNOT:**
+- Resell, redistribute, or sublicense the source code
+- Use the item to create an end product where the end user IS charged (requires Extended License)
+- Use the item in a product offered for sale on any marketplace
+- Share your license with another person or organization
+- Extract and use a single component separately from the item
+- Use the item in any application allowing users to customize the product to their needs
+  (e.g., "website builder" or "application builder")
+
+### Extended License
+Required if the end product is sold to end users for a fee.
+
+**Includes everything in Regular License, PLUS:**
+- Use the item to create an end product where the end user IS charged
+- The item may be used in unlimited end products sold to multiple end users
+
+---
+
+## General Terms
+
+### Support
+- Regular License includes 6 months of support
+- Extended License includes 6 months of support
+- Support extension available for purchase
+- Support includes: bug fixes, minor updates, and installation assistance
+- Support does NOT include: customization, server configuration, or feature development
+
+### Updates
+- You will receive free updates for the lifetime of this product
+- Updates include bug fixes, security patches, and minor enhancements
+- Major version updates may require additional purchase
+
+### Refund Policy
+- Refunds are handled according to Envato Market's refund policy
+- No refunds for downloaded items unless the item is defective
+- Contact support first before requesting a refund
+
+### Warranty Disclaimer
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
+OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
+AND FITNESS FOR A PARTICULAR PURPOSE.
+
+---
+
+## Usage Guidelines
+
+### Allowed Use Cases
+1. **Single Website/Application**: Install on one domain or subdomain
+2. **Client Projects**: Create a solution for a single client
+3. **Internal Use**: Use within your organization on one instance
+4. **Development**: Use on localhost and staging servers for development
+
+### Prohibited Use Cases
+1. **Multiple Installations**: One license = one installation
+2. **Resale**: Cannot resell or redistribute the source code
+3. **SaaS**: Cannot use in a Software-as-a-Service offering (requires Extended License)
+4. **Sublicensing**: Cannot transfer your license to another party
+
+---
+
+## Third-Party Components
+
+This product includes the following open-source components:
+
+- **Laravel Framework** - MIT License
+- **Tailwind CSS** - MIT License
+- **Spatie Laravel Activity Log** - MIT License
+- **Font Awesome Icons** - Font Awesome Free License
+- Other dependencies as listed in composer.json and package.json
+
+All third-party components are subject to their respective licenses.
+
+---
+
+## Trademark Notice
+
+"WMS Pro" is a trademark of Bintang Wijaya. You may not use this trademark in
+any way without written permission, except as necessary to reference the product.
+
+---
+
+## Liability Limitation
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT,
+OR CONSEQUENTIAL DAMAGES WHATSOEVER ARISING OUT OF OR RELATED TO YOUR USE OR
+INABILITY TO USE THE SOFTWARE.
+
+---
+
+## Support & Contact
+
+**Email**: bintangwijaya@example.com
+**WhatsApp**: +62 81350000965
+**Documentation**: Available in the documentation folder
+**Updates**: Available through CodeCanyon
+
+---
+
+## Acknowledgments
+
+Thank you for purchasing WMS Pro! Your support helps us continue developing
+and improving this product.
+
+---
+
+**Last Updated**: January 2025
+**License Version**: 1.0
+
+For complete terms and conditions, please refer to:
+https://codecanyon.net/licenses/standard
+https://codecanyon.net/licenses/terms/extended
+
+---
+
+END OF LICENSE

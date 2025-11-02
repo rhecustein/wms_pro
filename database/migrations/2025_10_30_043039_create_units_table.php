@@ -13,11 +13,17 @@ return new class extends Migration
     {
         Schema::create('units', function (Blueprint $table) {
             $table->id();
-            $table->string('name')->unique(); // Contoh: Kilogram, Piece, Box
-            $table->string('short_code', 10)->unique(); // Contoh: KG, PC, BX
-            $table->string('type')->default('base'); // Contoh: base, volume, weight
+            $table->string('name')->unique(); // Kilogram, Piece, Box
+            $table->string('short_code', 10)->unique(); // KG, PC, BX
+            $table->string('type')->default('base'); // base, volume, weight, length
+            $table->decimal('base_unit_conversion', 15, 4)->default(1); // Conversion to base unit
+            $table->foreignId('base_unit_id')->nullable()->constrained('units')->nullOnDelete(); // Reference to base unit
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
+            
+            // Audit
+            $table->foreignId('created_by')->nullable()->constrained('users')->nullOnDelete();
+            $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
         });

@@ -1,22 +1,306 @@
-📦 Warehouse Management System (WMS) ProA Comprehensive Warehouse Management Solution built on Laravel 12 and Tailwind CSS.📋 Project DescriptionWMS Pro is a complete, feature-rich, and mobile-ready application designed to optimize modern warehouse operations. Focusing on enhanced efficiency and inventory accuracy through intelligent modules, this system is ideal for Third-Party Logistics (3PL), e-commerce fulfillment, and manufacturing companies.Core capabilities include automated allocation strategies, advanced picking suggestions (FEFO/FIFO), replenishment logic, and full mobile integration support for warehouse operators.🎯 Core Features (The Power of Smart Operations)AreaKey FeatureCompetitive EdgeWarehouse SetupHierarchical Location StructureSupports multiple warehouses and defines locations as: Warehouse → Storage Area → Storage Bin. Bin format: AA0101C (Aisle-Row-Column-Level).InboundSmart Putaway SystemAuto-suggestion for stock placement into high rack areas (Level B-E) based on complex criteria like packaging type, customer-specific allocation, and Hazmat/Temperature control zones.OutboundIntelligent PickingGenerates picking suggestions prioritizing FEFO (Near Expiry Items) or FIFO (Aging-based). Prioritizes picking from the primary pick face (Level A).Internal OpsAuto ReplenishmentAutomatically triggered when the pick face (Level A) reaches a low/empty state. Suggests transfers from high rack storage to the pick face based on FEFO/FIFO.Data & ControlReal-time Inventory & RBACReal-time stock tracking with batch, serial, and expiry tracking. Implements Role-Based Access Control (RBAC) supporting 6 distinct user roles.📊 KPI MetricsThe system includes reporting and analytics focused on core warehouse performance indicators:Order Fulfillment RatePicking Accuracy RateInventory Accuracy RateSpace Utilization Rate🛠️ Tech Stack & RequirementsComponentSpecificationBackendLaravel 12FrontendTailwind CSSDatabaseMySQL/PostgreSQLMobile IntegrationDedicated API Controllers for Mobile Operator Tasks🚀 Installation GuideBash# Clone repository
-git clone [repository-url]
-cd wms-laravel
+===========================================
+  WMS PRO - Warehouse Management System
+===========================================
 
-# Install dependencies
-composer install
-npm install
+Thank you for purchasing WMS Pro!
 
-# Setup environment
-cp .env.example .env
-php artisan key:generate
+VERSION: 1.0.0
+RELEASE DATE: Oktober 2025
+AUTHOR: Bintang Wijaya
+LICENSE: Envato Regular/Extended License
 
-# Database setup (Includes seeders for demo data)
-php artisan migrate
-php artisan db:seed
+===========================================
+  QUICK START GUIDE
+===========================================
 
-# Build assets
-npm run build
+🚀 INSTALLATION IN 5 MINUTES:
 
-# Start development server
-php artisan serve
-👤 Developer Information and ContactDeveloper NameBintang WijayaCountryIndonesiaGitHubhttps://github.com/rhecusteinWhatsApp+62 81350000965📝 LicensingThis product is offered under a commercial license (e.g., CodeCanyon Regular or Extended License).
+1. REQUIREMENTS
+   - PHP 8.2 or higher
+   - MySQL 8.0+ or PostgreSQL 13+
+   - Composer 2.5+
+   - Node.js 18+ & NPM
+   - Apache/Nginx web server
+
+2. EXTRACT FILES
+   Extract the zip file to your web server directory
+   (e.g., /var/www/html/wms-pro or htdocs/wms-pro)
+
+3. INSTALL DEPENDENCIES
+   Open terminal/command prompt:
+   
+   cd /path/to/wms-pro
+   composer install
+   npm install
+
+4. CONFIGURE DATABASE
+   
+   a) Create database:
+      mysql -u root -p
+      CREATE DATABASE wms_pro;
+      exit;
+   
+   b) Import SQL file:
+      mysql -u root -p wms_pro < database/wms_database.sql
+   
+   c) Configure .env file:
+      cp .env.example .env
+      
+      Edit .env and update:
+      DB_DATABASE=wms_pro
+      DB_USERNAME=your_username
+      DB_PASSWORD=your_password
+
+5. GENERATE KEY & BUILD ASSETS
+   
+   php artisan key:generate
+   php artisan storage:link
+   npm run build
+
+6. SET PERMISSIONS (Linux/Mac)
+   
+   chmod -R 775 storage bootstrap/cache
+   chown -R www-data:www-data storage bootstrap/cache
+
+7. ACCESS YOUR APPLICATION
+   
+   http://yourdomain.com
+   
+   or for development:
+   php artisan serve
+   http://localhost:8000
+
+===========================================
+  DEFAULT LOGIN CREDENTIALS
+===========================================
+
+⚠️  IMPORTANT: Change these passwords immediately after first login!
+
+SUPER ADMIN:
+Email: admin@wms.com
+Password: password
+
+WAREHOUSE MANAGER:
+Email: manager@wms.com
+Password: password
+
+WAREHOUSE OPERATOR:
+Email: operator@wms.com
+Password: password
+
+===========================================
+  FOLDER STRUCTURE
+===========================================
+
+wms-pro/
+├── main-files/
+│   ├── wms-laravel-full/    → Complete source code
+│   └── database/            → SQL dump file
+├── documentation/
+│   ├── index.html           → Full documentation
+│   ├── documentation.pdf    → PDF version
+│   └── screenshots/         → Feature screenshots
+├── LICENSE.txt              → License agreement
+├── README.txt               → This file
+└── CHANGELOG.txt            → Version history
+
+===========================================
+  DOCUMENTATION
+===========================================
+
+📖 Complete documentation available in:
+   documentation/index.html
+   documentation/documentation.pdf
+
+Topics covered:
+- Detailed installation guide
+- Configuration options
+- User roles & permissions
+- Feature usage guides
+- API documentation
+- Troubleshooting
+- FAQ
+
+===========================================
+  KEY FEATURES
+===========================================
+
+✅ Warehouse Management
+   - Multiple warehouses support
+   - Hierarchical location structure
+   - Storage area & bin management
+
+✅ Inbound Operations
+   - Purchase order management
+   - Good receiving
+   - Smart putaway system
+
+✅ Outbound Operations
+   - Sales order processing
+   - Intelligent picking (FEFO/FIFO)
+   - Packing & delivery
+
+✅ Inventory Control
+   - Real-time stock tracking
+   - Batch & serial number tracking
+   - Expiry date management
+   - Cycle counting
+
+✅ Auto Replenishment
+   - Automatic trigger logic
+   - Pick face optimization
+   - FEFO/FIFO prioritization
+
+✅ User Management
+   - 6 distinct user roles
+   - Role-based access control
+   - Activity logging
+
+✅ Reports & Analytics
+   - Order fulfillment rate
+   - Picking accuracy
+   - Inventory accuracy
+   - Space utilization
+
+✅ Mobile Ready
+   - Responsive design
+   - Dedicated mobile API
+   - Barcode scanning support
+
+===========================================
+  SUPPORT
+===========================================
+
+📧 Email: bintangwijaya@example.com
+📱 WhatsApp: +62 81350000965
+🐙 GitHub: https://github.com/rhecustein
+
+SUPPORT INCLUDES:
+✓ Bug fixes
+✓ Installation assistance
+✓ Minor updates
+✓ Technical questions
+
+SUPPORT DOES NOT INCLUDE:
+✗ Customization
+✗ Server configuration
+✗ Feature development
+✗ Third-party integrations
+
+RESPONSE TIME:
+- Critical issues: 24-48 hours
+- General questions: 48-72 hours
+
+===========================================
+  TROUBLESHOOTING
+===========================================
+
+COMMON ISSUES:
+
+1. "500 Internal Server Error"
+   → Check file permissions
+   → Clear cache: php artisan cache:clear
+   → Check .env configuration
+
+2. "Database connection error"
+   → Verify database credentials in .env
+   → Ensure database server is running
+   → Check if database exists
+
+3. "CSS/JS not loading"
+   → Run: npm run build
+   → Clear browser cache
+   → Check public/build folder exists
+
+4. "Permission denied"
+   → Run: chmod -R 775 storage bootstrap/cache
+   → Ensure web server has write permissions
+
+For more troubleshooting tips, see documentation/index.html
+
+===========================================
+  UPDATES
+===========================================
+
+Stay updated with the latest version:
+1. Check CodeCanyon for updates
+2. Backup your database and files
+3. Replace files (keep your .env)
+4. Run: php artisan migrate
+5. Clear cache: php artisan optimize:clear
+
+===========================================
+  SECURITY BEST PRACTICES
+===========================================
+
+⚠️  IMPORTANT SECURITY STEPS:
+
+1. Change all default passwords immediately
+2. Update APP_KEY in .env (php artisan key:generate)
+3. Set APP_DEBUG=false in production
+4. Use strong database passwords
+5. Keep Laravel and dependencies updated
+6. Enable HTTPS/SSL
+7. Regular database backups
+
+===========================================
+  CUSTOMIZATION
+===========================================
+
+This is a fully customizable Laravel application.
+
+To customize:
+- Views: resources/views/
+- Styles: resources/css/
+- Routes: routes/web.php
+- Controllers: app/Http/Controllers/
+- Models: app/Models/
+
+Refer to Laravel documentation: https://laravel.com/docs
+
+===========================================
+  RATE & REVIEW
+===========================================
+
+If you're happy with WMS Pro, please consider:
+
+⭐ Leaving a 5-star review on CodeCanyon
+💬 Sharing your experience
+🎯 Recommending to colleagues
+
+Your feedback helps us improve!
+
+===========================================
+  CHANGELOG
+===========================================
+
+See CHANGELOG.txt for version history and updates.
+
+===========================================
+  LICENSE
+===========================================
+
+This product is licensed under the Envato Market License.
+See LICENSE.txt for complete terms and conditions.
+
+One license = One installation/domain
+
+===========================================
+  THANK YOU!
+===========================================
+
+Thank you for choosing WMS Pro!
+
+We're committed to providing excellent support and
+continuous improvements to help your warehouse operations.
+
+Happy warehouse management! 📦🚀
+
+---
+
+© 2025 Bintang Wijaya. All rights reserved.
+Visit: https://github.com/rhecustein
+
+===========================================
+END OF README
+===========================================
