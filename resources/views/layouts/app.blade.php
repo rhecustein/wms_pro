@@ -1,4 +1,4 @@
-{{-- resources/views/layouts/app.blade.php (REVISED AND EXPANDED) --}}
+{{-- resources/views/layouts/app.blade.php (ENHANCED WITH SETTINGS INTEGRATION) --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -6,21 +6,58 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
-    <title>{{ config('app.name', 'WMS Pro') }} - @yield('title', 'Dashboard')</title>
+    {{-- Dynamic Title from Settings --}}
+    <title>@yield('title', 'Dashboard') - {{ setting('site_name', config('app.name', 'WMS Pro')) }}</title>
+
+    {{-- SEO Meta Tags --}}
+    <meta name="description" content="{{ setting('site_description', 'Professional Warehouse Management System') }}">
+    <meta name="keywords" content="{{ setting('site_keywords', 'warehouse, management, inventory, wms') }}">
+    <meta name="author" content="{{ setting('company_name', 'WMS Pro') }}">
+    
+    {{-- Open Graph --}}
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="{{ setting('site_title', config('app.name')) }}">
+    <meta property="og:description" content="{{ setting('site_description') }}">
+    @if(setting('site_og_image'))
+        <meta property="og:image" content="{{ Storage::url(setting('site_og_image')) }}">
+    @endif
+
+    {{-- Twitter Card --}}
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="{{ setting('site_title') }}">
+    <meta name="twitter:description" content="{{ setting('site_description') }}">
+
+    {{-- Favicon --}}
+    @if(site_favicon())
+        <link rel="icon" type="image/x-icon" href="{{ site_favicon() }}">
+        <link rel="shortcut icon" type="image/x-icon" href="{{ site_favicon() }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @endif
 
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700,800&display=swap" rel="stylesheet" />
-
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         [x-cloak] { display: none !important; }
+        
+        {{-- Dynamic Theme Colors from Settings --}}
+        :root {
+            --color-primary: {{ theme_color('primary') }};
+            --color-secondary: {{ theme_color('secondary') }};
+            --color-sidebar: {{ theme_color('sidebar') }};
+        }
+        
+        .bg-primary { background-color: var(--color-primary) !important; }
+        .text-primary { color: var(--color-primary) !important; }
+        .border-primary { border-color: var(--color-primary) !important; }
+        .hover\:bg-primary:hover { background-color: var(--color-primary) !important; }
         
         /* Grid Background Pattern */
         .grid-background {
@@ -38,7 +75,7 @@
         }
         
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: #1f2937;
+            background: {{ theme_color('sidebar') }};
             border-radius: 10px;
         }
         
@@ -51,9 +88,9 @@
             background: #6b7280;
         }
 
-        /* Menu Active State */
+        /* Menu Active State with Primary Color */
         .menu-active {
-            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
             box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.3);
         }
 
@@ -61,7 +98,47 @@
         .submenu-active {
             background-color: #374151;
             color: #60a5fa;
-            border-left: 3px solid #3b82f6;
+            border-left: 3px solid var(--color-primary);
+        }
+
+        /* Sidebar Gradient */
+        .sidebar-gradient {
+            background: linear-gradient(180deg, var(--color-sidebar) 0%, #111827 100%);
+        }
+
+        /* Logo Animation */
+        .logo-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .8; }
+        }
+
+        /* Notification Badge Pulse */
+        @keyframes pulse-ring {
+            0% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        .notification-badge::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 8px;
+            height: 8px;
+            background-color: #ef4444;
+            border-radius: 50%;
+            animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Smooth Transitions */
+        * {
+            transition-property: color, background-color, border-color, text-decoration-color, fill, stroke;
+            transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+            transition-duration: 150ms;
         }
     </style>
 
@@ -70,6 +147,7 @@
 <body class="font-sans antialiased" x-data="{ sidebarOpen: false }">
     <div class="flex h-screen overflow-hidden bg-gray-100">
         
+        {{-- Mobile Sidebar Overlay --}}
         <div x-show="sidebarOpen" 
              x-cloak
              @click="sidebarOpen = false"
@@ -82,17 +160,25 @@
              class="fixed inset-0 z-40 bg-gray-900 bg-opacity-50 lg:hidden">
         </div>
 
-        <aside class="fixed inset-y-0 left-0 z-50 w-64 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 custom-scrollbar overflow-y-auto"
+        {{-- Sidebar --}}
+        <aside class="fixed inset-y-0 left-0 z-50 w-64 sidebar-gradient shadow-2xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0 custom-scrollbar overflow-y-auto"
                :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full'">
             
-            <div class="flex items-center justify-between h-20 px-6 border-b border-gray-800 bg-gray-900">
+            {{-- Logo Section --}}
+            <div class="flex items-center justify-between h-20 px-6 border-b border-gray-800" style="background-color: var(--color-sidebar);">
                 <a href="{{ route('dashboard') }}" class="flex items-center space-x-3 group">
-                    <div class="w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
-                        <i class="fas fa-warehouse text-white text-xl"></i>
-                    </div>
+                    @if(site_logo(true))
+                        <img src="{{ site_logo(true) }}" alt="{{ site_name() }}" class="h-10 w-auto logo-pulse">
+                    @else
+                        <div class="w-11 h-11 bg-gradient-to-br from-blue-500 via-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg transform group-hover:scale-110 group-hover:rotate-3 transition-all duration-300">
+                            <i class="fas fa-warehouse text-white text-xl"></i>
+                        </div>
+                    @endif
                     <div class="text-white">
-                        <div class="font-bold text-xl tracking-tight">WMS Pro</div>
-                        <div class="text-xs text-gray-400 font-medium">Warehouse Management</div>
+                        <div class="font-bold text-xl tracking-tight">{{ site_name() }}</div>
+                        @if(setting('site_tagline'))
+                            <div class="text-xs text-gray-400 font-medium">{{ setting('site_tagline') }}</div>
+                        @endif
                     </div>
                 </a>
                 <button @click="sidebarOpen = false" class="lg:hidden text-gray-400 hover:text-white transition-colors">
@@ -100,13 +186,16 @@
                 </button>
             </div>
 
+            {{-- Navigation Menu --}}
             <nav class="px-3 py-6 space-y-1">
+                {{-- Dashboard --}}
                 <a href="{{ route('dashboard') }}" 
                    class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->routeIs('dashboard') ? 'menu-active text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                     <i class="fas fa-home w-5 text-center mr-3 {{ request()->routeIs('dashboard') ? 'text-white' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
                     <span>Dashboard</span>
                 </a>
 
+                {{-- Master Data --}}
                 <div x-data="{ open: {{ request()->is('master*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('master*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -116,12 +205,7 @@
                         </div>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
-                    <div x-show="open" 
-                         x-cloak 
-                         x-transition:enter="transition ease-out duration-200"
-                         x-transition:enter-start="opacity-0 transform -translate-y-2"
-                         x-transition:enter-end="opacity-100 transform translate-y-0"
-                         class="ml-4 mt-2 space-y-1">
+                    <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
                         <a href="{{ route('master.users.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.users.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-users-cog w-4 mr-2"></i> Users
@@ -130,10 +214,12 @@
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.roles.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-user-shield w-4 mr-2"></i> Roles & Permissions
                         </a>
+                        @if(is_feature_enabled('multi_warehouse'))
                         <a href="{{ route('master.warehouses.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.warehouses.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-warehouse w-4 mr-2"></i> Warehouses
                         </a>
+                        @endif
                         <a href="{{ route('master.storage-areas.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.storage-areas.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-map-marked-alt w-4 mr-2"></i> Storage Areas
@@ -146,9 +232,9 @@
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.product-categories.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-tags w-4 mr-2"></i> Product Categories
                         </a>
-                        <a href="#" 
+                        <a href="{{ route('master.units.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.units.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-balance-scale w-4 mr-2"></i> UoM (Unit of Measure)
+                            <i class="fas fa-balance-scale w-4 mr-2"></i> UoM
                         </a>
                         <a href="{{ route('master.products.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.products.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
@@ -165,6 +251,7 @@
                     </div>
                 </div>
 
+                {{-- Inventory --}}
                 <div x-data="{ open: {{ request()->is('inventory*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('inventory*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -198,6 +285,7 @@
                     </div>
                 </div>
 
+                {{-- Inbound --}}
                 <div x-data="{ open: {{ request()->is('inbound*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('inbound*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -227,6 +315,7 @@
                     </div>
                 </div>
 
+                {{-- Outbound --}}
                 <div x-data="{ open: {{ request()->is('outbound*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('outbound*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -260,6 +349,7 @@
                     </div>
                 </div>
 
+                {{-- Operations --}}
                 <div x-data="{ open: {{ request()->is('operations*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('operations*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -285,6 +375,7 @@
                     </div>
                 </div>
 
+                {{-- Equipment --}}
                 <div x-data="{ open: {{ request()->is('equipment*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('equipment*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
@@ -306,83 +397,50 @@
                     </div>
                 </div>
 
+                {{-- Reports & Analytics --}}
                 <div x-data="{ open: {{ request()->is('reports*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('reports*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
                             <i class="fas fa-chart-line w-5 text-center mr-3 {{ request()->is('reports*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
-                            <span>Reports & Analytics</span>
+                            <span>Reports</span>
                         </div>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
-                        
                         <a href="{{ route('reports.kpi.dashboard') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.kpi.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-tachometer-alt w-4 mr-2"></i> KPI Dashboard
                         </a>
-
-                        <div x-data="{ invOpen: {{ request()->is('reports/inventory*') ? 'true' : 'false' }} }" class="mt-1">
-                            <button @click="invOpen = !invOpen" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all text-gray-400 hover:bg-gray-800 hover:text-white">
-                                <i class="fas fa-cubes w-4 mr-2"></i> Inventory Reports <i class="fas fa-chevron-down text-xs ml-auto transition-transform duration-300" :class="invOpen ? 'rotate-180' : ''"></i>
-                            </button>
-                            <div x-show="invOpen" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                                <a href="{{ route('reports.inventory.stock-summary') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Stock Summary</a>
-                                <a href="{{ route('reports.inventory.stock-valuation') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Stock Valuation</a>
-                                <a href="{{ route('reports.inventory.stock-movements') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Movements</a>
-                                <a href="{{ route('reports.inventory.expiry-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Expiry Report</a>
-                                <a href="{{ route('reports.inventory.low-stock-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Low Stock</a>
-                            </div>
-                        </div>
-
-                        <div x-data="{ inboundOpen: {{ request()->is('reports/inbound*') ? 'true' : 'false' }} }" class="mt-1">
-                            <button @click="inboundOpen = !inboundOpen" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all text-gray-400 hover:bg-gray-800 hover:text-white">
-                                <i class="fas fa-arrow-down w-4 mr-2"></i> Inbound Reports <i class="fas fa-chevron-down text-xs ml-auto transition-transform duration-300" :class="inboundOpen ? 'rotate-180' : ''"></i>
-                            </button>
-                            <div x-show="inboundOpen" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                                <a href="{{ route('reports.inbound.receiving-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Receiving Report</a>
-                                <a href="{{ route('reports.inbound.putaway-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Putaway Report</a>
-                                <a href="{{ route('reports.inbound.vendor-performance') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Vendor Perf.</a>
-                            </div>
-                        </div>
-
-                        <div x-data="{ outboundOpen: {{ request()->is('reports/outbound*') ? 'true' : 'false' }} }" class="mt-1">
-                            <button @click="outboundOpen = !outboundOpen" class="w-full flex items-center px-4 py-2 text-sm font-medium rounded-lg transition-all text-gray-400 hover:bg-gray-800 hover:text-white">
-                                <i class="fas fa-arrow-up w-4 mr-2"></i> Outbound Reports <i class="fas fa-chevron-down text-xs ml-auto transition-transform duration-300" :class="outboundOpen ? 'rotate-180' : ''"></i>
-                            </button>
-                            <div x-show="outboundOpen" x-cloak x-transition class="ml-4 mt-1 space-y-1">
-                                <a href="{{ route('reports.outbound.picking-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Picking Report</a>
-                                <a href="{{ route('reports.outbound.shipping-report') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Shipping Report</a>
-                                <a href="{{ route('reports.outbound.customer-orders') }}" class="flex items-center px-4 py-2 text-xs rounded-lg text-gray-500 hover:bg-gray-800 hover:text-white">Customer Orders</a>
-                            </div>
-                        </div>
-                        
                         <a href="{{ route('reports.operations.daily-summary') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('reports.operations.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-calendar-day w-4 mr-2"></i> Operational Summary
+                            <i class="fas fa-calendar-day w-4 mr-2"></i> Daily Summary
                         </a>
                     </div>
                 </div>
 
+                @if(is_feature_enabled('mobile_app'))
                 <a href="#" 
-                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('mobile*') ? 'menu-active text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                    <i class="fas fa-mobile-alt w-5 text-center mr-3 {{ request()->is('mobile*') ? 'text-white' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
+                   class="flex items-center px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group text-gray-300 hover:bg-gray-800 hover:text-white hover:translate-x-1">
+                    <i class="fas fa-mobile-alt w-5 text-center mr-3 text-gray-400 group-hover:text-blue-400"></i>
                     <span>Mobile Operator</span>
                 </a>
+                @endif
 
+                {{-- System --}}
                 <div x-data="{ open: {{ request()->is('system*') ? 'true' : 'false' }} }">
                     <button @click="open = !open" 
                             class="w-full flex items-center justify-between px-4 py-3 text-sm font-medium rounded-lg transition-all duration-200 group {{ request()->is('system*') ? 'bg-gray-800 text-white' : 'text-gray-300 hover:bg-gray-800 hover:text-white' }}">
                         <div class="flex items-center">
                             <i class="fas fa-cog w-5 text-center mr-3 {{ request()->is('system*') ? 'text-blue-400' : 'text-gray-400 group-hover:text-blue-400' }}"></i>
-                            <span>System Setup & Audit</span>
+                            <span>System</span>
                         </div>
                         <i class="fas fa-chevron-down text-xs transition-transform duration-300" :class="open ? 'rotate-180' : ''"></i>
                     </button>
                     <div x-show="open" x-cloak x-transition class="ml-4 mt-2 space-y-1">
                         <a href="{{ route('system.settings.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.settings.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-sliders-h w-4 mr-2"></i> Global Settings
+                            <i class="fas fa-sliders-h w-4 mr-2"></i> Settings
                         </a>
                         <a href="{{ route('system.activity-logs.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.activity-logs.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
@@ -390,17 +448,20 @@
                         </a>
                         <a href="{{ route('system.notifications.index') }}" 
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.notifications.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-bell w-4 mr-2"></i> Notifications Center
+                            <i class="fas fa-bell w-4 mr-2"></i> Notifications
                         </a>
+                        @if(is_feature_enabled('api'))
                         <a href="#" 
-                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('system.integration.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-plug w-4 mr-2"></i> ERP & API Integration
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1">
+                            <i class="fas fa-plug w-4 mr-2"></i> API Integration
                         </a>
+                        @endif
                     </div>
                 </div>
             </nav>
 
-            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800 bg-gray-900">
+            {{-- User Profile Bottom Section --}}
+            <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-800" style="background-color: var(--color-sidebar);">
                 <div class="flex items-center space-x-3 px-4 py-3 rounded-lg bg-gray-800 hover:bg-gray-750 transition-all cursor-pointer group">
                     <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold shadow-lg group-hover:scale-105 transition-transform">
                         {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
@@ -413,27 +474,33 @@
             </div>
         </aside>
 
+        {{-- Main Content Area --}}
         <div class="flex-1 flex flex-col overflow-hidden">
             
+            {{-- Top Header --}}
             <header class="bg-white border-b border-gray-200 shadow-sm z-10">
                 <div class="flex items-center justify-between h-16 px-6">
                     <div class="flex items-center space-x-4">
-                        <button @click="sidebarOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none">
+                        <button @click="sidebarOpen = true" class="lg:hidden text-gray-500 hover:text-gray-700 focus:outline-none transition-colors">
                             <i class="fas fa-bars text-xl"></i>
                         </button>
                         <h1 class="text-xl lg:text-2xl font-bold text-gray-900">@yield('title', 'Dashboard')</h1>
                     </div>
 
                     <div class="flex items-center space-x-3">
+                        {{-- Search Bar --}}
                         <div class="hidden md:block relative">
-                            <input type="search" placeholder="Search..." class="w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
+                            <input type="search" placeholder="Search..." class="w-64 pl-10 pr-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all">
                             <i class="fas fa-search text-gray-400 absolute left-3 top-1/2 transform -translate-y-1/2"></i>
                         </div>
 
+                        {{-- Notifications --}}
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="relative p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100 transition-colors">
                                 <i class="fas fa-bell text-xl"></i>
-                                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                @if(is_feature_enabled('email_notifications'))
+                                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full notification-badge"></span>
+                                @endif
                             </button>
 
                             <div x-show="open" @click.away="open = false" x-cloak 
@@ -459,13 +526,14 @@
                                     </a>
                                 </div>
                                 <div class="p-3 border-t border-gray-200 text-center bg-gray-50">
-                                    <a href="{{ route('system.notifications.index') }}" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                                    <a href="{{ route('system.notifications.index') }}" class="text-sm text-primary hover:text-blue-700 font-medium">
                                         View all notifications
                                     </a>
                                 </div>
                             </div>
                         </div>
 
+                        {{-- User Dropdown --}}
                         <div class="relative" x-data="{ open: false }">
                             <button @click="open = !open" class="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors">
                                 <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow">
@@ -512,11 +580,12 @@
                 </div>
             </header>
 
+            {{-- Main Content --}}
             <main class="flex-1 overflow-y-auto custom-scrollbar grid-background">
                 <div class="p-6">
                     {{-- Flash Messages --}}
                     @if(session('success'))
-                        <div class="mb-6 px-4 py-3 bg-green-50 border-l-4 border-green-500 text-green-800 rounded-lg flex items-center justify-between shadow-sm">
+                        <div class="mb-6 px-4 py-3 bg-green-50 border-l-4 border-green-500 text-green-800 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
                             <div class="flex items-center">
                                 <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
                                 <span>{{ session('success') }}</span>
@@ -528,7 +597,7 @@
                     @endif
 
                     @if(session('error'))
-                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg flex items-center justify-between shadow-sm">
+                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
                             <div class="flex items-center">
                                 <i class="fas fa-exclamation-circle text-red-500 mr-3 text-xl"></i>
                                 <span>{{ session('error') }}</span>
@@ -540,7 +609,7 @@
                     @endif
 
                     @if ($errors->any())
-                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg shadow-sm">
+                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg shadow-sm animate-fade-in">
                             <div class="flex items-start">
                                 <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-xl mt-0.5"></i>
                                 <div class="flex-1">
@@ -560,22 +629,62 @@
                 </div>
             </main>
 
+            {{-- Footer --}}
             <footer class="bg-white border-t border-gray-200 py-4 px-6">
                 <div class="flex flex-col md:flex-row justify-between items-center text-sm text-gray-600">
                     <div>
-                        © {{ date('Y') }} <span class="font-semibold text-gray-900">WMS Pro</span>. All rights reserved.
+                        © {{ date('Y') }} <span class="font-semibold text-gray-900">{{ company_name() }}</span>. All rights reserved.
                     </div>
                     <div class="flex items-center space-x-4 mt-2 md:mt-0">
-                        <a href="#" class="hover:text-blue-600 transition-colors">Documentation</a>
+                        @foreach(social_links() as $platform => $url)
+                            @if($url)
+                                <a href="{{ $url }}" target="_blank" class="text-gray-500 hover:text-primary transition-colors">
+                                    <i class="fab fa-{{ $platform }}"></i>
+                                </a>
+                            @endif
+                        @endforeach
                         <span class="text-gray-300">|</span>
-                        <a href="#" class="hover:text-blue-600 transition-colors">Support</a>
+                        <a href="#" class="hover:text-primary transition-colors">Documentation</a>
                         <span class="text-gray-300">|</span>
-                        <a href="#" class="hover:text-blue-600 transition-colors">Version 1.0.0</a>
+                        <a href="#" class="hover:text-primary transition-colors">Support</a>
+                        <span class="text-gray-300">|</span>
+                        <span class="text-gray-500">v1.0.0</span>
                     </div>
                 </div>
             </footer>
         </div>
     </div>
+
+    {{-- Global Scripts --}}
+    <script>
+        // Auto-hide flash messages after 5 seconds
+        setTimeout(() => {
+            const alerts = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"], [class*="bg-blue-50"]');
+            alerts.forEach(alert => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            });
+        }, 5000);
+
+        // SweetAlert2 Confirmation Helper
+        window.confirmDelete = function(formId) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '{{ theme_color("primary") }}',
+                cancelButtonColor: '#6b7280',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    document.getElementById(formId).submit();
+                }
+            });
+            return false;
+        };
+    </script>
 
     @stack('scripts')
 </body>

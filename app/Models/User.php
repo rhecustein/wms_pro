@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable, SoftDeletes;
+    use HasFactory, Notifiable, SoftDeletes, HasRoles;
 
     protected $fillable = [
         'name',
@@ -56,13 +57,13 @@ class User extends Authenticatable
                         <i class="fas fa-trash mr-1"></i>Deleted
                     </span>';
         }
-
+        
         if ($this->is_active) {
             return '<span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
                         <i class="fas fa-check-circle mr-1"></i>Active
                     </span>';
         }
-
+        
         return '<span class="px-2 py-1 text-xs font-semibold rounded bg-gray-100 text-gray-800">
                     <i class="fas fa-times-circle mr-1"></i>Inactive
                 </span>';
@@ -76,5 +77,19 @@ class User extends Authenticatable
         
         // Default avatar using UI Avatars
         return 'https://ui-avatars.com/api/?name=' . urlencode($this->name) . '&color=3b82f6&background=dbeafe';
+    }
+
+    public function getRolesStringAttribute()
+    {
+        return $this->roles->pluck('name')->join(', ');
+    }
+
+    public function getRolesBadgesAttribute()
+    {
+        return $this->roles->map(function($role) {
+            return '<span class="px-2 py-1 text-xs font-semibold rounded bg-purple-100 text-purple-800">' 
+                   . $role->name . 
+                   '</span>';
+        })->join(' ');
     }
 }

@@ -1,4 +1,3 @@
-{{-- resources/views/master/products/index.blade.php --}}
 @extends('layouts.app')
 
 @section('title', 'Products Management')
@@ -13,15 +12,18 @@
                 <i class="fas fa-box text-blue-600 mr-2"></i>
                 Products Management
             </h1>
-            <p class="text-sm text-gray-600 mt-1">Manage all products and inventory items</p>
+            <p class="text-sm text-gray-600 mt-1">Manage all product inventory and information</p>
         </div>
         <div class="flex space-x-2">
-            <a href="{{ route('master.products.export') }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
-                <i class="fas fa-file-export mr-2"></i>Export
-            </a>
             <a href="{{ route('master.products.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
                 <i class="fas fa-plus mr-2"></i>Add New Product
             </a>
+            <button class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <i class="fas fa-file-import mr-2"></i>Import
+            </button>
+            <button class="px-4 py-2 bg-gray-700 text-white rounded-lg hover:bg-gray-800 transition">
+                <i class="fas fa-file-export mr-2"></i>Export
+            </button>
         </div>
     </div>
 
@@ -32,7 +34,7 @@
                 <i class="fas fa-check-circle mr-2"></i>
                 <span>{{ session('success') }}</span>
             </div>
-            <button onclick="this.parentElement.remove()" class="text-green-700 hover:text-green-900">
+            <button onclick="this.parentElement.parentElement.remove()" class="text-green-700 hover:text-green-900">
                 <i class="fas fa-times"></i>
             </button>
         </div>
@@ -45,7 +47,9 @@
                 {{-- Search --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="SKU, Barcode, Name..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <input type="text" name="search" value="{{ request('search') }}" 
+                           placeholder="SKU, Barcode, Name..." 
+                           class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
 
                 {{-- Category Filter --}}
@@ -104,11 +108,11 @@
                 <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product Info</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Packaging</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tracking</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit/Packaging</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Dimensions</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock Info</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -118,9 +122,11 @@
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap">
                                 @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->name }}" class="w-16 h-16 object-cover rounded-lg">
+                                    <img src="{{ Storage::url($product->image) }}" 
+                                         alt="{{ $product->name }}" 
+                                         class="w-16 h-16 rounded-lg object-cover border border-gray-200">
                                 @else
-                                    <div class="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
+                                    <div class="w-16 h-16 rounded-lg bg-gray-100 flex items-center justify-center">
                                         <i class="fas fa-box text-2xl text-gray-400"></i>
                                     </div>
                                 @endif
@@ -128,57 +134,77 @@
                             <td class="px-6 py-4">
                                 <div>
                                     <div class="text-sm font-semibold text-gray-900">{{ $product->name }}</div>
-                                    <div class="text-xs text-gray-500">
-                                        <span class="font-mono">SKU: {{ $product->sku }}</span>
+                                    <div class="text-xs text-gray-500 space-x-2 mt-1">
+                                        <span class="font-mono">
+                                            <i class="fas fa-barcode mr-1"></i>{{ $product->sku }}
+                                        </span>
+                                        @if($product->barcode)
+                                            <span class="font-mono">
+                                                <i class="fas fa-qrcode mr-1"></i>{{ $product->barcode }}
+                                            </span>
+                                        @endif
                                     </div>
-                                    @if($product->barcode)
-                                        <div class="text-xs text-gray-500">
-                                            <span class="font-mono">Barcode: {{ $product->barcode }}</span>
-                                        </div>
+                                    @if($product->is_hazmat)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-red-100 text-red-800 mt-1">
+                                            <i class="fas fa-exclamation-triangle mr-1"></i>Hazmat
+                                        </span>
                                     @endif
                                 </div>
                             </td>
                             <td class="px-6 py-4">
                                 @if($product->category)
-                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
-                                        {{ $product->category->name }}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-purple-100 text-purple-800">
+                                        <i class="fas fa-tag mr-1"></i>{{ $product->category->name }}
                                     </span>
                                 @else
-                                    <span class="text-sm text-gray-400">Uncategorized</span>
+                                    <span class="text-sm text-gray-400">-</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {{ strtoupper($product->unit_of_measure) }}
-                                </span>
+                                <div class="text-sm">
+                                    <div class="font-medium text-gray-900">
+                                        <i class="fas fa-ruler mr-1 text-blue-500"></i>{{ strtoupper($product->unit_of_measure) }}
+                                    </div>
+                                    <div class="text-xs text-gray-500">
+                                        <i class="fas fa-box mr-1 text-green-500"></i>{{ ucfirst($product->packaging_type) }}
+                                    </div>
+                                </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                    <i class="fas fa-box mr-1"></i>
-                                    {{ ucfirst($product->packaging_type) }}
-                                </span>
+                                @if($product->weight_kg || $product->length_cm)
+                                    <div class="text-xs text-gray-600">
+                                        @if($product->weight_kg)
+                                            <div><i class="fas fa-weight-hanging mr-1"></i>{{ $product->weight_kg }} kg</div>
+                                        @endif
+                                        @if($product->length_cm)
+                                            <div><i class="fas fa-cube mr-1"></i>{{ $product->length_cm }}×{{ $product->width_cm }}×{{ $product->height_cm }} cm</div>
+                                        @endif
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-400">-</span>
+                                @endif
                             </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="flex flex-col space-y-1">
+                            <td class="px-6 py-4">
+                                <div class="text-xs space-y-1">
                                     @if($product->is_batch_tracked)
-                                        <span class="inline-flex items-center text-xs text-green-700">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-blue-100 text-blue-800">
                                             <i class="fas fa-layer-group mr-1"></i>Batch
                                         </span>
                                     @endif
                                     @if($product->is_serial_tracked)
-                                        <span class="inline-flex items-center text-xs text-blue-700">
-                                            <i class="fas fa-barcode mr-1"></i>Serial
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-green-100 text-green-800">
+                                            <i class="fas fa-hashtag mr-1"></i>Serial
                                         </span>
                                     @endif
                                     @if($product->is_expiry_tracked)
-                                        <span class="inline-flex items-center text-xs text-orange-700">
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-800">
                                             <i class="fas fa-calendar-times mr-1"></i>Expiry
                                         </span>
                                     @endif
-                                    @if($product->is_hazmat)
-                                        <span class="inline-flex items-center text-xs text-red-700">
-                                            <i class="fas fa-exclamation-triangle mr-1"></i>Hazmat
-                                        </span>
+                                    @if($product->reorder_level)
+                                        <div class="text-gray-600">
+                                            <i class="fas fa-sync-alt mr-1"></i>Reorder: {{ $product->reorder_level }}
+                                        </div>
                                     @endif
                                 </div>
                             </td>
@@ -197,16 +223,20 @@
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('master.products.show', $product) }}" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                    <a href="{{ route('master.products.show', $product) }}" 
+                                       class="text-blue-600 hover:text-blue-900" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
-                                    <a href="{{ route('master.products.stock-summary', $product) }}" class="text-purple-600 hover:text-purple-900" title="Stock Summary">
-                                        <i class="fas fa-chart-bar"></i>
-                                    </a>
-                                    <a href="{{ route('master.products.edit', $product) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                                    <a href="{{ route('master.products.edit', $product) }}" 
+                                       class="text-yellow-600 hover:text-yellow-900" title="Edit">
                                         <i class="fas fa-edit"></i>
                                     </a>
-                                    <form action="{{ route('master.products.destroy', $product) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this product?')">
+                                    <a href="#" class="text-purple-600 hover:text-purple-900" title="Stock Summary">
+                                        <i class="fas fa-chart-bar"></i>
+                                    </a>
+                                    <form action="{{ route('master.products.destroy', $product) }}" 
+                                          method="POST" class="inline" 
+                                          onsubmit="return confirm('Are you sure you want to delete this product?')">
                                         @csrf
                                         @method('DELETE')
                                         <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">

@@ -3,18 +3,18 @@
 namespace App\Http\Controllers\Master;
 
 use App\Http\Controllers\Controller;
-
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rules\Password;
+use Spatie\Permission\Models\Role;
 
 class UserController extends Controller
 {
     public function index(Request $request)
     {
-        $query = User::query()->withTrashed();
+        $query = User::query()->withTrashed()->with('roles');
 
         // Search
         if ($request->filled('search')) {
@@ -37,14 +37,23 @@ class UserController extends Controller
             }
         }
 
-        $users = $query->latest()->paginate(15);
+        // Role Filter
+        if ($request->filled('role')) {
+            $query->whereHas('roles', function($q) use ($request) {
+                $q->where('roles.id', $request->role);
+            });
+        }
 
-        return view('users.index', compact('users'));
+        $users = $query->latest()->paginate(15);
+        $roles = Role::all();
+
+        return view('master.users.index', compact('users', 'roles'));
     }
 
     public function create()
     {
-        return view('users.create');
+        $roles = Role::all();
+        return view('master.users.create', compact('roles'));
     }
 
     public function store(Request $request)
@@ -56,6 +65,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'is_active' => ['boolean'],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['exists:roles,id'],
         ]);
 
         $validated['password'] = Hash::make($validated['password']);
@@ -65,21 +76,29 @@ class UserController extends Controller
             $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
         }
 
-        User::create($validated);
+        $user = User::create($validated);
 
-        return redirect()->route('users.index')
+        // Assign roles - Convert IDs to Role objects
+        if ($request->filled('roles')) {
+            $roles = Role::whereIn('id', $request->roles)->get();
+            $user->syncRoles($roles);
+        }
+
+        return redirect()->route('master.users.index')
             ->with('success', 'User created successfully!');
     }
 
     public function show(User $user)
     {
-        $user->load('creator', 'updater');
-        return view('users.show', compact('user'));
+        $user->load('creator', 'updater', 'roles');
+        return view('master.users.show', compact('user'));
     }
 
     public function edit(User $user)
     {
-        return view('users.edit', compact('user'));
+        $roles = Role::all();
+        $user->load('roles');
+        return view('master.users.edit', compact('user', 'roles'));
     }
 
     public function update(Request $request, User $user)
@@ -91,6 +110,8 @@ class UserController extends Controller
             'phone' => ['nullable', 'string', 'max:20'],
             'avatar' => ['nullable', 'image', 'mimes:jpeg,png,jpg,gif', 'max:2048'],
             'is_active' => ['boolean'],
+            'roles' => ['nullable', 'array'],
+            'roles.*' => ['exists:roles,id'],
         ]);
 
         if ($request->filled('password')) {
@@ -111,7 +132,18 @@ class UserController extends Controller
 
         $user->update($validated);
 
-        return redirect()->route('users.index')
+        // Sync roles - Convert IDs to Role objects
+        if ($request->has('roles')) {
+            if ($request->filled('roles')) {
+                $roles = Role::whereIn('id', $request->roles)->get();
+                $user->syncRoles($roles);
+            } else {
+                // Remove all roles if none selected
+                $user->syncRoles([]);
+            }
+        }
+
+        return redirect()->route('master.users.index')
             ->with('success', 'User updated successfully!');
     }
 
@@ -120,7 +152,7 @@ class UserController extends Controller
         // Soft delete
         $user->delete();
 
-        return redirect()->route('users.index')
+        return redirect()->route('master.users.index')
             ->with('success', 'User deleted successfully!');
     }
 
@@ -129,7 +161,7 @@ class UserController extends Controller
         $user = User::withTrashed()->findOrFail($id);
         $user->restore();
 
-        return redirect()->route('users.index')
+        return redirect()->route('master.users.index')
             ->with('success', 'User restored successfully!');
     }
 
@@ -144,7 +176,7 @@ class UserController extends Controller
 
         $user->forceDelete();
 
-        return redirect()->route('users.index')
+        return redirect()->route('master.users.index')
             ->with('success', 'User permanently deleted!');
     }
 }

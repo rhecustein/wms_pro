@@ -48,6 +48,11 @@ class SalesOrder extends Model
         return $this->hasMany(PackingOrder::class);
     }
 
+    public function pickingOrders()
+    {
+        return $this->hasMany(PickingOrder::class);
+    }
+
     public function deliveryOrders()
     {
         return $this->hasMany(DeliveryOrder::class);

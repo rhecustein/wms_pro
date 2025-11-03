@@ -15,6 +15,7 @@ use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\ProductCategoryController;
 use App\Http\Controllers\Master\CustomerController;
 use App\Http\Controllers\Master\VendorController;
+use App\Http\Controllers\Master\UnitController;
 
 // ============================================
 // INVENTORY CONTROLLERS
@@ -135,16 +136,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('warehouses/{warehouse}/storage-areas', [StorageAreaController::class, 'byWarehouse'])->name('storage-areas.by-warehouse');
         
         // Storage Bins Management
+        // Storage Bins Management
         Route::resource('storage-bins', StorageBinController::class);
         Route::get('storage-areas/{storageArea}/bins', [StorageBinController::class, 'byStorageArea'])->name('storage-bins.by-area');
         Route::post('storage-bins/generate', [StorageBinController::class, 'generate'])->name('storage-bins.generate');
         Route::post('storage-bins/{storageBin}/activate', [StorageBinController::class, 'activate'])->name('storage-bins.activate');
         Route::post('storage-bins/{storageBin}/deactivate', [StorageBinController::class, 'deactivate'])->name('storage-bins.deactivate');
         Route::get('storage-bins/{storageBin}/current-stock', [StorageBinController::class, 'currentStock'])->name('storage-bins.current-stock');
-        
+
+        // Quick Actions Routes
+        Route::get('storage-bins/{storageBin}/add-stock', [StorageBinController::class, 'addStockForm'])->name('storage-bins.add-stock');
+        Route::post('storage-bins/{storageBin}/add-stock', [StorageBinController::class, 'addStockStore'])->name('storage-bins.add-stock.store');
+        Route::get('storage-bins/{storageBin}/transfer-stock', [StorageBinController::class, 'transferStockForm'])->name('storage-bins.transfer-stock');
+        Route::post('storage-bins/{storageBin}/transfer-stock', [StorageBinController::class, 'transferStockStore'])->name('storage-bins.transfer-stock.store');
+        Route::get('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryForm'])->name('storage-bins.adjust-inventory');
+        Route::post('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryStore'])->name('storage-bins.adjust-inventory.store');
+        Route::get('storage-bins/{storageBin}/history', [StorageBinController::class, 'viewHistory'])->name('storage-bins.history');
+                
         // Product Categories Management
         Route::resource('product-categories', ProductCategoryController::class);
-        Route::get('product-categories/tree', [ProductCategoryController::class, 'tree'])->name('product-categories.tree');
+        Route::post('product-categories/{id}/restore', [ProductCategoryController::class, 'restore'])
+            ->name('product-categories.restore');
+        Route::delete('product-categories/{id}/force-delete', [ProductCategoryController::class, 'forceDelete'])
+         ->name('product-categories.force-delete');
         
         // Products Management
         Route::resource('products', ProductController::class);
@@ -154,6 +168,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('products/{product}/movements', [ProductController::class, 'movements'])->name('products.movements');
         Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
+
+        //  Route::resource('units', UnitController::class);
+          Route::resource('units', UnitController::class);
         
         // Customers Management
         Route::resource('customers', CustomerController::class);
@@ -427,11 +444,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('system')->name('system.')->group(function () {
         
-        // Settings
-        Route::get('settings', [SettingController::class, 'index'])->name('settings.index');
-        Route::get('settings/edit', [SettingController::class, 'edit'])->name('settings.edit');
-        Route::put('settings', [SettingController::class, 'update'])->name('settings.update');
-        Route::post('settings/reset', [SettingController::class, 'reset'])->name('settings.reset');
+        Route::prefix('settings')->name('settings.')->group(function () {
+        
+        // Main settings page
+        Route::get('/', [SettingController::class, 'index'])->name('index');
+        
+        // Show specific group
+        Route::get('/{group}', [SettingController::class, 'show'])->name('show');
+        
+        // Update all settings
+        Route::put('/update', [SettingController::class, 'update'])->name('update');
+        
+        // Update specific group
+        Route::put('/{group}/update', [SettingController::class, 'updateGroup'])->name('update-group');
+        
+        // Delete file
+        Route::get('/{key}/delete-file', [SettingController::class, 'deleteFile'])->name('delete-file');
+        
+        // Cache management
+        Route::post('/clear-cache', [SettingController::class, 'clearCache'])->name('clear-cache');
+        
+        // Import/Export
+        Route::get('/export', [SettingController::class, 'export'])->name('export');
+        Route::post('/import', [SettingController::class, 'import'])->name('import');
+        
+        // Reset settings
+        Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
+
+        Route::post('/upload-file', [SettingController::class, 'uploadFile'])->name('upload-file');
+        });
         
         // Activity Logs
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');

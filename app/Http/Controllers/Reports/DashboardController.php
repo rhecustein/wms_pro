@@ -94,7 +94,7 @@ class DashboardController extends Controller
         // Total Stock Value
         $totalStockValue = $query->clone()
             ->where('status', 'available')
-            ->sum(DB::raw('quantity * cost_per_unit'));
+            ->sum(DB::raw('quantity * COALESCE(cost_per_unit, 0)'));
 
         // Total SKUs
         $totalSKUs = $query->clone()
@@ -141,9 +141,9 @@ class DashboardController extends Controller
 
         return [
             'total_products' => $totalProducts,
-            'total_stock_value' => $totalStockValue,
+            'total_stock_value' => $totalStockValue ?? 0,
             'total_skus' => $totalSKUs,
-            'total_stock_qty' => $totalStockQty,
+            'total_stock_qty' => $totalStockQty ?? 0,
             'inbound_today' => $inboundToday,
             'outbound_today' => $outboundToday,
             'pending_pickings' => $pendingPickings,
@@ -163,11 +163,11 @@ class DashboardController extends Controller
         }
 
         return [
-            'available' => $query->clone()->where('status', 'available')->sum('quantity'),
-            'reserved' => $query->clone()->where('status', 'reserved')->sum('quantity'),
-            'quarantine' => $query->clone()->where('status', 'quarantine')->sum('quantity'),
-            'damaged' => $query->clone()->where('status', 'damaged')->sum('quantity'),
-            'expired' => $query->clone()->where('status', 'expired')->sum('quantity'),
+            'available' => $query->clone()->where('status', 'available')->sum('quantity') ?? 0,
+            'reserved' => $query->clone()->where('status', 'reserved')->sum('quantity') ?? 0,
+            'quarantine' => $query->clone()->where('status', 'quarantine')->sum('quantity') ?? 0,
+            'damaged' => $query->clone()->where('status', 'damaged')->sum('quantity') ?? 0,
+            'expired' => $query->clone()->where('status', 'expired')->sum('quantity') ?? 0,
         ];
     }
 
@@ -305,12 +305,15 @@ class DashboardController extends Controller
     {
         $alerts = [];
 
-        // Low Stock Alert
+        // Low Stock Alert - Using products table columns: minimum_stock, reorder_level
         $lowStockCount = DB::table('inventory_stocks as inv')
             ->join('products as p', 'inv.product_id', '=', 'p.id')
             ->where('inv.status', 'available')
             ->when($warehouseId, fn($q) => $q->where('inv.warehouse_id', $warehouseId))
-            ->whereColumn('inv.quantity', '<=', 'p.min_stock_level')
+            ->where(function($q) {
+                $q->whereColumn('inv.quantity', '<=', 'p.minimum_stock')
+                  ->orWhereColumn('inv.quantity', '<=', 'p.reorder_level');
+            })
             ->count();
 
         if ($lowStockCount > 0) {
@@ -487,24 +490,22 @@ class DashboardController extends Controller
         if ($warehouseId) {
             $warehouse = DB::table('warehouses')->find($warehouseId);
             
-            // Count total bins
-            $totalBins = DB::table('storage_bins as sb')
-                ->join('storage_areas as sa', 'sb.storage_area_id', '=', 'sa.id')
-                ->where('sa.warehouse_id', $warehouseId)
-                ->where('sb.is_active', true)
+            // Count total bins for specific warehouse
+            $totalBins = DB::table('storage_bins')
+                ->where('warehouse_id', $warehouseId)
+                ->where('is_active', true)
                 ->count();
 
-            // Count occupied bins
-            $occupiedBins = DB::table('storage_bins as sb')
-                ->join('storage_areas as sa', 'sb.storage_area_id', '=', 'sa.id')
-                ->where('sa.warehouse_id', $warehouseId)
-                ->where('sb.is_occupied', true)
+            // Count occupied bins (status = occupied)
+            $occupiedBins = DB::table('storage_bins')
+                ->where('warehouse_id', $warehouseId)
+                ->where('status', 'occupied')
                 ->count();
 
             $utilizationPercent = $totalBins > 0 ? round(($occupiedBins / $totalBins) * 100, 2) : 0;
 
             return [
-                'warehouse_name' => $warehouse->name,
+                'warehouse_name' => $warehouse->name ?? 'Unknown',
                 'total_bins' => $totalBins,
                 'occupied_bins' => $occupiedBins,
                 'available_bins' => $totalBins - $occupiedBins,
@@ -514,12 +515,11 @@ class DashboardController extends Controller
 
         // All warehouses summary
         return DB::table('warehouses as w')
-            ->leftJoin('storage_areas as sa', 'w.id', '=', 'sa.warehouse_id')
-            ->leftJoin('storage_bins as sb', 'sa.id', '=', 'sb.storage_area_id')
+            ->leftJoin('storage_bins as sb', 'w.id', '=', 'sb.warehouse_id')
             ->select(
                 'w.name',
-                DB::raw('count(distinct sb.id) as total_bins'),
-                DB::raw('sum(case when sb.is_occupied = 1 then 1 else 0 end) as occupied_bins')
+                DB::raw('count(sb.id) as total_bins'),
+                DB::raw('sum(case when sb.status = "occupied" then 1 else 0 end) as occupied_bins')
             )
             ->where('w.is_active', true)
             ->groupBy('w.id', 'w.name')
