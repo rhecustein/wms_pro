@@ -1,4 +1,3 @@
-{{-- resources/views/system/settings/show.blade.php --}}
 @extends('layouts.app')
 
 @section('title', ($groupLabels[$group] ?? ucfirst($group)) . ' Settings')
@@ -9,7 +8,7 @@
     {{-- Page Header --}}
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center">
-            <a href="{{ route('system.settings.index') }}" class="mr-4 text-gray-600 hover:text-gray-800">
+            <a href="{{ route('system.settings.index') }}" class="mr-4 text-gray-600 hover:text-gray-800 transition">
                 <i class="fas fa-arrow-left text-xl"></i>
             </a>
             <div>
@@ -20,11 +19,16 @@
                 <p class="text-sm text-gray-600 mt-1">Configure {{ strtolower($groupLabels[$group] ?? $group) }}</p>
             </div>
         </div>
+        <div class="flex space-x-2">
+            <button onclick="resetGroup()" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition duration-200">
+                <i class="fas fa-undo mr-2"></i>Reset to Default
+            </button>
+        </div>
     </div>
 
-    {{-- Success/Error Messages --}}
+    {{-- Alert Messages --}}
     @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between animate-fade-in">
             <div class="flex items-center">
                 <i class="fas fa-check-circle mr-2"></i>
                 <span>{{ session('success') }}</span>
@@ -36,7 +40,7 @@
     @endif
 
     @if(session('error'))
-        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between animate-fade-in">
             <div class="flex items-center">
                 <i class="fas fa-exclamation-circle mr-2"></i>
                 <span>{{ session('error') }}</span>
@@ -44,6 +48,20 @@
             <button onclick="this.parentElement.parentElement.remove()" class="text-red-700 hover:text-red-900">
                 <i class="fas fa-times"></i>
             </button>
+        </div>
+    @endif
+
+    @if($errors->any())
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 animate-fade-in">
+            <div class="flex items-center mb-2">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <strong>Validation Errors:</strong>
+            </div>
+            <ul class="list-disc list-inside ml-6">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
         </div>
     @endif
 
@@ -57,7 +75,7 @@
             @method('PUT')
 
             <div class="p-6 space-y-6">
-                @foreach($settings as $setting)
+                @forelse($settings as $setting)
                     <div class="border-b border-gray-200 pb-6 last:border-0 last:pb-0">
                         <div class="flex items-start justify-between mb-2">
                             <div class="flex-1">
@@ -83,7 +101,7 @@
                                     name="{{ $setting->key }}" 
                                     id="{{ $setting->key }}"
                                     value="{{ old($setting->key, $setting->value) }}"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                     placeholder="Enter {{ strtolower(str_replace('_', ' ', $setting->key)) }}"
                                 >
                             @endif
@@ -95,7 +113,7 @@
                                     name="{{ $setting->key }}" 
                                     id="{{ $setting->key }}"
                                     value="{{ old($setting->key, $setting->value) }}"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                     placeholder="email@example.com"
                                 >
                             @endif
@@ -107,7 +125,7 @@
                                     name="{{ $setting->key }}" 
                                     id="{{ $setting->key }}"
                                     value="{{ old($setting->key, $setting->value) }}"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                     placeholder="https://example.com"
                                 >
                             @endif
@@ -119,7 +137,7 @@
                                     name="{{ $setting->key }}" 
                                     id="{{ $setting->key }}"
                                     value="{{ old($setting->key, $setting->value) }}"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                     placeholder="Enter number"
                                 >
                             @endif
@@ -130,7 +148,7 @@
                                     name="{{ $setting->key }}" 
                                     id="{{ $setting->key }}"
                                     rows="3"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                                     placeholder="Enter {{ strtolower(str_replace('_', ' ', $setting->key)) }}"
                                 >{{ old($setting->key, $setting->value) }}</textarea>
                             @endif
@@ -147,7 +165,7 @@
                                         class="sr-only peer"
                                     >
                                     <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
-                                    <span class="ml-3 text-sm font-medium text-gray-700">
+                                    <span class="ml-3 text-sm font-medium text-gray-700" id="{{ $setting->key }}_label">
                                         {{ old($setting->key, $setting->value) === 'true' ? 'Enabled' : 'Disabled' }}
                                     </span>
                                 </label>
@@ -175,10 +193,10 @@
 
                             {{-- File/Image Upload --}}
                             @if(in_array($setting->type, ['file', 'image']))
-                                <div class="space-y-3">
+                                <div class="space-y-3" id="file-container-{{ $setting->key }}">
                                     {{-- Show existing file if exists --}}
                                     @if($setting->value && Storage::disk('public')->exists($setting->value))
-                                        <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                                        <div class="flex items-start space-x-4 p-3 bg-gray-50 rounded-lg border border-gray-200" id="existing-file-{{ $setting->key }}">
                                             @if($setting->type === 'image')
                                                 <img src="{{ Storage::url($setting->value) }}" alt="{{ $setting->key }}" class="h-20 w-auto rounded border border-gray-300 shadow-sm">
                                             @else
@@ -187,29 +205,28 @@
                                                     <span class="text-sm text-gray-600">{{ basename($setting->value) }}</span>
                                                 </div>
                                             @endif
-                                            <a href="{{ route('system.settings.delete-file', $setting->key) }}" 
-                                               class="text-red-600 hover:text-red-800 text-sm font-medium"
-                                               onclick="return confirm('Delete this file?')">
+                                            <button type="button" onclick="deleteFile('{{ $setting->key }}')" class="text-red-600 hover:text-red-800 text-sm font-medium transition">
                                                 <i class="fas fa-trash mr-1"></i>Delete
-                                            </a>
+                                            </button>
                                         </div>
                                     @else
-                                        <div class="flex items-center text-sm text-gray-500 mb-2 p-2 bg-gray-50 rounded">
+                                        <div class="flex items-center text-sm text-gray-500 mb-2 p-2 bg-gray-50 rounded" id="no-file-{{ $setting->key }}">
                                             <i class="fas fa-info-circle mr-2"></i>
                                             <span>No file uploaded yet</span>
                                         </div>
                                     @endif
                                     
-                                    {{-- File input - ALWAYS SHOW --}}
-                                    <div>
-                                        <label for="{{ $setting->key }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    {{-- File input wrapper - ALWAYS SHOW --}}
+                                    <div id="file-input-wrapper-{{ $setting->key }}">
+                                        <label for="{{ $setting->key }}_file" class="block text-sm font-medium text-gray-700 mb-2">
                                             {{ $setting->value ? 'Replace file' : 'Upload file' }}
                                         </label>
                                         <input 
                                             type="file" 
-                                            name="{{ $setting->key }}" 
-                                            id="{{ $setting->key }}"
+                                            name="{{ $setting->key }}_file" 
+                                            id="{{ $setting->key }}_file"
                                             accept="{{ $setting->type === 'image' ? 'image/*' : '*' }}"
+                                            data-setting-key="{{ $setting->key }}"
                                             class="block w-full text-sm text-gray-500 
                                                 file:mr-4 file:py-2 file:px-4 
                                                 file:rounded-lg file:border-0 
@@ -217,9 +234,12 @@
                                                 file:bg-blue-50 file:text-blue-700 
                                                 hover:file:bg-blue-100
                                                 cursor-pointer border border-gray-300 rounded-lg
-                                                focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                                focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
                                         >
                                     </div>
+                                    
+                                    {{-- Upload status message container --}}
+                                    <div id="upload-status-{{ $setting->key }}"></div>
                                     
                                     @if($setting->type === 'image')
                                         <p class="text-xs text-gray-500 flex items-center">
@@ -259,23 +279,29 @@
 
                         @if($setting->updated_by)
                             <p class="text-xs text-gray-400 mt-2">
+                                <i class="fas fa-clock mr-1"></i>
                                 Last updated by {{ $setting->updatedByUser->name ?? 'System' }} on {{ $setting->updated_at->format('d M Y H:i') }}
                             </p>
                         @endif
                     </div>
-                @endforeach
+                @empty
+                    <div class="text-center py-8">
+                        <i class="fas fa-inbox text-gray-300 text-5xl mb-4"></i>
+                        <p class="text-gray-600">No settings found in this group</p>
+                    </div>
+                @endforelse
             </div>
 
             {{-- Form Actions --}}
             <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between rounded-b-xl">
-                <a href="{{ route('system.settings.index') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                <a href="{{ route('system.settings.index') }}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200">
                     <i class="fas fa-arrow-left mr-2"></i>Back
                 </a>
                 <div class="flex space-x-2">
-                    <button type="reset" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    <button type="reset" class="px-6 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition duration-200">
                         <i class="fas fa-undo mr-2"></i>Reset
                     </button>
-                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition duration-200">
                         <i class="fas fa-save mr-2"></i>Save Changes
                     </button>
                 </div>
@@ -288,6 +314,21 @@
 
 @push('styles')
 <style>
+    @keyframes fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .animate-fade-in {
+        animation: fade-in 0.3s ease-out;
+    }
+
     /* Custom file input styling */
     input[type="file"] {
         cursor: pointer;
@@ -309,16 +350,6 @@
     input[type="file"]::file-selector-button:hover {
         background-color: #bfdbfe;
     }
-
-    /* Preview image container */
-    .preview-image {
-        animation: fadeIn 0.3s ease-in;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
 </style>
 @endpush
 
@@ -337,36 +368,42 @@
     // Boolean toggle text update
     document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
         checkbox.addEventListener('change', function() {
-            const label = this.nextElementSibling.nextElementSibling;
+            const label = document.getElementById(this.id + '_label');
             if (label) {
                 label.textContent = this.checked ? 'Enabled' : 'Disabled';
             }
         });
     });
 
-    // AJAX File Upload
+    // AJAX File Upload - FIXED VERSION
     document.querySelectorAll('input[type="file"]').forEach(input => {
         input.addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
 
-            const settingKey = this.name;
+            const settingKey = this.dataset.settingKey;
             const formData = new FormData();
             formData.append('file', file);
             formData.append('setting_key', settingKey);
-            formData.append('_token', document.querySelector('[name="_token"]').value);
 
-            // Show loading
+            // Get status container
+            const statusContainer = document.getElementById(`upload-status-${settingKey}`);
+            
+            // Clear previous status
+            statusContainer.innerHTML = '';
+            
+            // Show loading in status container
             const loadingDiv = document.createElement('div');
             loadingDiv.className = 'mt-2 text-blue-600 text-sm';
             loadingDiv.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
-            this.parentElement.appendChild(loadingDiv);
+            statusContainer.appendChild(loadingDiv);
 
             try {
                 const response = await fetch('{{ route("system.settings.upload-file") }}', {
                     method: 'POST',
                     body: formData,
                     headers: {
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         'X-Requested-With': 'XMLHttpRequest'
                     }
                 });
@@ -376,7 +413,10 @@
                 if (result.success) {
                     // Show success message
                     loadingDiv.className = 'mt-2 text-green-600 text-sm';
-                    loadingDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Uploaded successfully!';
+                    loadingDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i>Uploaded successfully! Reloading...';
+                    
+                    // Reset file input value to allow re-upload
+                    this.value = '';
                     
                     // Reload page after 1 second
                     setTimeout(() => {
@@ -391,15 +431,76 @@
                 loadingDiv.className = 'mt-2 text-red-600 text-sm';
                 loadingDiv.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i>' + error.message;
                 
+                // Reset file input
+                this.value = '';
+                
                 // Remove error message after 5 seconds
-                setTimeout(() => loadingDiv.remove(), 5000);
+                setTimeout(() => {
+                    statusContainer.innerHTML = '';
+                }, 5000);
             }
         });
     });
 
+    // Delete file function - FIXED VERSION
+    async function deleteFile(key) {
+        if (!confirm('Are you sure you want to delete this file?')) return;
+        
+        // Show loading in status container
+        const statusContainer = document.getElementById(`upload-status-${key}`);
+        statusContainer.innerHTML = '<div class="mt-2 text-blue-600 text-sm"><i class="fas fa-spinner fa-spin mr-2"></i>Deleting...</div>';
+        
+        try {
+            const response = await fetch(`/system/settings/files/${key}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (response.ok) {
+                statusContainer.innerHTML = '<div class="mt-2 text-green-600 text-sm"><i class="fas fa-check-circle mr-2"></i>Deleted successfully! Reloading...</div>';
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                const data = await response.json();
+                throw new Error(data.error || 'Failed to delete file');
+            }
+        } catch (error) {
+            console.error('Delete error:', error);
+            statusContainer.innerHTML = `<div class="mt-2 text-red-600 text-sm"><i class="fas fa-exclamation-circle mr-2"></i>${error.message}</div>`;
+            
+            // Remove error message after 5 seconds
+            setTimeout(() => {
+                statusContainer.innerHTML = '';
+            }, 5000);
+        }
+    }
+
+    // Reset group function
+    function resetGroup() {
+        if (!confirm('Are you sure you want to reset all settings in this group to default values?')) return;
+        
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("system.settings.reset", $group) }}';
+        
+        const csrfToken = document.createElement('input');
+        csrfToken.type = 'hidden';
+        csrfToken.name = '_token';
+        csrfToken.value = '{{ csrf_token() }}';
+        
+        form.appendChild(csrfToken);
+        document.body.appendChild(form);
+        form.submit();
+    }
+
     // Auto-hide success messages after 5 seconds
     setTimeout(() => {
-        const alerts = document.querySelectorAll('.bg-green-100, .bg-blue-100');
+        const alerts = document.querySelectorAll('.animate-fade-in');
         alerts.forEach(alert => {
             alert.style.transition = 'opacity 0.5s';
             alert.style.opacity = '0';

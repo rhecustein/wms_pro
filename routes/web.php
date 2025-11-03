@@ -445,33 +445,25 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('system')->name('system.')->group(function () {
         
         Route::prefix('settings')->name('settings.')->group(function () {
-        
-        // Main settings page
+        // Main pages
         Route::get('/', [SettingController::class, 'index'])->name('index');
-        
-        // Show specific group
         Route::get('/{group}', [SettingController::class, 'show'])->name('show');
         
-        // Update all settings
-        Route::put('/update', [SettingController::class, 'update'])->name('update');
+        // Update operations
+        Route::put('/{group}', [SettingController::class, 'updateGroup'])->name('update-group');
         
-        // Update specific group
-        Route::put('/{group}/update', [SettingController::class, 'updateGroup'])->name('update-group');
+        // File operations
+        Route::post('/files', [SettingController::class, 'uploadFile'])->name('upload-file');
+        Route::delete('/files/{key}', [SettingController::class, 'deleteFile'])->name('delete-file');
         
-        // Delete file
-        Route::get('/{key}/delete-file', [SettingController::class, 'deleteFile'])->name('delete-file');
-        
-        // Cache management
-        Route::post('/clear-cache', [SettingController::class, 'clearCache'])->name('clear-cache');
+        // Utility operations
+        Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('clear-cache');
+        Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
         
         // Import/Export
         Route::get('/export', [SettingController::class, 'export'])->name('export');
         Route::post('/import', [SettingController::class, 'import'])->name('import');
         
-        // Reset settings
-        Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
-
-        Route::post('/upload-file', [SettingController::class, 'uploadFile'])->name('upload-file');
         });
         
         // Activity Logs
