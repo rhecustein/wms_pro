@@ -36,7 +36,7 @@
     </div>
 
     {{-- FORM --}}
-    <form action="{{ route('master.warehouses.update', $warehouse) }}" method="POST" class="space-y-6">
+    <form action="{{ route('master.warehouses.update', $warehouse) }}" method="POST" class="space-y-6" id="editWarehouseForm">
         @csrf
         @method('PUT')
 
@@ -60,13 +60,14 @@
                             id="code" 
                             value="{{ old('code', $warehouse->code) }}" 
                             required 
+                            placeholder="e.g., WH001, JKT01"
                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('code') border-red-500 @enderror"
                         >
                         @error('code')
                             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                         @enderror
                         <p class="mt-1 text-xs text-gray-500">
-                            <i class="fas fa-lightbulb mr-1"></i>Unique identifier for this warehouse (e.g., WH001, JKT01)
+                            <i class="fas fa-lightbulb mr-1"></i>Unique identifier for this warehouse
                         </p>
                     </div>
 
@@ -81,6 +82,7 @@
                             id="name" 
                             value="{{ old('name', $warehouse->name) }}" 
                             required 
+                            placeholder="e.g., Central Warehouse Jakarta"
                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('name') border-red-500 @enderror"
                         >
                         @error('name')
@@ -101,7 +103,7 @@
                             id="manager_id" 
                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('manager_id') border-red-500 @enderror"
                         >
-                            <option value="">Select Manager</option>
+                            <option value="">-- Select Manager (Optional) --</option>
                             @foreach($managers as $manager)
                                 <option 
                                     value="{{ $manager->id }}" 
@@ -148,7 +150,7 @@
 
                 {{-- Current Status Badge --}}
                 <div class="bg-gray-50 rounded-lg p-4">
-                    <div class="flex items-center justify-between">
+                    <div class="flex items-center justify-between flex-wrap gap-4">
                         <div class="flex items-center">
                             <i class="fas fa-clock text-gray-400 text-xl mr-3"></i>
                             <div>
@@ -263,6 +265,7 @@
                             name="country" 
                             id="country" 
                             value="{{ old('country', $warehouse->country) }}" 
+                            placeholder="Indonesia"
                             class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 @error('country') border-red-500 @enderror"
                         >
                         @error('country')
@@ -309,7 +312,7 @@
                     </div>
                 </div>
 
-                {{-- Map Preview (Optional) --}}
+                {{-- Map Preview --}}
                 @if($warehouse->latitude && $warehouse->longitude)
                 <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <div class="flex items-start">
@@ -398,7 +401,7 @@
                                 name="total_area_sqm" 
                                 id="total_area_sqm" 
                                 value="{{ old('total_area_sqm', $warehouse->total_area_sqm) }}" 
-                                placeholder="414.2"
+                                placeholder="1000.00"
                                 class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-12 @error('total_area_sqm') border-red-500 @enderror"
                             >
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -425,7 +428,7 @@
                                 name="height_meters" 
                                 id="height_meters" 
                                 value="{{ old('height_meters', $warehouse->height_meters) }}" 
-                                placeholder="8.0"
+                                placeholder="8.00"
                                 class="block w-full rounded-lg border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 pr-12 @error('height_meters') border-red-500 @enderror"
                             >
                             <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
@@ -449,15 +452,19 @@
                     <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div class="text-center">
                             <p class="text-xs text-gray-600 mb-1">Current Area</p>
-                            <p class="text-lg font-bold text-purple-700">{{ number_format($warehouse->total_area_sqm ?? 0, 0) }} m²</p>
+                            <p class="text-lg font-bold text-purple-700" id="display_area">
+                                {{ number_format($warehouse->total_area_sqm ?? 0, 0) }} m²
+                            </p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-600 mb-1">Current Height</p>
-                            <p class="text-lg font-bold text-blue-700">{{ number_format($warehouse->height_meters ?? 0, 1) }} m</p>
+                            <p class="text-lg font-bold text-blue-700" id="display_height">
+                                {{ number_format($warehouse->height_meters ?? 0, 1) }} m
+                            </p>
                         </div>
                         <div class="text-center">
                             <p class="text-xs text-gray-600 mb-1">Volume</p>
-                            <p class="text-lg font-bold text-green-700">
+                            <p class="text-lg font-bold text-green-700" id="display_volume">
                                 {{ number_format(($warehouse->total_area_sqm ?? 0) * ($warehouse->height_meters ?? 0), 0) }} m³
                             </p>
                         </div>
@@ -470,7 +477,7 @@
             </div>
         </div>
 
-        {{-- Change Summary (if validation errors) --}}
+        {{-- Validation Errors Summary --}}
         @if($errors->any())
         <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
             <div class="flex">
@@ -517,37 +524,6 @@
             </div>
         </div>
     </form>
-
-    {{-- Confirmation Modal (Optional - using Alpine.js or vanilla JS) --}}
-    <div id="confirmModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-        <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-            <div class="mt-3 text-center">
-                <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-yellow-100">
-                    <i class="fas fa-exclamation-triangle text-yellow-600 text-2xl"></i>
-                </div>
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mt-4">Confirm Changes</h3>
-                <div class="mt-2 px-7 py-3">
-                    <p class="text-sm text-gray-500">
-                        Are you sure you want to save these changes to the warehouse information?
-                    </p>
-                </div>
-                <div class="items-center px-4 py-3">
-                    <button
-                        id="confirmBtn"
-                        class="px-4 py-2 bg-blue-600 text-white text-base font-medium rounded-md w-full shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300"
-                    >
-                        Yes, Update
-                    </button>
-                    <button
-                        id="cancelBtn"
-                        class="mt-3 px-4 py-2 bg-gray-300 text-gray-800 text-base font-medium rounded-md w-full shadow-sm hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300"
-                    >
-                        Cancel
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
 @endsection
 
 @push('scripts')
@@ -557,12 +533,8 @@
         const label = document.getElementById('status_label');
         if (this.checked) {
             label.textContent = 'Active';
-            label.classList.remove('text-red-600');
-            label.classList.add('text-green-600');
         } else {
             label.textContent = 'Inactive';
-            label.classList.remove('text-green-600');
-            label.classList.add('text-red-600');
         }
     });
 
@@ -575,17 +547,18 @@
         const height = parseFloat(heightInput?.value || 0);
         const volume = area * height;
         
-        // You can add a display element for real-time calculation
-        console.log('Calculated Volume:', volume.toFixed(2), 'm³');
+        document.getElementById('display_area').textContent = area.toFixed(2) + ' m²';
+        document.getElementById('display_height').textContent = height.toFixed(2) + ' m';
+        document.getElementById('display_volume').textContent = volume.toFixed(2) + ' m³';
     }
 
     areaInput?.addEventListener('input', updateCapacityDisplay);
     heightInput?.addEventListener('input', updateCapacityDisplay);
 
-    // Form validation before submit (optional)
-    document.querySelector('form')?.addEventListener('submit', function(e) {
-        const code = document.getElementById('code').value;
-        const name = document.getElementById('name').value;
+    // Form validation before submit
+    document.getElementById('editWarehouseForm')?.addEventListener('submit', function(e) {
+        const code = document.getElementById('code').value.trim();
+        const name = document.getElementById('name').value.trim();
 
         if (!code || !name) {
             e.preventDefault();
@@ -596,12 +569,12 @@
         // Show loading state
         const submitBtn = this.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Updating Warehouse...';
     });
 
     // Prevent double submission
     let submitted = false;
-    document.querySelector('form')?.addEventListener('submit', function(e) {
+    document.getElementById('editWarehouseForm')?.addEventListener('submit', function(e) {
         if (submitted) {
             e.preventDefault();
             return false;
@@ -609,64 +582,46 @@
         submitted = true;
     });
 
-    // Auto-format phone number (optional)
-    document.getElementById('phone')?.addEventListener('input', function(e) {
-        let value = e.target.value.replace(/\D/g, '');
-        if (value.startsWith('62')) {
-            value = '+' + value;
-        } else if (value.startsWith('0')) {
-            value = '+62' + value.substring(1);
-        }
-        // You can add more formatting logic here
-    });
-
     // Coordinate validation
     document.getElementById('latitude')?.addEventListener('input', function(e) {
         const value = parseFloat(e.target.value);
-        if (value < -90 || value > 90) {
-            e.target.classList.add('border-red-500');
-            console.warn('Latitude must be between -90 and 90');
+        if (value && (value < -90 || value > 90)) {
+            this.classList.add('border-red-500');
         } else {
-            e.target.classList.remove('border-red-500');
+            this.classList.remove('border-red-500');
         }
     });
 
     document.getElementById('longitude')?.addEventListener('input', function(e) {
         const value = parseFloat(e.target.value);
-        if (value < -180 || value > 180) {
-            e.target.classList.add('border-red-500');
-            console.warn('Longitude must be between -180 and 180');
+        if (value && (value < -180 || value > 180)) {
+            this.classList.add('border-red-500');
         } else {
-            e.target.classList.remove('border-red-500');
+            this.classList.remove('border-red-500');
         }
+    });
+
+    // Auto-uppercase warehouse code
+    document.getElementById('code')?.addEventListener('input', function(e) {
+        this.value = this.value.toUpperCase();
     });
 </script>
 @endpush
 
 @push('styles')
 <style>
-    /* Custom styles for better UX */
     input:focus, select:focus, textarea:focus {
         box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
     }
 
-    /* Animated border for focused inputs */
-    .form-input:focus {
-        border-color: #3b82f6;
-        transition: border-color 0.2s ease-in-out;
-    }
-
-    /* Smooth transitions */
     input, select, textarea, button {
         transition: all 0.2s ease-in-out;
     }
 
-    /* Hover effect for submit button */
     button[type="submit"]:hover {
         transform: translateY(-1px);
     }
 
-    /* Loading animation */
     @keyframes spin {
         to { transform: rotate(360deg); }
     }

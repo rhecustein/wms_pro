@@ -4,7 +4,19 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Lupa Password - WMS Cakraindo</title>
+    
+    {{-- Dynamic Title from Settings --}}
+    <title>Lupa Password - {{ setting('site_name', 'WMS Pro') }}</title>
+    
+    {{-- SEO Meta Tags --}}
+    <meta name="description" content="{{ setting('site_description', 'Professional Warehouse Management System') }}">
+    
+    {{-- Favicon --}}
+    @if(setting('site_favicon'))
+        <link rel="icon" type="image/x-icon" href="{{ Storage::url(setting('site_favicon')) }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @endif
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -16,12 +28,20 @@
     <style>
         [x-cloak] { display: none !important; }
         
+        {{-- Dynamic Theme Colors --}}
+        :root {
+            --color-primary: {{ setting('theme_primary_color', '#3b82f6') }};
+            --color-secondary: {{ setting('theme_secondary_color', '#6366f1') }};
+        }
+        
         /* Grid Pattern Background */
-        .grid-pattern {
+        .grid-background {
+            background-color: #f9fafb;
             background-image: 
-                linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
+                linear-gradient(rgba(209, 213, 219, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(209, 213, 219, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: center center;
         }
         
         @keyframes pulse-ring {
@@ -42,37 +62,76 @@
         .animate-pulse-ring {
             animation: pulse-ring 2s ease-in-out infinite;
         }
+
+        /* Dynamic gradient colors */
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        .text-primary {
+            color: var(--color-primary);
+        }
+
+        .text-primary:hover {
+            opacity: 0.8;
+        }
+
+        .border-primary {
+            border-color: var(--color-primary);
+        }
+
+        .bg-primary-light {
+            background-color: color-mix(in srgb, var(--color-primary) 10%, white);
+        }
+
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 20%, white);
+            border-color: var(--color-primary);
+        }
     </style>
 </head>
-<body class="antialiased bg-gray-50">
+<body class="antialiased bg-gray-50 grid-background">
     <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 py-12 relative">
-        <!-- Grid Pattern Background -->
-        <div class="absolute inset-0 grid-pattern opacity-50"></div>
-        
-        <!-- Decorative Elements -->
-        <div class="absolute top-20 right-20 w-72 h-72 bg-blue-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div class="absolute bottom-20 left-20 w-72 h-72 bg-purple-200 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style="animation-delay: 1s"></div>
+        <!-- Decorative Elements with Dynamic Colors -->
+        <div class="absolute top-20 right-20 w-72 h-72 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style="background-color: var(--color-primary);"></div>
+        <div class="absolute bottom-20 left-20 w-72 h-72 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" style="background-color: var(--color-secondary); animation-delay: 1s;"></div>
 
         <div class="w-full max-w-md space-y-8 relative z-10">
             <!-- Icon & Header -->
             <div class="text-center">
                 <a href="{{ route('home') }}" class="inline-flex items-center justify-center mb-8 group">
-                    <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition">
-                        <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                    </div>
+                    @if(setting('site_logo'))
+                        <img src="{{ Storage::url(setting('site_logo')) }}" 
+                             alt="{{ setting('site_name', 'WMS Pro') }}" 
+                             class="h-16 w-auto group-hover:scale-105 transition">
+                    @else
+                        <div class="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg group-hover:scale-105 transition">
+                            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                        </div>
+                    @endif
                 </a>
 
                 <!-- Animated Lock Icon -->
                 <div class="mb-6 inline-flex items-center justify-center">
                     <div class="relative">
-                        <div class="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center">
-                            <svg class="w-12 h-12 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="w-24 h-24 rounded-full flex items-center justify-center bg-primary-light">
+                            <svg class="w-12 h-12 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                             </svg>
                         </div>
-                        <div class="absolute inset-0 w-24 h-24 bg-blue-200 rounded-full animate-pulse-ring opacity-50"></div>
+                        <div class="absolute inset-0 w-24 h-24 rounded-full animate-pulse-ring opacity-50 bg-primary-light"></div>
                     </div>
                 </div>
                 
@@ -139,8 +198,8 @@
                                 value="{{ old('email') }}"
                                 required 
                                 autofocus
-                                class="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition @error('email') border-red-500 @enderror"
-                                placeholder="nama@cakraindo.com"
+                                class="focus-ring block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg transition @error('email') border-red-500 @enderror"
+                                placeholder="nama@{{ setting('company_email') ? explode('@', setting('company_email'))[1] : 'company.com' }}"
                             >
                         </div>
                         @error('email')
@@ -154,7 +213,8 @@
                     <!-- Submit Button -->
                     <button 
                         type="submit" 
-                        class="w-full flex justify-center items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                        class="w-full flex justify-center items-center px-6 py-3 btn-primary text-white font-semibold rounded-lg hover:shadow-lg transform transition focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style="focus:ring-color: var(--color-primary);"
                     >
                         <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
@@ -186,10 +246,10 @@
             </div>
 
             <!-- Help Section -->
-            <div class="bg-blue-50 border border-blue-100 rounded-2xl p-6 text-center space-y-3">
+            <div class="bg-primary-light border border-primary rounded-2xl p-6 text-center space-y-3" style="border-color: color-mix(in srgb, var(--color-primary) 30%, white);">
                 <div class="flex justify-center">
-                    <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="w-12 h-12 rounded-full flex items-center justify-center" style="background-color: color-mix(in srgb, var(--color-primary) 20%, white);">
+                        <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
                         </svg>
                     </div>
@@ -200,19 +260,34 @@
                         Jika Anda mengalami kesulitan reset password, silakan hubungi IT Support kami
                     </p>
                     <div class="flex flex-col sm:flex-row items-center justify-center gap-3 text-sm">
-                        <a href="mailto:it.support@cakraindo.com" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                        @if(setting('company_email'))
+                        <a href="mailto:{{ setting('company_email') }}" class="inline-flex items-center text-primary hover:opacity-80 font-medium">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                             </svg>
-                            it.support@cakraindo.com
+                            {{ setting('company_email') }}
                         </a>
+                        @endif
+                        
+                        @if(setting('company_phone'))
                         <span class="hidden sm:inline text-gray-300">|</span>
-                        <a href="tel:+6221xxxxxxx" class="inline-flex items-center text-blue-600 hover:text-blue-700 font-medium">
+                        <a href="tel:{{ setting('company_phone') }}" class="inline-flex items-center text-primary hover:opacity-80 font-medium">
                             <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                             </svg>
-                            (021) XXXX-XXXX
+                            {{ setting('company_phone') }}
                         </a>
+                        @endif
+
+                        @if(setting('company_whatsapp'))
+                        <span class="hidden sm:inline text-gray-300">|</span>
+                        <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', setting('company_whatsapp')) }}" target="_blank" class="inline-flex items-center text-primary hover:opacity-80 font-medium">
+                            <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                            </svg>
+                            WhatsApp
+                        </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -232,7 +307,7 @@
 
             <!-- Back to Home -->
             <div class="text-center">
-                <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition">
+                <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition">
                     <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>

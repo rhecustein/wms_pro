@@ -56,7 +56,21 @@ class WarehouseController extends Controller
             ->orderBy('city')
             ->pluck('city');
 
-        return view('master.warehouses.index', compact('warehouses', 'cities'));
+        // ✅ STATISTICS CARDS - Calculate statistics for all warehouses
+        $stats = [
+            'total_warehouses' => Warehouse::count(),
+            'active_warehouses' => Warehouse::where('is_active', true)->count(),
+            'inactive_warehouses' => Warehouse::where('is_active', false)->count(),
+            'total_storage_bins' => 0,
+            'total_area_sqm' => Warehouse::sum('total_area_sqm'),
+        ];
+
+        // Count total storage bins if table exists
+        if (Schema::hasTable('storage_bins')) {
+            $stats['total_storage_bins'] = DB::table('storage_bins')->count();
+        }
+
+        return view('master.warehouses.index', compact('warehouses', 'cities', 'stats'));
     }
 
     /**
@@ -139,7 +153,9 @@ class WarehouseController extends Controller
         }
     }
 
-    // app/Http/Controllers/Master/WarehouseController.php
+    /**
+     * Display the specified resource.
+     */
     public function show(Warehouse $warehouse)
     {
         try {
@@ -172,7 +188,7 @@ class WarehouseController extends Controller
                 ];
             }
 
-            // ✅ PERBAIKAN: Get recent activities dengan cara yang benar
+            // Get recent activities
             $activities = \Spatie\Activitylog\Models\Activity::query()
                 ->where('subject_type', Warehouse::class)
                 ->where('subject_id', $warehouse->id)

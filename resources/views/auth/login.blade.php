@@ -4,7 +4,20 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Login - WMS Cakraindo</title>
+    
+    {{-- Dynamic Title from Settings --}}
+    <title>Login - {{ setting('site_name', 'WMS Pro') }}</title>
+    
+    {{-- SEO Meta Tags --}}
+    <meta name="description" content="{{ setting('site_description', 'Professional Warehouse Management System') }}">
+    <meta name="keywords" content="{{ setting('site_keywords', 'warehouse, management, inventory, wms') }}">
+    
+    {{-- Favicon --}}
+    @if(setting('site_favicon'))
+        <link rel="icon" type="image/x-icon" href="{{ Storage::url(setting('site_favicon')) }}">
+    @else
+        <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    @endif
     
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
@@ -16,12 +29,29 @@
     <style>
         [x-cloak] { display: none !important; }
         
-        /* Grid Pattern Background */
+        {{-- Dynamic Theme Colors --}}
+        :root {
+            --color-primary: {{ setting('theme_primary_color', '#3b82f6') }};
+            --color-secondary: {{ setting('theme_secondary_color', '#6366f1') }};
+        }
+        
+        /* Grid Pattern Background - Left Side */
+        .grid-background {
+            background-color: #f9fafb;
+            background-image: 
+                linear-gradient(rgba(209, 213, 219, 0.3) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(209, 213, 219, 0.3) 1px, transparent 1px);
+            background-size: 20px 20px;
+            background-position: center center;
+        }
+        
+        /* Grid Pattern Background - Right Side (Colored) */
         .grid-pattern {
             background-image: 
-                linear-gradient(to right, rgba(59, 130, 246, 0.1) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(59, 130, 246, 0.1) 1px, transparent 1px);
-            background-size: 40px 40px;
+                linear-gradient(to right, rgba(255, 255, 255, 0.1) 2px, transparent 2px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.1) 2px, transparent 2px);
+            background-size: 50px 50px;
+            background-position: center center;
         }
         
         @keyframes float {
@@ -32,9 +62,38 @@
         .animate-float {
             animation: float 3s ease-in-out infinite;
         }
+
+        /* Dynamic gradient colors */
+        .bg-gradient-primary {
+            background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-secondary) 100%);
+        }
+
+        .text-gradient-primary {
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-2px);
+        }
+
+        /* Focus ring color */
+        .focus-ring:focus {
+            outline: none;
+            ring: 2px;
+            ring-color: var(--color-primary);
+            ring-offset: 2px;
+        }
     </style>
 </head>
-<body class="antialiased bg-gray-50">
+<body class="antialiased bg-gray-50 grid-background">
     <div class="min-h-screen flex">
         <!-- Left Side - Login Form -->
         <div class="flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-8 relative z-10">
@@ -42,17 +101,28 @@
                 <!-- Logo & Header -->
                 <div class="text-center">
                     <a href="{{ route('home') }}" class="inline-flex items-center justify-center space-x-3 mb-8">
-                        <div class="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow-lg">
-                            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                            </svg>
-                        </div>
-                        <div class="text-left">
-                            <div class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-700 bg-clip-text text-transparent">
-                                WMS Cakraindo
+                        @if(setting('site_logo'))
+                            <img src="{{ Storage::url(setting('site_logo')) }}" 
+                                 alt="{{ setting('site_name', 'WMS Pro') }}" 
+                                 class="h-16 w-auto">
+                        @else
+                            <div class="w-16 h-16 bg-gradient-primary rounded-xl flex items-center justify-center shadow-lg">
+                                <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
                             </div>
-                            <div class="text-xs text-gray-500">Warehouse Management System</div>
+                        @endif
+                        
+                        @if(!setting('site_logo'))
+                        <div class="text-left">
+                            <div class="text-2xl font-bold text-gradient-primary">
+                                {{ setting('site_name', 'WMS Pro') }}
+                            </div>
+                            @if(setting('site_tagline'))
+                                <div class="text-xs text-gray-500">{{ setting('site_tagline') }}</div>
+                            @endif
                         </div>
+                        @endif
                     </a>
                     
                     <h2 class="text-3xl font-bold text-gray-900 mb-2">
@@ -111,8 +181,8 @@
                                     required 
                                     autofocus 
                                     autocomplete="username"
-                                    class="block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition @error('email') border-red-500 @enderror"
-                                    placeholder="nama@cakraindo.com"
+                                    class="focus-ring block w-full pl-12 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition @error('email') border-red-500 @enderror"
+                                    placeholder="nama@{{ setting('company_email') ? explode('@', setting('company_email'))[1] : 'company.com' }}"
                                 >
                             </div>
                             @error('email')
@@ -137,7 +207,7 @@
                                     name="password" 
                                     required 
                                     autocomplete="current-password"
-                                    class="block w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition @error('password') border-red-500 @enderror"
+                                    class="focus-ring block w-full pl-12 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent transition @error('password') border-red-500 @enderror"
                                     placeholder="••••••••"
                                 >
                                 <button 
@@ -165,13 +235,14 @@
                                 <input 
                                     type="checkbox" 
                                     name="remember" 
-                                    class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                                    class="w-4 h-4 border-gray-300 rounded focus:ring-2"
+                                    style="color: var(--color-primary);"
                                 >
                                 <span class="ml-2 text-sm text-gray-600">Remember me</span>
                             </label>
 
                             @if (Route::has('password.request'))
-                                <a href="{{ route('password.request') }}" class="text-sm font-medium text-blue-600 hover:text-blue-700">
+                                <a href="{{ route('password.request') }}" class="text-sm font-medium hover:opacity-80" style="color: var(--color-primary);">
                                     Lupa Password?
                                 </a>
                             @endif
@@ -180,7 +251,7 @@
                         <!-- Submit Button -->
                         <button 
                             type="submit" 
-                            class="w-full flex justify-center items-center px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-semibold rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                            class="w-full flex justify-center items-center px-6 py-3 btn-primary text-white font-semibold rounded-lg hover:shadow-lg transform transition focus:outline-none focus:ring-2 focus:ring-offset-2"
                         >
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"/>
@@ -205,26 +276,41 @@
                             Hubungi IT Support untuk bantuan login atau reset password
                         </p>
                         <div class="flex items-center justify-center space-x-4 text-sm">
-                            <a href="mailto:it.support@cakraindo.com" class="text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                            @if(setting('company_email'))
+                            <a href="mailto:{{ setting('company_email') }}" class="hover:opacity-80 font-medium flex items-center" style="color: var(--color-primary);">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
                                 </svg>
                                 Email
                             </a>
+                            @endif
+                            
+                            @if(setting('company_phone'))
                             <span class="text-gray-300">|</span>
-                            <a href="tel:+6221xxxxxxx" class="text-blue-600 hover:text-blue-700 font-medium flex items-center">
+                            <a href="tel:{{ setting('company_phone') }}" class="hover:opacity-80 font-medium flex items-center" style="color: var(--color-primary);">
                                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
                                 </svg>
                                 Phone
                             </a>
+                            @endif
+
+                            @if(setting('company_whatsapp'))
+                            <span class="text-gray-300">|</span>
+                            <a href="https://wa.me/{{ preg_replace('/[^0-9]/', '', setting('company_whatsapp')) }}" target="_blank" class="hover:opacity-80 font-medium flex items-center" style="color: var(--color-primary);">
+                                <svg class="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/>
+                                </svg>
+                                WhatsApp
+                            </a>
+                            @endif
                         </div>
                     </div>
                 </div>
 
                 <!-- Back to Home -->
                 <div class="text-center">
-                    <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-blue-600 transition">
+                    <a href="{{ route('home') }}" class="inline-flex items-center text-sm text-gray-600 hover:text-gray-800 transition">
                         <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                         </svg>
@@ -235,7 +321,7 @@
         </div>
 
         <!-- Right Side - Illustration -->
-        <div class="hidden lg:flex lg:flex-1 bg-gradient-to-br from-blue-600 via-indigo-700 to-purple-700 relative overflow-hidden">
+        <div class="hidden lg:flex lg:flex-1 bg-gradient-primary relative overflow-hidden">
             <!-- Grid Pattern -->
             <div class="absolute inset-0 grid-pattern opacity-20"></div>
             
@@ -263,10 +349,10 @@
                     <!-- Title -->
                     <div class="text-center">
                         <h2 class="text-4xl font-bold mb-4">
-                            Warehouse Management System
+                            {{ setting('site_title', 'Warehouse Management System') }}
                         </h2>
                         <p class="text-xl text-blue-100">
-                            PT Cakraindo Mitra Internasional
+                            {{ setting('company_name', 'Your Company Name') }}
                         </p>
                     </div>
 
@@ -296,6 +382,7 @@
                             </div>
                         </div>
 
+                        @if(setting('enable_multi_warehouse', 'true') === 'true')
                         <div class="flex items-start space-x-3 bg-white/10 backdrop-blur-sm rounded-xl p-4 border border-white/20">
                             <div class="w-8 h-8 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
@@ -304,24 +391,25 @@
                             </div>
                             <div>
                                 <div class="font-semibold">Multi-Location Management</div>
-                                <div class="text-sm text-blue-100">Kelola Jakarta, Medan, dan Surabaya dalam satu sistem</div>
+                                <div class="text-sm text-blue-100">Kelola semua warehouse dalam satu sistem</div>
                             </div>
                         </div>
+                        @endif
                     </div>
 
                     <!-- Stats -->
                     <div class="grid grid-cols-3 gap-4 pt-8">
                         <div class="text-center">
-                            <div class="text-3xl font-bold">3+</div>
-                            <div class="text-sm text-blue-100">Warehouses</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-3xl font-bold">50K+</div>
-                            <div class="text-sm text-blue-100">Items</div>
-                        </div>
-                        <div class="text-center">
                             <div class="text-3xl font-bold">24/7</div>
-                            <div class="text-sm text-blue-100">Operations</div>
+                            <div class="text-sm text-blue-100">Support</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">100%</div>
+                            <div class="text-sm text-blue-100">Secure</div>
+                        </div>
+                        <div class="text-center">
+                            <div class="text-3xl font-bold">Fast</div>
+                            <div class="text-sm text-blue-100">Processing</div>
                         </div>
                     </div>
                 </div>

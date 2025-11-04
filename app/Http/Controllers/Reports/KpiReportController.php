@@ -8,6 +8,7 @@ use App\Models\StockMovement;
 use App\Models\StockOpname;
 use App\Models\Product;
 use App\Models\Warehouse;
+use App\Models\InventoryStock;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -32,35 +33,55 @@ class KpiReportController extends Controller
 
         $overallAccuracy = $accuracyQuery->avg('accuracy_percentage') ?? 0;
 
-        // Order Fulfillment Rate
+        // Order Fulfillment Rate - berdasarkan movement_type 'outbound' atau 'picking'
         $totalOrders = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
-            ->where('reference_type', 'order')
-            ->count();
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
+            ->when($warehouseId, function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId);
+            })
+            ->distinct('reference_number')
+            ->count('reference_number');
 
         $fulfilledOrders = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
-            ->where('reference_type', 'order')
-            ->where('status', 'completed')
-            ->count();
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
+            ->whereNotNull('reference_number')
+            ->when($warehouseId, function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId);
+            })
+            ->distinct('reference_number')
+            ->count('reference_number');
 
         $fulfillmentRate = $totalOrders > 0 ? ($fulfilledOrders / $totalOrders) * 100 : 0;
 
         // Inventory Turnover
         $totalMovements = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->when($warehouseId, function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId);
+            })
             ->sum('quantity');
 
-        $avgInventory = Product::avg('stock') ?? 1;
+        // Average inventory dari inventory_stocks
+        $avgInventoryQuery = InventoryStock::where('status', 'available');
+        if ($warehouseId) {
+            $avgInventoryQuery->where('warehouse_id', $warehouseId);
+        }
+        $avgInventory = $avgInventoryQuery->sum('quantity') ?: 1;
+        
         $inventoryTurnover = $avgInventory > 0 ? $totalMovements / $avgInventory : 0;
 
-        // Efficiency Score (processing time)
-        $avgProcessingTime = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->whereNotNull('processed_at')
-            ->selectRaw('AVG(TIMESTAMPDIFF(HOUR, created_at, processed_at)) as avg_time')
-            ->value('avg_time') ?? 0;
+        // Efficiency Score - berdasarkan volume movements per hari
+        $daysCount = Carbon::parse($dateFrom)->diffInDays(Carbon::parse($dateTo)) + 1;
+        $totalMovementsCount = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
+            ->when($warehouseId, function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId);
+            })
+            ->count();
 
-        $efficiencyScore = $avgProcessingTime > 0 ? max(0, 100 - ($avgProcessingTime * 2)) : 100;
+        $avgMovementsPerDay = $daysCount > 0 ? $totalMovementsCount / $daysCount : 0;
+        $efficiencyScore = min(100, $avgMovementsPerDay * 2); // Skor berdasarkan volume
 
         // Recent Opnames
         $recentOpnames = StockOpname::with('warehouse')
@@ -85,7 +106,8 @@ class KpiReportController extends Controller
             'recentOpnames',
             'monthlyAccuracy',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'warehouseId'
         ));
     }
 
@@ -137,7 +159,8 @@ class KpiReportController extends Controller
             'accuracyTrend',
             'topProducts',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'warehouseId'
         ));
     }
 
@@ -149,29 +172,26 @@ class KpiReportController extends Controller
 
         $warehouses = Warehouse::orderBy('name')->get();
 
-        // Processing time metrics
+        // Movement metrics by type
         $processingMetrics = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->whereNotNull('processed_at')
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);
             })
             ->selectRaw('
                 movement_type,
                 COUNT(*) as total_movements,
-                AVG(TIMESTAMPDIFF(MINUTE, created_at, processed_at)) as avg_processing_time,
-                MIN(TIMESTAMPDIFF(MINUTE, created_at, processed_at)) as min_processing_time,
-                MAX(TIMESTAMPDIFF(MINUTE, created_at, processed_at)) as max_processing_time
+                SUM(quantity) as total_quantity,
+                AVG(quantity) as avg_quantity
             ')
             ->groupBy('movement_type')
             ->get();
 
-        // Daily efficiency trend
+        // Daily efficiency trend - volume per day
         $dailyEfficiency = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->whereNotNull('processed_at')
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);
             })
-            ->selectRaw('DATE(movement_date) as date, COUNT(*) as total, AVG(TIMESTAMPDIFF(MINUTE, created_at, processed_at)) as avg_time')
+            ->selectRaw('DATE(movement_date) as date, COUNT(*) as total, SUM(quantity) as total_quantity')
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -179,8 +199,7 @@ class KpiReportController extends Controller
         // Warehouse efficiency comparison
         $warehouseEfficiency = StockMovement::with('warehouse')
             ->whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->whereNotNull('processed_at')
-            ->selectRaw('warehouse_id, COUNT(*) as total_movements, AVG(TIMESTAMPDIFF(MINUTE, created_at, processed_at)) as avg_time')
+            ->selectRaw('warehouse_id, COUNT(*) as total_movements, SUM(quantity) as total_quantity')
             ->groupBy('warehouse_id')
             ->get();
 
@@ -190,7 +209,8 @@ class KpiReportController extends Controller
             'dailyEfficiency',
             'warehouseEfficiency',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'warehouseId'
         ));
     }
 
@@ -202,32 +222,44 @@ class KpiReportController extends Controller
 
         $warehouses = Warehouse::orderBy('name')->get();
 
-        // Overall fulfillment metrics
-        $fulfillmentMetrics = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
-            ->where('reference_type', 'order')
+        // Overall fulfillment metrics - berdasarkan sales_order
+        $totalOrders = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);
             })
-            ->selectRaw('
-                COUNT(*) as total_orders,
-                SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_orders,
-                SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending_orders,
-                SUM(CASE WHEN status = "cancelled" THEN 1 ELSE 0 END) as cancelled_orders
-            ')
-            ->first();
+            ->distinct('reference_number')
+            ->count('reference_number');
+
+        $completedOrders = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
+            ->whereNotNull('reference_number')
+            ->when($warehouseId, function($q) use ($warehouseId) {
+                $q->where('warehouse_id', $warehouseId);
+            })
+            ->distinct('reference_number')
+            ->count('reference_number');
+
+        $fulfillmentMetrics = (object)[
+            'total_orders' => $totalOrders,
+            'completed_orders' => $completedOrders,
+            'pending_orders' => 0,
+            'cancelled_orders' => 0
+        ];
 
         // Daily fulfillment trend
         $dailyFulfillment = StockMovement::whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
-            ->where('reference_type', 'order')
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);
             })
             ->selectRaw('
                 DATE(movement_date) as date,
-                COUNT(*) as total,
-                SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed
+                COUNT(DISTINCT reference_number) as total,
+                COUNT(DISTINCT reference_number) as completed
             ')
             ->groupBy('date')
             ->orderBy('date')
@@ -236,12 +268,12 @@ class KpiReportController extends Controller
         // Fulfillment by warehouse
         $warehouseFulfillment = StockMovement::with('warehouse')
             ->whereBetween('movement_date', [$dateFrom, $dateTo])
-            ->where('movement_type', 'out')
-            ->where('reference_type', 'order')
+            ->whereIn('movement_type', ['outbound', 'picking'])
+            ->where('reference_type', 'sales_order')
             ->selectRaw('
                 warehouse_id,
-                COUNT(*) as total_orders,
-                SUM(CASE WHEN status = "completed" THEN 1 ELSE 0 END) as completed_orders
+                COUNT(DISTINCT reference_number) as total_orders,
+                COUNT(DISTINCT reference_number) as completed_orders
             ')
             ->groupBy('warehouse_id')
             ->get();
@@ -252,7 +284,8 @@ class KpiReportController extends Controller
             'dailyFulfillment',
             'warehouseFulfillment',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'warehouseId'
         ));
     }
 
@@ -266,15 +299,22 @@ class KpiReportController extends Controller
 
         // Turnover by product category
         $turnoverByCategory = StockMovement::join('products', 'stock_movements.product_id', '=', 'products.id')
+            ->leftJoin('inventory_stocks', function($join) use ($warehouseId) {
+                $join->on('products.id', '=', 'inventory_stocks.product_id')
+                     ->where('inventory_stocks.status', '=', 'available');
+                if ($warehouseId) {
+                    $join->where('inventory_stocks.warehouse_id', '=', $warehouseId);
+                }
+            })
             ->whereBetween('stock_movements.movement_date', [$dateFrom, $dateTo])
-            ->where('stock_movements.movement_type', 'out')
+            ->whereIn('stock_movements.movement_type', ['outbound', 'picking'])
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('stock_movements.warehouse_id', $warehouseId);
             })
             ->selectRaw('
                 products.category,
                 SUM(stock_movements.quantity) as total_out,
-                AVG(products.stock) as avg_stock
+                AVG(inventory_stocks.quantity) as avg_stock
             ')
             ->groupBy('products.category')
             ->get()
@@ -285,8 +325,14 @@ class KpiReportController extends Controller
 
         // Top moving products
         $topMovingProducts = StockMovement::join('products', 'stock_movements.product_id', '=', 'products.id')
+            ->leftJoin(DB::raw('(SELECT product_id, SUM(quantity) as total_stock 
+                               FROM inventory_stocks 
+                               WHERE status = "available"' . 
+                               ($warehouseId ? ' AND warehouse_id = ' . $warehouseId : '') . '
+                               GROUP BY product_id) as inv_stock'), 
+                      'products.id', '=', 'inv_stock.product_id')
             ->whereBetween('stock_movements.movement_date', [$dateFrom, $dateTo])
-            ->where('stock_movements.movement_type', 'out')
+            ->whereIn('stock_movements.movement_type', ['outbound', 'picking'])
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('stock_movements.warehouse_id', $warehouseId);
             })
@@ -294,10 +340,10 @@ class KpiReportController extends Controller
                 products.id,
                 products.name,
                 products.sku,
-                products.stock,
+                COALESCE(inv_stock.total_stock, 0) as stock,
                 SUM(stock_movements.quantity) as total_moved
             ')
-            ->groupBy('products.id', 'products.name', 'products.sku', 'products.stock')
+            ->groupBy('products.id', 'products.name', 'products.sku', 'inv_stock.total_stock')
             ->orderByDesc('total_moved')
             ->limit(10)
             ->get()
@@ -308,8 +354,14 @@ class KpiReportController extends Controller
 
         // Slow moving products
         $slowMovingProducts = StockMovement::join('products', 'stock_movements.product_id', '=', 'products.id')
+            ->leftJoin(DB::raw('(SELECT product_id, SUM(quantity) as total_stock 
+                               FROM inventory_stocks 
+                               WHERE status = "available"' . 
+                               ($warehouseId ? ' AND warehouse_id = ' . $warehouseId : '') . '
+                               GROUP BY product_id) as inv_stock'), 
+                      'products.id', '=', 'inv_stock.product_id')
             ->whereBetween('stock_movements.movement_date', [$dateFrom, $dateTo])
-            ->where('stock_movements.movement_type', 'out')
+            ->whereIn('stock_movements.movement_type', ['outbound', 'picking'])
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('stock_movements.warehouse_id', $warehouseId);
             })
@@ -317,10 +369,11 @@ class KpiReportController extends Controller
                 products.id,
                 products.name,
                 products.sku,
-                products.stock,
+                COALESCE(inv_stock.total_stock, 0) as stock,
                 SUM(stock_movements.quantity) as total_moved
             ')
-            ->groupBy('products.id', 'products.name', 'products.sku', 'products.stock')
+            ->groupBy('products.id', 'products.name', 'products.sku', 'inv_stock.total_stock')
+            ->having('total_moved', '>', 0)
             ->orderBy('total_moved')
             ->limit(10)
             ->get()
@@ -331,7 +384,7 @@ class KpiReportController extends Controller
 
         // Monthly turnover trend
         $monthlyTurnover = StockMovement::whereBetween('movement_date', [now()->subMonths(6), now()])
-            ->where('movement_type', 'out')
+            ->whereIn('movement_type', ['outbound', 'picking'])
             ->when($warehouseId, function($q) use ($warehouseId) {
                 $q->where('warehouse_id', $warehouseId);
             })
@@ -347,7 +400,8 @@ class KpiReportController extends Controller
             'slowMovingProducts',
             'monthlyTurnover',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'warehouseId'
         ));
     }
 }

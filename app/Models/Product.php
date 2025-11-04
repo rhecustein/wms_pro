@@ -106,16 +106,26 @@ class Product extends Model
         return $this->hasMany(InboundItem::class);
     }
 
+    public function inventoryStocks(): HasMany
+    {
+        return $this->hasMany(InventoryStock::class);
+    }
+
+    public function stockMovements(): HasMany
+    {
+        return $this->hasMany(StockMovement::class);
+    }
+
     // Accessors
     public function getStatusBadgeAttribute(): string
     {
         if ($this->is_active) {
-            return '<span class="px-2 py-1 text-xs font-semibold rounded bg-green-100 text-green-800">
-                <i class="fas fa-check-circle mr-1"></i>Active
+            return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span class="w-1.5 h-1.5 bg-green-500 rounded-full mr-1.5"></span>Active
             </span>';
         }
-        return '<span class="px-2 py-1 text-xs font-semibold rounded bg-red-100 text-red-800">
-            <i class="fas fa-times-circle mr-1"></i>Inactive
+        return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <span class="w-1.5 h-1.5 bg-red-500 rounded-full mr-1.5"></span>Inactive
         </span>';
     }
 
@@ -134,13 +144,42 @@ class Product extends Model
     public function getStockStatusColorAttribute(): string
     {
         if ($this->current_stock <= 0) {
-            return 'text-red-600';
+            return 'red';
         } elseif ($this->current_stock <= $this->reorder_level) {
-            return 'text-yellow-600';
+            return 'yellow';
         } elseif ($this->current_stock >= $this->maximum_stock) {
-            return 'text-blue-600';
+            return 'blue';
         }
-        return 'text-green-600';
+        return 'green';
+    }
+
+    public function getStockStatusBadgeAttribute(): string
+    {
+        $status = $this->stock_status;
+        $color = $this->stock_status_color;
+        
+        $badgeClasses = [
+            'red' => 'bg-red-100 text-red-800',
+            'yellow' => 'bg-yellow-100 text-yellow-800',
+            'blue' => 'bg-blue-100 text-blue-800',
+            'green' => 'bg-green-100 text-green-800',
+        ];
+        
+        $iconClasses = [
+            'red' => 'bg-red-500',
+            'yellow' => 'bg-yellow-500',
+            'blue' => 'bg-blue-500',
+            'green' => 'bg-green-500',
+        ];
+        
+        return sprintf(
+            '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium %s">
+                <span class="w-1.5 h-1.5 %s rounded-full mr-1.5"></span>%s
+            </span>',
+            $badgeClasses[$color],
+            $iconClasses[$color],
+            $status
+        );
     }
 
     public function getProfitMarginAttribute(): float
@@ -164,10 +203,87 @@ class Product extends Model
         return asset('images/no-image.png');
     }
 
+    public function getTotalWeightAttribute(): float
+    {
+        return ($this->weight ?? 0) * $this->current_stock;
+    }
+
+    public function getTotalVolumeAttribute(): float
+    {
+        if (!$this->length || !$this->width || !$this->height) {
+            return 0;
+        }
+        // Calculate volume in m³ from dimensions in cm
+        $volumeInCubicCm = $this->length * $this->width * $this->height;
+        $volumeInCubicM = $volumeInCubicCm / 1000000; // Convert cm³ to m³
+        return $volumeInCubicM * $this->current_stock;
+    }
+
+    // Helper Accessors for Display
+    public function getFormattedWeightAttribute(): string
+    {
+        if (!$this->weight) {
+            return '-';
+        }
+        return number_format($this->weight, 2) . ' kg';
+    }
+
+    public function getFormattedVolumeAttribute(): string
+    {
+        if (!$this->length || !$this->width || !$this->height) {
+            return '-';
+        }
+        $volumeInCubicCm = $this->length * $this->width * $this->height;
+        $volumeInCubicM = $volumeInCubicCm / 1000000;
+        return number_format($volumeInCubicM, 6) . ' m³';
+    }
+
+    public function getFormattedDimensionsAttribute(): string
+    {
+        if (!$this->length || !$this->width || !$this->height) {
+            return '-';
+        }
+        return sprintf(
+            '%s × %s × %s cm',
+            number_format($this->length, 2),
+            number_format($this->width, 2),
+            number_format($this->height, 2)
+        );
+    }
+
+    public function getTypeDisplayAttribute(): string
+    {
+        $types = [
+            'raw_material' => 'Raw Material',
+            'finished_goods' => 'Finished Goods',
+            'spare_parts' => 'Spare Parts',
+            'consumable' => 'Consumable',
+        ];
+        
+        return $types[$this->type] ?? ucfirst($this->type);
+    }
+
+    public function getTypeBadgeAttribute(): string
+    {
+        $badges = [
+            'raw_material' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">Raw Material</span>',
+            'finished_goods' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">Finished Goods</span>',
+            'spare_parts' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">Spare Parts</span>',
+            'consumable' => '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-teal-100 text-teal-800">Consumable</span>',
+        ];
+        
+        return $badges[$this->type] ?? '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">' . ucfirst($this->type) . '</span>';
+    }
+
     // Scopes
     public function scopeActive($query)
     {
         return $query->where('is_active', true);
+    }
+
+    public function scopeInactive($query)
+    {
+        return $query->where('is_active', false);
     }
 
     public function scopeLowStock($query)
@@ -201,13 +317,29 @@ class Product extends Model
         return $query->where('supplier_id', $supplierId);
     }
 
+    public function scopeSerialized($query)
+    {
+        return $query->where('is_serialized', true);
+    }
+
+    public function scopeBatchTracked($query)
+    {
+        return $query->where('is_batch_tracked', true);
+    }
+
+    public function scopeTaxable($query)
+    {
+        return $query->where('is_taxable', true);
+    }
+
     public function scopeSearch($query, $search)
     {
         return $query->where(function($q) use ($search) {
             $q->where('name', 'like', "%{$search}%")
               ->orWhere('sku', 'like', "%{$search}%")
               ->orWhere('barcode', 'like', "%{$search}%")
-              ->orWhere('brand', 'like', "%{$search}%");
+              ->orWhere('brand', 'like', "%{$search}%")
+              ->orWhere('description', 'like', "%{$search}%");
         });
     }
 
@@ -217,7 +349,7 @@ class Product extends Model
         if ($type === 'add') {
             $this->current_stock += $quantity;
         } elseif ($type === 'subtract') {
-            $this->current_stock -= $quantity;
+            $this->current_stock = max(0, $this->current_stock - $quantity);
         } elseif ($type === 'set') {
             $this->current_stock = $quantity;
         }
@@ -240,12 +372,84 @@ class Product extends Model
         return $this->current_stock >= $this->maximum_stock;
     }
 
-    // Static Methods
-    public static function generateSku(): string
+    public function isLowStock(): bool
     {
-        $lastProduct = self::withTrashed()->latest('id')->first();
-        $number = $lastProduct ? intval(substr($lastProduct->sku, 4)) + 1 : 1;
-        return 'PRD-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+        return $this->current_stock > 0 && $this->current_stock <= $this->reorder_level;
+    }
+
+    public function hasStock(): bool
+    {
+        return $this->current_stock > 0;
+    }
+
+    public function canSell(float $quantity): bool
+    {
+        return $this->current_stock >= $quantity;
+    }
+
+    public function calculateTotalValue(): float
+    {
+        return $this->current_stock * $this->selling_price;
+    }
+
+    public function calculateTotalCost(): float
+    {
+        return $this->current_stock * $this->purchase_price;
+    }
+
+    public function calculateTotalProfit(): float
+    {
+        return $this->current_stock * $this->profit_amount;
+    }
+
+    public function getStockPercentage(): float
+    {
+        if ($this->maximum_stock <= 0) {
+            return 0;
+        }
+        return ($this->current_stock / $this->maximum_stock) * 100;
+    }
+
+    // Static Methods
+    public static function generateSku(string $prefix = 'PRD'): string
+    {
+        $lastProduct = self::withTrashed()
+            ->where('sku', 'like', $prefix . '-%')
+            ->latest('id')
+            ->first();
+        
+        if ($lastProduct) {
+            $lastNumber = intval(substr($lastProduct->sku, strlen($prefix) + 1));
+            $number = $lastNumber + 1;
+        } else {
+            $number = 1;
+        }
+        
+        return $prefix . '-' . str_pad($number, 5, '0', STR_PAD_LEFT);
+    }
+
+    public static function getProductTypes(): array
+    {
+        return [
+            'raw_material' => 'Raw Material',
+            'finished_goods' => 'Finished Goods',
+            'spare_parts' => 'Spare Parts',
+            'consumable' => 'Consumable',
+        ];
+    }
+
+    public static function getStockStatistics(): array
+    {
+        return [
+            'total_products' => self::count(),
+            'active_products' => self::active()->count(),
+            'inactive_products' => self::inactive()->count(),
+            'low_stock' => self::lowStock()->count(),
+            'out_of_stock' => self::outOfStock()->count(),
+            'overstock' => self::overstock()->count(),
+            'total_stock_value' => self::active()->get()->sum(fn($p) => $p->calculateTotalValue()),
+            'total_stock_cost' => self::active()->get()->sum(fn($p) => $p->calculateTotalCost()),
+        ];
     }
 
     // Boot

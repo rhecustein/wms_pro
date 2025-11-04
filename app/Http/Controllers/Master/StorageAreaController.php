@@ -1,5 +1,4 @@
 <?php
-// app/Http/Controllers/Master/StorageAreaController.php
 
 namespace App\Http\Controllers\Master;
 
@@ -8,11 +7,12 @@ use App\Models\StorageArea;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 
 class StorageAreaController extends Controller
 {
- 
     /**
      * Display a listing of the resource.
      */
@@ -47,13 +47,41 @@ class StorageAreaController extends Controller
             $query->where('is_active', $request->status === 'active');
         }
 
+        // Get paginated storage areas
         $storageAreas = $query->latest()->paginate(15)->withQueryString();
         
+        // Get warehouses for filter dropdown
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
         
+        // Types array for filter
         $types = ['spr', 'bulky', 'quarantine', 'staging_1', 'staging_2', 'virtual'];
 
-        return view('master.storage-areas.index', compact('storageAreas', 'warehouses', 'types'));
+        // Calculate statistics for all storage areas
+        $stats = [
+            'total_areas' => StorageArea::count(),
+            'active_areas' => StorageArea::where('is_active', true)->count(),
+            'inactive_areas' => StorageArea::where('is_active', false)->count(),
+            'total_capacity' => StorageArea::sum('capacity_pallets') ?? 0,
+            'total_area_sqm' => StorageArea::sum('area_sqm') ?? 0,
+        ];
+
+        // Count by type
+        $stats['by_type'] = [
+            'spr' => StorageArea::where('type', 'spr')->count(),
+            'bulky' => StorageArea::where('type', 'bulky')->count(),
+            'quarantine' => StorageArea::where('type', 'quarantine')->count(),
+            'staging_1' => StorageArea::where('type', 'staging_1')->count(),
+            'staging_2' => StorageArea::where('type', 'staging_2')->count(),
+            'virtual' => StorageArea::where('type', 'virtual')->count(),
+        ];
+
+        // Return view with all data
+        return view('master.storage-areas.index', [
+            'storageAreas' => $storageAreas,
+            'warehouses' => $warehouses,
+            'types' => $types,
+            'stats' => $stats
+        ]);
     }
 
     /**
@@ -75,6 +103,7 @@ class StorageAreaController extends Controller
     public function create()
     {
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        
         $types = [
             'spr' => 'SPR (Standard Pallet Rack)',
             'bulky' => 'Bulky Storage',
@@ -111,14 +140,39 @@ class StorageAreaController extends Controller
             'description' => 'nullable|string'
         ]);
 
-        $validated['created_by'] = Auth::id();
-        $validated['updated_by'] = Auth::id();
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        DB::beginTransaction();
+        try {
+            $validated['created_by'] = Auth::id();
+            $validated['updated_by'] = Auth::id();
+            $validated['is_active'] = $request->has('is_active');
 
-        StorageArea::create($validated);
+            $storageArea = StorageArea::create($validated);
 
-        return redirect()->route('master.storage-areas.index')
-            ->with('success', 'Storage area created successfully.');
+            // Log activity
+            activity()
+                ->performedOn($storageArea)
+                ->causedBy(Auth::user())
+                ->log('Created storage area: ' . $storageArea->name);
+
+            DB::commit();
+
+            return redirect()
+                ->route('master.storage-areas.index')
+                ->with('success', 'Storage area created successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to create storage area', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'data' => $request->except(['_token'])
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to create storage area: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -128,7 +182,21 @@ class StorageAreaController extends Controller
     {
         $storageArea->load(['warehouse', 'createdBy', 'updatedBy', 'storageBins']);
 
-        return view('master.storage-areas.show', compact('storageArea'));
+        // Get statistics for this storage area
+        $stats = [
+            'total_bins' => $storageArea->storageBins()->count(),
+            'available_bins' => $storageArea->storageBins()->where('status', 'available')->count(),
+            'occupied_bins' => $storageArea->storageBins()->where('status', 'occupied')->count(),
+            'reserved_bins' => $storageArea->storageBins()->where('status', 'reserved')->count(),
+            'utilization' => 0,
+        ];
+
+        // Calculate utilization percentage
+        if ($stats['total_bins'] > 0) {
+            $stats['utilization'] = round(($stats['occupied_bins'] / $stats['total_bins']) * 100, 2);
+        }
+
+        return view('master.storage-areas.show', compact('storageArea', 'stats'));
     }
 
     /**
@@ -137,6 +205,7 @@ class StorageAreaController extends Controller
     public function edit(StorageArea $storageArea)
     {
         $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        
         $types = [
             'spr' => 'SPR (Standard Pallet Rack)',
             'bulky' => 'Bulky Storage',
@@ -173,13 +242,37 @@ class StorageAreaController extends Controller
             'description' => 'nullable|string'
         ]);
 
-        $validated['updated_by'] = Auth::id();
-        $validated['is_active'] = $request->has('is_active') ? true : false;
+        DB::beginTransaction();
+        try {
+            $validated['updated_by'] = Auth::id();
+            $validated['is_active'] = $request->has('is_active');
 
-        $storageArea->update($validated);
+            $storageArea->update($validated);
 
-        return redirect()->route('master.storage-areas.index')
-            ->with('success', 'Storage area updated successfully.');
+            // Log activity
+            activity()
+                ->performedOn($storageArea)
+                ->causedBy(Auth::user())
+                ->log('Updated storage area: ' . $storageArea->name);
+
+            DB::commit();
+
+            return redirect()
+                ->route('master.storage-areas.index')
+                ->with('success', 'Storage area updated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to update storage area', [
+                'storage_area_id' => $storageArea->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()
+                ->withInput()
+                ->with('error', 'Failed to update storage area: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -187,14 +280,102 @@ class StorageAreaController extends Controller
      */
     public function destroy(StorageArea $storageArea)
     {
+        // Check if storage area has storage bins
+        if ($storageArea->storageBins()->exists()) {
+            return back()->with('error', 'Cannot delete storage area with existing storage bins.');
+        }
+
+        DB::beginTransaction();
         try {
+            $areaName = $storageArea->name;
             $storageArea->delete();
+
+            // Log activity
+            activity()
+                ->causedBy(Auth::user())
+                ->log('Deleted storage area: ' . $areaName);
+
+            DB::commit();
             
-            return redirect()->route('master.storage-areas.index')
+            return redirect()
+                ->route('master.storage-areas.index')
                 ->with('success', 'Storage area deleted successfully.');
+
         } catch (\Exception $e) {
-            return redirect()->route('master.storage-areas.index')
-                ->with('error', 'Unable to delete storage area. It may be in use.');
+            DB::rollBack();
+            
+            Log::error('Failed to delete storage area', [
+                'storage_area_id' => $storageArea->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to delete storage area: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Activate storage area
+     */
+    public function activate(StorageArea $storageArea)
+    {
+        DB::beginTransaction();
+        try {
+            $storageArea->update([
+                'is_active' => true,
+                'updated_by' => Auth::id()
+            ]);
+
+            activity()
+                ->performedOn($storageArea)
+                ->causedBy(Auth::user())
+                ->log('Activated storage area: ' . $storageArea->name);
+
+            DB::commit();
+
+            return back()->with('success', 'Storage area activated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to activate storage area', [
+                'storage_area_id' => $storageArea->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to activate storage area: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Deactivate storage area
+     */
+    public function deactivate(StorageArea $storageArea)
+    {
+        DB::beginTransaction();
+        try {
+            $storageArea->update([
+                'is_active' => false,
+                'updated_by' => Auth::id()
+            ]);
+
+            activity()
+                ->performedOn($storageArea)
+                ->causedBy(Auth::user())
+                ->log('Deactivated storage area: ' . $storageArea->name);
+
+            DB::commit();
+
+            return back()->with('success', 'Storage area deactivated successfully.');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            
+            Log::error('Failed to deactivate storage area', [
+                'storage_area_id' => $storageArea->id,
+                'error' => $e->getMessage()
+            ]);
+            
+            return back()->with('error', 'Failed to deactivate storage area: ' . $e->getMessage());
         }
     }
 }

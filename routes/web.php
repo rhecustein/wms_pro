@@ -134,8 +134,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Storage Areas Management
         Route::resource('storage-areas', StorageAreaController::class);
         Route::get('warehouses/{warehouse}/storage-areas', [StorageAreaController::class, 'byWarehouse'])->name('storage-areas.by-warehouse');
-        
-        // Storage Bins Management
+    
         // Storage Bins Management
         Route::resource('storage-bins', StorageBinController::class);
         Route::get('storage-areas/{storageArea}/bins', [StorageBinController::class, 'byStorageArea'])->name('storage-bins.by-area');
@@ -152,6 +151,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryForm'])->name('storage-bins.adjust-inventory');
         Route::post('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryStore'])->name('storage-bins.adjust-inventory.store');
         Route::get('storage-bins/{storageBin}/history', [StorageBinController::class, 'viewHistory'])->name('storage-bins.history');
+        Route::post('storage-areas/{storageArea}/activate', [StorageAreaController::class, 'activate'])->name('storage-areas.activate');
+        Route::post('storage-areas/{storageArea}/deactivate', [StorageAreaController::class, 'deactivate'])->name('storage-areas.deactivate');
                 
         // Product Categories Management
         Route::resource('product-categories', ProductCategoryController::class);
@@ -250,6 +251,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/confirm', [PurchaseOrderController::class, 'confirm'])->name('purchase-orders.confirm');
         Route::post('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
         Route::get('purchase-orders/{purchaseOrder}/print', [PurchaseOrderController::class, 'print'])->name('purchase-orders.print');
+        Route::post('purchase-orders/{purchaseOrder}/update-status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
         
         // Inbound Shipments
         Route::resource('shipments', InboundShipmentController::class);
@@ -470,13 +472,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
         Route::delete('activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
+        Route::delete('activity-logs/{activityLog}', [ActivityLogController::class, 'destroy'])->name('activity-logs.destroy');
+        //bulk-delete
+        Route::post('activity-logs/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activity-logs.bulk-delete');
         
         // Notifications
-        Route::get('notifications', [NotificationController::class, 'index'])->name('notifications.index');
-        Route::get('notifications/{notification}', [NotificationController::class, 'show'])->name('notifications.show');
-        Route::post('notifications/{notification}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-        Route::post('notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read-all');
-        Route::delete('notifications/{notification}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
+        Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationController::class, 'index'])->name('index');
+        Route::post('{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+        Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        Route::delete('delete-all-read', [NotificationController::class, 'deleteAllRead'])->name('delete-all-read');
+        Route::get('unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
+    });
     });
 
     // ============================================

@@ -46,6 +46,11 @@ class InventoryStock extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
+    public function unit()
+    {
+        return $this->belongsTo(Unit::class);
+    }
+
     public function storageBin()
     {
         return $this->belongsTo(StorageBin::class);

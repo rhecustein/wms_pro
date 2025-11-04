@@ -52,4 +52,9 @@ class StockOpnameItem extends Model
     {
         return $this->belongsTo(User::class, 'counted_by');
     }
+
+    public function countedBy()
+    {
+        return $this->belongsTo(User::class, 'counted_by');
+    }
 }
