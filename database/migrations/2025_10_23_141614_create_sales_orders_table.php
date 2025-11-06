@@ -33,6 +33,14 @@ return new class extends Migration
             $table->foreignId('updated_by')->nullable()->constrained('users')->nullOnDelete();
             $table->timestamps();
             $table->softDeletes();
+
+            // Indexes for performance
+            $table->index('so_number');
+            $table->index('status');
+            $table->index('payment_status');
+            $table->index('order_date');
+            $table->index(['warehouse_id', 'status']);
+            $table->index(['customer_id', 'status']);
         });
     }
 

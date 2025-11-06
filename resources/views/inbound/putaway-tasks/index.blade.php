@@ -66,7 +66,7 @@
                         <option value="">All Status</option>
                         @foreach($statuses as $status)
                             <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
-                                {{ ucfirst($status) }}
+                                {{ ucfirst(str_replace('_', ' ', $status)) }}
                             </option>
                         @endforeach
                     </select>
@@ -155,16 +155,18 @@
                     @forelse($putawayTasks as $task)
                         <tr class="hover:bg-gray-50 transition">
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="text-sm font-mono font-semibold text-gray-900">{{ $task->task_number }}</span>
-                                @if($task->suggested_by_system)
-                                    <span class="ml-2 text-xs text-blue-600" title="System Suggested">
-                                        <i class="fas fa-robot"></i>
-                                    </span>
-                                @endif
+                                <div class="flex flex-col">
+                                    <span class="text-sm font-mono font-semibold text-gray-900">{{ $task->task_number }}</span>
+                                    @if($task->suggested_by_system)
+                                        <span class="text-xs text-blue-600 mt-1" title="System Suggested">
+                                            <i class="fas fa-robot mr-1"></i>System Suggested
+                                        </span>
+                                    @endif
+                                </div>
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                    <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
                                         <i class="fas fa-box text-indigo-600"></i>
                                     </div>
                                     <div>
@@ -175,7 +177,7 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 flex-shrink-0">
                                         <i class="fas fa-warehouse text-purple-600"></i>
                                     </div>
                                     <div>
@@ -195,7 +197,7 @@
                                     </div>
                                     <div class="text-gray-900 font-semibold">
                                         <i class="fas fa-layer-group text-green-500 mr-1"></i>
-                                        {{ $task->storageBin->bin_code ?? 'Not Assigned' }}
+                                        {{ $task->storageBin->code ?? 'Not Assigned' }}
                                     </div>
                                 </div>
                             </td>
@@ -208,12 +210,24 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {!! $task->priority_badge !!}
+                                @if($task->priority === 'high')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        <i class="fas fa-exclamation-triangle mr-1"></i>High
+                                    </span>
+                                @elseif($task->priority === 'medium')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-minus-circle mr-1"></i>Medium
+                                    </span>
+                                @else
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Low
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4">
                                 @if($task->assignedUser)
                                     <div class="flex items-center">
-                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2">
+                                        <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mr-2 flex-shrink-0">
                                             <i class="fas fa-user text-blue-600 text-xs"></i>
                                         </div>
                                         <div>
@@ -222,26 +236,46 @@
                                         </div>
                                     </div>
                                 @else
-                                    <span class="text-sm text-gray-400">Unassigned</span>
+                                    <span class="text-sm text-gray-400 italic">Unassigned</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {!! $task->status_badge !!}
+                                @if($task->status === 'pending')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-gray-100 text-gray-800">
+                                        <i class="fas fa-clock mr-1"></i>Pending
+                                    </span>
+                                @elseif($task->status === 'assigned')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        <i class="fas fa-user-check mr-1"></i>Assigned
+                                    </span>
+                                @elseif($task->status === 'in_progress')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        <i class="fas fa-spinner mr-1"></i>In Progress
+                                    </span>
+                                @elseif($task->status === 'completed')
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                                        <i class="fas fa-check-circle mr-1"></i>Completed
+                                    </span>
+                                @else
+                                    <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-red-100 text-red-800">
+                                        <i class="fas fa-times-circle mr-1"></i>Cancelled
+                                    </span>
+                                @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('inbound.putaway-tasks.show', $task) }}" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                    <a href="{{ route('inbound.putaway-tasks.show', $task) }}" class="text-blue-600 hover:text-blue-900 transition" title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     
                                     @if(in_array($task->status, ['assigned', 'in_progress']))
-                                        <a href="{{ route('inbound.putaway-tasks.execute', $task) }}" class="text-green-600 hover:text-green-900" title="Execute Task">
+                                        <a href="{{ route('inbound.putaway-tasks.execute', $task) }}" class="text-green-600 hover:text-green-900 transition" title="Execute Task">
                                             <i class="fas fa-play-circle"></i>
                                         </a>
                                     @endif
                                     
                                     @if(in_array($task->status, ['pending', 'assigned']))
-                                        <a href="{{ route('inbound.putaway-tasks.edit', $task) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                                        <a href="{{ route('inbound.putaway-tasks.edit', $task) }}" class="text-yellow-600 hover:text-yellow-900 transition" title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
                                     @endif
@@ -250,7 +284,7 @@
                                         <form action="{{ route('inbound.putaway-tasks.destroy', $task) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this task?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
+                                            <button type="submit" class="text-red-600 hover:text-red-900 transition" title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>

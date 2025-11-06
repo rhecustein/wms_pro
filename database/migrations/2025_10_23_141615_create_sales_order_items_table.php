@@ -23,6 +23,10 @@ return new class extends Migration
             $table->decimal('line_total', 15, 2);
             $table->text('notes')->nullable();
             $table->timestamps();
+
+            // Indexes for performance
+            $table->index('sales_order_id');
+            $table->index('product_id');
         });
     }
 

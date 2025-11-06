@@ -58,6 +58,21 @@ class PutawayTask extends Model
         return $this->belongsTo(Product::class);
     }
 
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function storageBin()
+    {
+        return $this->belongsTo(StorageBin::class, 'from_storage_bin_id');
+    }
+
     public function toStorageBin()
     {
         return $this->belongsTo(StorageBin::class, 'to_storage_bin_id');

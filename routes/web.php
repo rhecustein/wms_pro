@@ -331,17 +331,37 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('sales-orders/ajax/product/{id}', [SalesOrderController::class, 'getProduct'])
             ->name('sales-orders.get-product');
 
-        // Picking Orders - Wave Picking harus di atas resource
-        Route::get('picking-orders/wave', [PickingOrderController::class, 'wave'])->name('picking-orders.wave');
-        Route::post('picking-orders/batch-generate', [PickingOrderController::class, 'batchGenerate'])->name('picking-orders.batch-generate');
-        Route::get('picking-orders/pending', [PickingOrderController::class, 'pending'])->name('picking-orders.pending');
-        Route::get('picking-orders/{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('picking-orders.execute');
-        Route::get('picking-orders/{pickingOrder}/print', [PickingOrderController::class, 'print'])->name('picking-orders.print');
-        Route::post('picking-orders/{pickingOrder}/assign', [PickingOrderController::class, 'assign'])->name('picking-orders.assign');
-        Route::post('picking-orders/{pickingOrder}/start', [PickingOrderController::class, 'start'])->name('picking-orders.start');
-        Route::post('picking-orders/{pickingOrder}/complete', [PickingOrderController::class, 'complete'])->name('picking-orders.complete');
-        Route::post('picking-orders/{pickingOrder}/cancel', [PickingOrderController::class, 'cancel'])->name('picking-orders.cancel');
-        Route::resource('picking-orders', PickingOrderController::class);
+        // Picking Orders Routes
+        Route::prefix('picking-orders')->name('picking-orders.')->group(function () {
+            
+            // ========================================
+            // PENTING: Route AJAX harus DI ATAS!
+            // ========================================
+            Route::get('sales-order/{salesOrderId}/items', [PickingOrderController::class, 'getSalesOrderItems'])->name('get-items');
+            
+            // Static routes (sebelum dynamic routes)
+            Route::get('wave/create', [PickingOrderController::class, 'wave'])->name('wave');
+            Route::post('wave/generate', [PickingOrderController::class, 'batchGenerate'])->name('batch-generate');
+            Route::get('pending/list', [PickingOrderController::class, 'pending'])->name('pending');
+            Route::get('create', [PickingOrderController::class, 'create'])->name('create');
+            
+            // CRUD routes
+            Route::get('/', [PickingOrderController::class, 'index'])->name('index');
+            Route::post('/', [PickingOrderController::class, 'store'])->name('store');
+            
+            // Dynamic routes (harus di bawah)
+            Route::get('{pickingOrder}', [PickingOrderController::class, 'show'])->name('show');
+            Route::get('{pickingOrder}/edit', [PickingOrderController::class, 'edit'])->name('edit');
+            Route::put('{pickingOrder}', [PickingOrderController::class, 'update'])->name('update');
+            Route::delete('{pickingOrder}', [PickingOrderController::class, 'destroy'])->name('destroy');
+            
+            Route::post('{pickingOrder}/assign', [PickingOrderController::class, 'assign'])->name('assign');
+            Route::post('{pickingOrder}/start', [PickingOrderController::class, 'start'])->name('start');
+            Route::get('{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('execute');
+            Route::post('{pickingOrder}/complete', [PickingOrderController::class, 'complete'])->name('complete');
+            Route::post('{pickingOrder}/cancel', [PickingOrderController::class, 'cancel'])->name('cancel');
+            Route::get('{pickingOrder}/print', [PickingOrderController::class, 'print'])->name('print');
+        });
         
         // Packing Orders
         Route::get('packing-orders/pending', [PackingOrderController::class, 'pending'])->name('packing-orders.pending');
@@ -411,12 +431,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('equipment')->name('equipment.')->group(function () {
         
-        // Vehicles Management
-        Route::get('vehicles/{vehicle}/history', [VehicleController::class, 'history'])->name('vehicles.history');
-        Route::post('vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->name('vehicles.activate');
-        Route::post('vehicles/{vehicle}/deactivate', [VehicleController::class, 'deactivate'])->name('vehicles.deactivate');
-        Route::post('vehicles/{vehicle}/maintenance', [VehicleController::class, 'maintenance'])->name('vehicles.maintenance');
-        Route::resource('vehicles', VehicleController::class);
+        // Vehicle Routes
+        Route::prefix('vehicles')->name('vehicles.')->group(function () {
+            // Special routes (harus di atas resource routes)
+            Route::get('/export', [VehicleController::class, 'export'])->name('export');
+            Route::get('/print', [VehicleController::class, 'print'])->name('print');
+            
+            // Resource routes
+            Route::get('/', [VehicleController::class, 'index'])->name('index');
+            Route::get('/create', [VehicleController::class, 'create'])->name('create');
+            Route::post('/', [VehicleController::class, 'store'])->name('store');
+            Route::get('/{vehicle}', [VehicleController::class, 'show'])->name('show');
+            Route::get('/{vehicle}/edit', [VehicleController::class, 'edit'])->name('edit');
+            Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
+            Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
+        });
+        
         
         // Equipment Management
         Route::get('equipments/{equipment}/history', [EquipmentController::class, 'history'])->name('equipments.history');
@@ -524,6 +554,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('good-receiving/{goodReceiving}', [GoodReceivingMobileController::class, 'show'])->name('good-receiving.show');
         Route::post('good-receiving/{goodReceiving}/scan', [GoodReceivingMobileController::class, 'scan'])->name('good-receiving.scan');
         Route::post('good-receiving/{goodReceiving}/confirm', [GoodReceivingMobileController::class, 'confirm'])->name('good-receiving.confirm');
+        Route::get('good-receivings/products', [GoodReceivingController::class, 'getProducts'])->name('inbound.good-receivings.products');
         
         // Putaway Mobile
         Route::get('putaway', [PutawayMobileController::class, 'index'])->name('putaway.index');

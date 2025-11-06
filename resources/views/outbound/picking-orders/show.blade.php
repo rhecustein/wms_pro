@@ -10,7 +10,7 @@
     {{-- Page Header --}}
     <div class="flex items-center justify-between mb-6">
         <div class="flex items-center">
-            <a href="{{ route('outbound.picking-orders.index') }}" class="mr-4 text-gray-600 hover:text-gray-900">
+            <a href="{{ route('picking-orders.index') }}" class="mr-4 text-gray-600 hover:text-gray-900">
                 <i class="fas fa-arrow-left text-xl"></i>
             </a>
             <div>
@@ -23,22 +23,22 @@
         </div>
         <div class="flex space-x-2">
             @if(in_array($pickingOrder->status, ['pending', 'assigned']))
-                <form action="{{ route('outbound.picking-orders.start', $pickingOrder) }}" method="POST" class="inline">
+                <form action="{{ route('picking-orders.start', $pickingOrder) }}" method="POST" class="inline">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         <i class="fas fa-play mr-2"></i>Start Picking
                     </button>
                 </form>
-                <a href="{{ route('outbound.picking-orders.edit', $pickingOrder) }}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
+                <a href="{{ route('picking-orders.edit', $pickingOrder) }}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
                     <i class="fas fa-edit mr-2"></i>Edit
                 </a>
             @endif
 
             @if($pickingOrder->status === 'in_progress')
-                <a href="{{ route('outbound.picking-orders.execute', $pickingOrder) }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                <a href="{{ route('picking-orders.execute', $pickingOrder) }}" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
                     <i class="fas fa-tasks mr-2"></i>Execute Picking
                 </a>
-                <form action="{{ route('outbound.picking-orders.complete', $pickingOrder) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to complete this picking order?')">
+                <form action="{{ route('picking-orders.complete', $pickingOrder) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to complete this picking order?')">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                         <i class="fas fa-check-circle mr-2"></i>Complete
@@ -47,7 +47,7 @@
             @endif
 
             @if(!in_array($pickingOrder->status, ['completed', 'cancelled']))
-                <form action="{{ route('outbound.picking-orders.cancel', $pickingOrder) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this picking order?')">
+                <form action="{{ route('picking-orders.cancel', $pickingOrder) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to cancel this picking order?')">
                     @csrf
                     <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                         <i class="fas fa-times-circle mr-2"></i>Cancel
@@ -55,7 +55,7 @@
                 </form>
             @endif
 
-            <a href="{{ route('outbound.picking-orders.print', $pickingOrder) }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition" target="_blank">
+            <a href="{{ route('picking-orders.print', $pickingOrder) }}" class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition" target="_blank">
                 <i class="fas fa-print mr-2"></i>Print
             </a>
         </div>
@@ -86,6 +86,18 @@
         </div>
     @endif
 
+    @if(session('warning'))
+        <div class="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2"></i>
+                <span>{{ session('warning') }}</span>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" class="text-yellow-700 hover:text-yellow-900">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    @endif
+
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {{-- Main Information --}}
         <div class="lg:col-span-2">
@@ -101,18 +113,45 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Status</label>
-                        <div class="mt-1">{!! $pickingOrder->status_badge !!}</div>
+                        <div class="mt-1">
+                            @php
+                                $statusColors = [
+                                    'pending' => 'bg-yellow-100 text-yellow-800',
+                                    'assigned' => 'bg-blue-100 text-blue-800',
+                                    'in_progress' => 'bg-purple-100 text-purple-800',
+                                    'completed' => 'bg-green-100 text-green-800',
+                                    'cancelled' => 'bg-red-100 text-red-800',
+                                ];
+                                $color = $statusColors[$pickingOrder->status] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $color }}">
+                                {{ ucfirst(str_replace('_', ' ', $pickingOrder->status)) }}
+                            </span>
+                        </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Picking Date</label>
                         <p class="text-base text-gray-900">
                             <i class="fas fa-calendar text-gray-400 mr-1"></i>
-                            {{ $pickingOrder->picking_date->format('d M Y, H:i') }}
+                            {{ \Carbon\Carbon::parse($pickingOrder->picking_date)->format('d M Y, H:i') }}
                         </p>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Priority</label>
-                        <div class="mt-1">{!! $pickingOrder->priority_badge !!}</div>
+                        <div class="mt-1">
+                            @php
+                                $priorityColors = [
+                                    'urgent' => 'bg-red-100 text-red-800',
+                                    'high' => 'bg-orange-100 text-orange-800',
+                                    'medium' => 'bg-yellow-100 text-yellow-800',
+                                    'low' => 'bg-green-100 text-green-800',
+                                ];
+                                $priorityColor = $priorityColors[$pickingOrder->priority] ?? 'bg-gray-100 text-gray-800';
+                            @endphp
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $priorityColor }}">
+                                {{ ucfirst($pickingOrder->priority) }}
+                            </span>
+                        </div>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Picking Type</label>
@@ -149,11 +188,13 @@
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Order Date</label>
-                        <p class="text-base text-gray-900">{{ $pickingOrder->salesOrder->order_date->format('d M Y') }}</p>
+                        <p class="text-base text-gray-900">{{ \Carbon\Carbon::parse($pickingOrder->salesOrder->order_date)->format('d M Y') }}</p>
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-500">Delivery Date</label>
-                        <p class="text-base text-gray-900">{{ $pickingOrder->salesOrder->delivery_date?->format('d M Y') ?? '-' }}</p>
+                        <p class="text-base text-gray-900">
+                            {{ $pickingOrder->salesOrder->delivery_date ? \Carbon\Carbon::parse($pickingOrder->salesOrder->delivery_date)->format('d M Y') : '-' }}
+                        </p>
                     </div>
                 </div>
             </div>
@@ -173,7 +214,7 @@
                         <label class="text-sm font-medium text-gray-500">Warehouse Code</label>
                         <p class="text-base text-gray-900">{{ $pickingOrder->warehouse->code }}</p>
                     </div>
-                    <div>
+                    <div class="col-span-2">
                         <label class="text-sm font-medium text-gray-500">Location</label>
                         <p class="text-base text-gray-900">{{ $pickingOrder->warehouse->address ?? '-' }}</p>
                     </div>
@@ -200,13 +241,15 @@
                             </div>
                             <div>
                                 <p class="text-base font-semibold text-gray-900">{{ $pickingOrder->assignedUser->name }}</p>
-                                <p class="text-xs text-gray-500">{{ $pickingOrder->assigned_at?->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {{ $pickingOrder->assigned_at ? \Carbon\Carbon::parse($pickingOrder->assigned_at)->format('d M Y, H:i') : '-' }}
+                                </p>
                             </div>
                         </div>
                     @else
                         <p class="text-base text-gray-400 mt-2">Not assigned yet</p>
                         @if($pickingOrder->status === 'pending')
-                            <button onclick="document.getElementById('assignModal').classList.remove('hidden')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm">
+                            <button onclick="document.getElementById('assignModal').classList.remove('hidden')" class="mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition text-sm w-full">
                                 <i class="fas fa-user-plus mr-2"></i>Assign Picker
                             </button>
                         @endif
@@ -235,7 +278,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">Assigned</p>
-                                <p class="text-xs text-gray-500">{{ $pickingOrder->assigned_at->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($pickingOrder->assigned_at)->format('d M Y, H:i') }}</p>
                             </div>
                         </div>
                     @endif
@@ -247,7 +290,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">Started</p>
-                                <p class="text-xs text-gray-500">{{ $pickingOrder->started_at->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($pickingOrder->started_at)->format('d M Y, H:i') }}</p>
                             </div>
                         </div>
                     @endif
@@ -259,7 +302,7 @@
                             </div>
                             <div>
                                 <p class="text-sm font-semibold text-gray-900">Completed</p>
-                                <p class="text-xs text-gray-500">{{ $pickingOrder->completed_at->format('d M Y, H:i') }}</p>
+                                <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($pickingOrder->completed_at)->format('d M Y, H:i') }}</p>
                             </div>
                         </div>
                     @endif
@@ -268,25 +311,31 @@
 
             {{-- Progress Summary --}}
             @if($pickingOrder->status === 'in_progress')
+                @php
+                    $pickedCount = $pickingOrder->items->where('status', 'picked')->count();
+                    $pendingCount = $pickingOrder->items->where('status', 'pending')->count();
+                    $totalCount = $pickingOrder->items->count();
+                    $progressPercentage = $totalCount > 0 ? round(($pickedCount / $totalCount) * 100) : 0;
+                @endphp
                 <div class="bg-gradient-to-br from-green-50 to-blue-50 rounded-xl shadow-sm border border-green-200 p-6">
                     <h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
                         <i class="fas fa-chart-line text-green-600 mr-2"></i>
                         Picking Progress
                     </h2>
                     <div class="text-center mb-4">
-                        <div class="text-4xl font-bold text-green-600">{{ $pickingOrder->progress_percentage }}%</div>
+                        <div class="text-4xl font-bold text-green-600">{{ $progressPercentage }}%</div>
                         <p class="text-sm text-gray-600 mt-1">Completion</p>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-3 mb-4">
-                        <div class="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: {{ $pickingOrder->progress_percentage }}%"></div>
+                        <div class="bg-gradient-to-r from-green-500 to-blue-500 h-3 rounded-full transition-all duration-500" style="width: {{ $progressPercentage }}%"></div>
                     </div>
                     <div class="grid grid-cols-2 gap-4 text-center">
                         <div class="bg-white rounded-lg p-3">
-                            <p class="text-2xl font-bold text-green-600">{{ $pickingOrder->items->where('status', 'picked')->count() }}</p>
+                            <p class="text-2xl font-bold text-green-600">{{ $pickedCount }}</p>
                             <p class="text-xs text-gray-600">Picked</p>
                         </div>
                         <div class="bg-white rounded-lg p-3">
-                            <p class="text-2xl font-bold text-gray-600">{{ $pickingOrder->items->where('status', 'pending')->count() }}</p>
+                            <p class="text-2xl font-bold text-gray-600">{{ $pendingCount }}</p>
                             <p class="text-xs text-gray-600">Pending</p>
                         </div>
                     </div>
@@ -332,12 +381,12 @@
                                     </div>
                                     <div>
                                         <div class="text-sm font-semibold text-gray-900">{{ $item->product->name }}</div>
-                                        <div class="text-xs text-gray-500">{{ $item->product->sku }}</div>
+                                        <div class="text-xs text-gray-500">{{ $item->product->code ?? $item->product->sku ?? '-' }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4">
-                                <div class="text-sm font-semibold text-gray-900">{{ $item->storageBin->bin_code }}</div>
+                                <div class="text-sm font-semibold text-gray-900">{{ $item->storageBin->bin_code ?? $item->storageBin->name ?? '-' }}</div>
                                 <div class="text-xs text-gray-500">{{ $item->storageBin->location ?? '-' }}</div>
                             </td>
                             <td class="px-6 py-4">
@@ -356,7 +405,7 @@
                                 @if($item->expiry_date)
                                     <div class="text-xs text-gray-500 mt-1">
                                         <i class="fas fa-calendar-alt mr-1"></i>
-                                        Exp: {{ $item->expiry_date->format('d M Y') }}
+                                        Exp: {{ \Carbon\Carbon::parse($item->expiry_date)->format('d M Y') }}
                                     </div>
                                 @endif
                             </td>
@@ -373,12 +422,25 @@
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                {!! $item->status_badge !!}
+                                @php
+                                    $itemStatusColors = [
+                                        'pending' => 'bg-yellow-100 text-yellow-800',
+                                        'picked' => 'bg-green-100 text-green-800',
+                                        'short' => 'bg-orange-100 text-orange-800',
+                                        'cancelled' => 'bg-red-100 text-red-800',
+                                    ];
+                                    $itemColor = $itemStatusColors[$item->status] ?? 'bg-gray-100 text-gray-800';
+                                @endphp
+                                <span class="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full {{ $itemColor }}">
+                                    {{ ucfirst($item->status) }}
+                                </span>
                             </td>
                             <td class="px-6 py-4">
                                 @if($item->pickedBy)
                                     <div class="text-sm text-gray-900">{{ $item->pickedBy->name }}</div>
-                                    <div class="text-xs text-gray-500">{{ $item->picked_at?->format('d M, H:i') }}</div>
+                                    <div class="text-xs text-gray-500">
+                                        {{ $item->picked_at ? \Carbon\Carbon::parse($item->picked_at)->format('d M, H:i') : '-' }}
+                                    </div>
                                 @else
                                     <span class="text-sm text-gray-400">-</span>
                                 @endif
@@ -387,7 +449,8 @@
                     @empty
                         <tr>
                             <td colspan="8" class="px-6 py-8 text-center text-gray-500">
-                                No items found
+                                <i class="fas fa-inbox text-4xl text-gray-300 mb-3"></i>
+                                <p>No items found</p>
                             </td>
                         </tr>
                     @endforelse
@@ -399,6 +462,7 @@
 </div>
 
 {{-- Assignment Modal --}}
+@if($pickingOrder->status === 'pending')
 <div id="assignModal" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
     <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-xl bg-white">
         <div class="flex items-center justify-between mb-4">
@@ -407,13 +471,13 @@
                 <i class="fas fa-times"></i>
             </button>
         </div>
-        <form action="{{ route('outbound.picking-orders.assign', $pickingOrder) }}" method="POST">
+        <form action="{{ route('picking-orders.assign', $pickingOrder) }}" method="POST">
             @csrf
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Select User</label>
                 <select name="assigned_to" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500" required>
                     <option value="">Choose a picker...</option>
-                    @foreach(\App\Models\User::orderBy('name')->get() as $user)
+                    @foreach(\App\Models\User::where('is_active', true)->orderBy('name')->get() as $user)
                         <option value="{{ $user->id }}">{{ $user->name }}</option>
                     @endforeach
                 </select>
@@ -423,11 +487,27 @@
                     Cancel
                 </button>
                 <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Assign
+                    <i class="fas fa-user-check mr-2"></i>Assign
                 </button>
             </div>
         </form>
     </div>
 </div>
+@endif
+
+{{-- Auto-hide alerts after 5 seconds --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto hide success/error messages after 5 seconds
+        const alerts = document.querySelectorAll('[class*="bg-green-100"], [class*="bg-red-100"], [class*="bg-yellow-100"]');
+        alerts.forEach(alert => {
+            setTimeout(() => {
+                alert.style.transition = 'opacity 0.5s';
+                alert.style.opacity = '0';
+                setTimeout(() => alert.remove(), 500);
+            }, 5000);
+        });
+    });
+</script>
 
 @endsection

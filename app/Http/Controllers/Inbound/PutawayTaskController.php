@@ -111,7 +111,7 @@ class PutawayTaskController extends Controller
     public function create()
     {
         $goodReceivings = GoodReceiving::where('status', 'completed')
-            ->with('vendor')
+            ->with('supplier')
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -184,7 +184,7 @@ class PutawayTaskController extends Controller
     public function show(PutawayTask $putawayTask)
     {
         $putawayTask->load([
-            'goodReceiving.vendor',
+            'goodReceiving.supplier',
             'goodReceiving.purchaseOrder',
             'warehouse',
             'product',
@@ -208,7 +208,7 @@ class PutawayTaskController extends Controller
         }
 
         $goodReceivings = GoodReceiving::where('status', 'completed')
-            ->with('vendor')
+            ->with('supplier')
             ->orderBy('created_at', 'desc')
             ->get();
         
@@ -419,7 +419,7 @@ class PutawayTaskController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(PutawayTask $putawayTask)
+    public function destroy(PutawawayTask $putawayTask)
     {
         if ($putawayTask->status !== 'pending') {
             return back()->with('error', 'Only pending tasks can be deleted.');

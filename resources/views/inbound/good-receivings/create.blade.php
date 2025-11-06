@@ -51,8 +51,11 @@
                             <select name="purchase_order_id" id="purchase_order_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                                 <option value="">Select Purchase Order...</option>
                                 @foreach($purchaseOrders as $po)
-                                    <option value="{{ $po->id }}" data-supplier="{{ $po->supplier_id }}" data-warehouse="{{ $po->warehouse_id }}" {{ old('purchase_order_id') == $po->id ? 'selected' : '' }}>
-                                        {{ $po->po_number }} - {{ $po->supplier->name }}
+                                    <option value="{{ $po->id }}" 
+                                            data-supplier="{{ $po->supplier_id }}" 
+                                            data-warehouse="{{ $po->warehouse_id }}" 
+                                            {{ old('purchase_order_id', request('purchase_order_id')) == $po->id ? 'selected' : '' }}>
+                                        {{ $po->po_number }} - {{ $po->supplier->name }} ({{ $po->po_date->format('d M Y') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -66,8 +69,11 @@
                             <select name="inbound_shipment_id" id="inbound_shipment_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                                 <option value="">Select Inbound Shipment...</option>
                                 @foreach($inboundShipments as $shipment)
-                                    <option value="{{ $shipment->id }}" data-supplier="{{ $shipment->supplier_id }}" data-warehouse="{{ $shipment->warehouse_id }}" {{ old('inbound_shipment_id') == $shipment->id ? 'selected' : '' }}>
-                                        {{ $shipment->shipment_number }} - {{ $shipment->supplier->name }}
+                                    <option value="{{ $shipment->id }}" 
+                                            data-supplier="{{ $shipment->supplier_id }}" 
+                                            data-warehouse="{{ $shipment->warehouse_id }}" 
+                                            {{ old('inbound_shipment_id', request('inbound_shipment_id')) == $shipment->id ? 'selected' : '' }}>
+                                        {{ $shipment->shipment_number }} - {{ $shipment->supplier->name }} ({{ $shipment->shipment_date->format('d M Y') }})
                                     </option>
                                 @endforeach
                             </select>
@@ -77,11 +83,90 @@
                         </div>
                     </div>
 
-                    @if($selectedPO || $selectedShipment)
+                    {{-- Reference Document Info --}}
+                    @if($selectedPO)
                         <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                            <p class="text-sm text-blue-800">
+                            <div class="flex items-start">
+                                <i class="fas fa-file-alt text-blue-600 text-2xl mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-blue-900 mb-2">Purchase Order Details</h4>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                            <span class="text-blue-700 font-medium">PO Number:</span>
+                                            <span class="text-blue-900">{{ $selectedPO->po_number }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-blue-700 font-medium">PO Date:</span>
+                                            <span class="text-blue-900">{{ $selectedPO->po_date->format('d M Y') }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-blue-700 font-medium">Supplier:</span>
+                                            <span class="text-blue-900">{{ $selectedPO->supplier->name }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-blue-700 font-medium">Total Items:</span>
+                                            <span class="text-blue-900">{{ $selectedPO->items->count() }} items</span>
+                                        </div>
+                                    </div>
+                                    <p class="text-xs text-blue-700 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Items from this PO have been loaded. You can adjust received quantities as needed.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if($selectedShipment)
+                        <div class="mt-4 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="fas fa-truck text-purple-600 text-2xl mr-3"></i>
+                                <div class="flex-1">
+                                    <h4 class="font-semibold text-purple-900 mb-2">Inbound Shipment Details</h4>
+                                    <div class="grid grid-cols-2 gap-2 text-sm">
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Shipment Number:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->shipment_number }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Shipment Date:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->shipment_date->format('d M Y') }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Supplier:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->supplier->name }}</span>
+                                        </div>
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Total Items:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->items->count() }} items</span>
+                                        </div>
+                                        @if($selectedShipment->tracking_number)
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Tracking:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->tracking_number }}</span>
+                                        </div>
+                                        @endif
+                                        @if($selectedShipment->carrier)
+                                        <div>
+                                            <span class="text-purple-700 font-medium">Carrier:</span>
+                                            <span class="text-purple-900">{{ $selectedShipment->carrier }}</span>
+                                        </div>
+                                        @endif
+                                    </div>
+                                    <p class="text-xs text-purple-700 mt-2">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Items from this shipment have been loaded. You can adjust received quantities as needed.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+
+                    @if(!$selectedPO && !$selectedShipment)
+                        <div class="mt-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                            <p class="text-sm text-gray-600">
                                 <i class="fas fa-info-circle mr-2"></i>
-                                Items from the selected document will be loaded below. You can adjust quantities as needed.
+                                Select a Purchase Order or Inbound Shipment to automatically load items, or add items manually below.
                             </p>
                         </div>
                     @endif
@@ -162,7 +247,7 @@
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Expected</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Received</th>
-                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pallets</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Batch/Serial</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Notes</th>
                                     <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Action</th>
                                 </tr>
@@ -173,8 +258,9 @@
                                         <tr class="border-b border-gray-200">
                                             <td class="px-4 py-3">
                                                 <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
+                                                <input type="hidden" name="items[{{ $index }}][unit_of_measure]" value="{{ $item->product->unit->name ?? 'PCS' }}">
                                                 <div class="text-sm font-semibold text-gray-900">{{ $item->product->name }}</div>
-                                                <div class="text-xs text-gray-500">{{ $item->product->sku }}</div>
+                                                <div class="text-xs text-gray-500">{{ $item->product->sku }} - {{ $item->product->unit->name ?? 'PCS' }}</div>
                                             </td>
                                             <td class="px-4 py-3">
                                                 <input type="number" name="items[{{ $index }}][quantity_expected]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm" readonly>
@@ -183,7 +269,8 @@
                                                 <input type="number" name="items[{{ $index }}][quantity_received]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0" required>
                                             </td>
                                             <td class="px-4 py-3">
-                                                <input type="number" name="items[{{ $index }}][pallets]" value="0" class="w-20 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0">
+                                                <input type="text" name="items[{{ $index }}][batch_number]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500 mb-1" placeholder="Batch...">
+                                                <input type="text" name="items[{{ $index }}][serial_number]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Serial...">
                                             </td>
                                             <td class="px-4 py-3">
                                                 <input type="text" name="items[{{ $index }}][notes]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Notes...">
@@ -200,8 +287,9 @@
                                         <tr class="border-b border-gray-200">
                                             <td class="px-4 py-3">
                                                 <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
+                                                <input type="hidden" name="items[{{ $index }}][unit_of_measure]" value="{{ $item->product->unit->name ?? 'PCS' }}">
                                                 <div class="text-sm font-semibold text-gray-900">{{ $item->product->name }}</div>
-                                                <div class="text-xs text-gray-500">{{ $item->product->sku }}</div>
+                                                <div class="text-xs text-gray-500">{{ $item->product->sku }} - {{ $item->product->unit->name ?? 'PCS' }}</div>
                                             </td>
                                             <td class="px-4 py-3">
                                                 <input type="number" name="items[{{ $index }}][quantity_expected]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm" readonly>
@@ -210,7 +298,8 @@
                                                 <input type="number" name="items[{{ $index }}][quantity_received]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0" required>
                                             </td>
                                             <td class="px-4 py-3">
-                                                <input type="number" name="items[{{ $index }}][pallets]" value="0" class="w-20 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0">
+                                                <input type="text" name="items[{{ $index }}][batch_number]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500 mb-1" placeholder="Batch...">
+                                                <input type="text" name="items[{{ $index }}][serial_number]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Serial...">
                                             </td>
                                             <td class="px-4 py-3">
                                                 <input type="text" name="items[{{ $index }}][notes]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Notes...">
@@ -283,6 +372,11 @@
 
 </div>
 
+{{-- Products Data for JavaScript --}}
+<script>
+    const productsData = @json($productsData);
+</script>
+
 @push('scripts')
 <script>
 let itemIndex = {{ ($selectedPO && $selectedPO->items->count() > 0) ? $selectedPO->items->count() : (($selectedShipment && $selectedShipment->items->count() > 0) ? $selectedShipment->items->count() : 0) }};
@@ -296,12 +390,24 @@ function addItem() {
         emptyRow.parentElement.remove();
     }
     
+    // Build product options with more details
+    let productOptions = '<option value="">Select Product...</option>';
+    productsData.forEach(product => {
+        productOptions += `<option value="${product.id}" 
+            data-unit="${product.unit}" 
+            data-category="${product.category}"
+            data-price="${product.purchase_price}">
+            ${product.name} (${product.sku}) - ${product.unit}
+        </option>`;
+    });
+    
     const row = `
         <tr class="border-b border-gray-200">
             <td class="px-4 py-3">
-                <select name="items[${itemIndex}][product_id]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" required>
-                    <option value="">Select Product...</option>
+                <select name="items[${itemIndex}][product_id]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" required onchange="updateProductInfo(this)">
+                    ${productOptions}
                 </select>
+                <div class="text-xs text-gray-500 mt-1 product-info-${itemIndex}"></div>
             </td>
             <td class="px-4 py-3">
                 <input type="number" name="items[${itemIndex}][quantity_expected]" value="0" class="w-24 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0" required>
@@ -326,6 +432,24 @@ function addItem() {
     tbody.insertAdjacentHTML('beforeend', row);
     itemIndex++;
     updateSummary();
+}
+
+function updateProductInfo(selectElement) {
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const unit = selectedOption.getAttribute('data-unit');
+    const category = selectedOption.getAttribute('data-category');
+    const price = selectedOption.getAttribute('data-price');
+    
+    // Find the info div
+    const row = selectElement.closest('tr');
+    const rowIndex = Array.from(row.parentElement.children).indexOf(row);
+    const infoDiv = document.querySelector(`.product-info-${rowIndex}`);
+    
+    if (infoDiv && selectedOption.value) {
+        infoDiv.innerHTML = `Category: ${category} | Price: Rp ${parseFloat(price).toLocaleString('id-ID')}`;
+    } else if (infoDiv) {
+        infoDiv.innerHTML = '';
+    }
 }
 
 function removeItem(button) {
@@ -378,14 +502,18 @@ document.addEventListener('input', function(e) {
 
 // Auto-fill from PO selection
 document.getElementById('purchase_order_id').addEventListener('change', function() {
+    const shipmentSelect = document.getElementById('inbound_shipment_id');
     if (this.value) {
+        shipmentSelect.value = ''; // Clear shipment selection
         window.location.href = `{{ route('inbound.good-receivings.create') }}?purchase_order_id=${this.value}`;
     }
 });
 
 // Auto-fill from Shipment selection
 document.getElementById('inbound_shipment_id').addEventListener('change', function() {
+    const poSelect = document.getElementById('purchase_order_id');
     if (this.value) {
+        poSelect.value = ''; // Clear PO selection
         window.location.href = `{{ route('inbound.good-receivings.create') }}?inbound_shipment_id=${this.value}`;
     }
 });

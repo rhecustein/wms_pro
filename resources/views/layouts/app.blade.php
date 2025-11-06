@@ -1,4 +1,4 @@
-{{-- resources/views/layouts/app.blade.php (ENHANCED WITH SETTINGS INTEGRATION) --}}
+{{-- resources/views/layouts/app.blade.php (FIXED - NO AUTO-HIDE BUG) --}}
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
 <head>
@@ -583,48 +583,7 @@
             {{-- Main Content --}}
             <main class="flex-1 overflow-y-auto custom-scrollbar grid-background">
                 <div class="p-6">
-                    <!-- {{-- Flash Messages --}}
-                    @if(session('success'))
-                        <div class="mb-6 px-4 py-3 bg-green-50 border-l-4 border-green-500 text-green-800 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
-                            <div class="flex items-center">
-                                <i class="fas fa-check-circle text-green-500 mr-3 text-xl"></i>
-                                <span>{{ session('success') }}</span>
-                            </div>
-                            <button onclick="this.parentElement.parentElement.remove()" class="text-green-600 hover:text-green-800 transition-colors">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if(session('error'))
-                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
-                            <div class="flex items-center">
-                                <i class="fas fa-exclamation-circle text-red-500 mr-3 text-xl"></i>
-                                <span>{{ session('error') }}</span>
-                            </div>
-                            <button onclick="this.parentElement.parentElement.remove()" class="text-red-600 hover:text-red-800 transition-colors">
-                                <i class="fas fa-times"></i>
-                            </button>
-                        </div>
-                    @endif
-
-                    @if ($errors->any())
-                        <div class="mb-6 px-4 py-3 bg-red-50 border-l-4 border-red-500 text-red-800 rounded-lg shadow-sm animate-fade-in">
-                            <div class="flex items-start">
-                                <i class="fas fa-exclamation-triangle text-red-500 mr-3 text-xl mt-0.5"></i>
-                                <div class="flex-1">
-                                    <p class="font-semibold mb-2">Please fix the following errors:</p>
-                                    <ul class="list-disc list-inside space-y-1">
-                                        @foreach ($errors->all() as $error)
-                                            <li class="text-sm">{{ $error }}</li>
-                                        @endforeach
-                                    </ul>
-                                </div>
-                            </div>
-                        </div>
-                    @endif -->
-
-                    {{-- Main Content --}}
+                    {{-- Main Content from child views --}}
                     @yield('content')
                 </div>
             </main>
@@ -655,17 +614,12 @@
         </div>
     </div>
 
-    {{-- Global Scripts --}}
+    {{-- Global Scripts - FIXED: NO AUTO-HIDE --}}
     <script>
-        // Auto-hide flash messages after 5 seconds
-        setTimeout(() => {
-            const alerts = document.querySelectorAll('[class*="bg-green-50"], [class*="bg-red-50"], [class*="bg-blue-50"]');
-            alerts.forEach(alert => {
-                alert.style.transition = 'opacity 0.5s';
-                alert.style.opacity = '0';
-                setTimeout(() => alert.remove(), 500);
-            });
-        }, 5000);
+        // ===================================
+        // NO AUTO-HIDE JAVASCRIPT
+        // Alert hanya hilang jika user click X button
+        // ===================================
 
         // SweetAlert2 Confirmation Helper
         window.confirmDelete = function(formId) {

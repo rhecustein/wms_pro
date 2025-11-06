@@ -17,7 +17,7 @@
                     </div>
                     Inbound Shipments
                 </h1>
-                <p class="text-gray-600 mt-2">Track and manage incoming shipments from suppliers</p>
+                <p class="text-gray-600 mt-2">Manage and track incoming shipments</p>
             </div>
             <a href="{{ route('inbound.shipments.create') }}" class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all shadow-lg shadow-blue-500/50 flex items-center">
                 <i class="fas fa-plus mr-2"></i>
@@ -77,10 +77,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">Scheduled</p>
-                    <p class="text-3xl font-bold text-blue-600 mt-1">{{ number_format($stats['scheduled']) }}</p>
+                    <p class="text-3xl font-bold text-gray-600 mt-1">{{ number_format($stats['scheduled']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-calendar-check text-2xl text-blue-600"></i>
+                <div class="w-14 h-14 bg-gradient-to-br from-gray-100 to-gray-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-calendar text-2xl text-gray-600"></i>
                 </div>
             </div>
         </div>
@@ -89,10 +89,10 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-sm font-medium text-gray-600">In Transit</p>
-                    <p class="text-3xl font-bold text-purple-600 mt-1">{{ number_format($stats['in_transit']) }}</p>
+                    <p class="text-3xl font-bold text-blue-600 mt-1">{{ number_format($stats['in_transit']) }}</p>
                 </div>
-                <div class="w-14 h-14 bg-gradient-to-br from-purple-100 to-purple-200 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-shipping-fast text-2xl text-purple-600"></i>
+                <div class="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-200 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-shipping-fast text-2xl text-blue-600"></i>
                 </div>
             </div>
         </div>
@@ -104,7 +104,7 @@
                     <p class="text-3xl font-bold text-yellow-600 mt-1">{{ number_format($stats['arrived']) }}</p>
                 </div>
                 <div class="w-14 h-14 bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-xl flex items-center justify-center">
-                    <i class="fas fa-box-open text-2xl text-yellow-600"></i>
+                    <i class="fas fa-clock text-2xl text-yellow-600"></i>
                 </div>
             </div>
         </div>
@@ -147,13 +147,13 @@
         </div>
         
         <form method="GET" action="{{ route('inbound.shipments.index') }}" id="filterForm">
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {{-- Search --}}
                 <div class="lg:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-search text-gray-400 mr-1"></i>Search
                     </label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Shipment #, Vehicle, Driver, PO..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Shipment Number, PO, Vehicle..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
                 </div>
 
                 {{-- Status Filter --}}
@@ -185,8 +185,22 @@
                         @endforeach
                     </select>
                 </div>
+            </div>
 
-                {{-- Supplier Filter --}}
+            {{-- Date Range & Supplier --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mt-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt text-gray-400 mr-1"></i>Date From
+                    </label>
+                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-calendar-alt text-gray-400 mr-1"></i>Date To
+                    </label>
+                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
+                </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         <i class="fas fa-building text-gray-400 mr-1"></i>Supplier
@@ -199,22 +213,6 @@
                             </option>
                         @endforeach
                     </select>
-                </div>
-            </div>
-
-            {{-- Date Range --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-calendar-alt text-gray-400 mr-1"></i>Date From
-                    </label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                        <i class="fas fa-calendar-alt text-gray-400 mr-1"></i>Date To
-                    </label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 shadow-sm">
                 </div>
                 <div class="flex items-end space-x-2">
                     <button type="submit" class="flex-1 px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition-all shadow-md flex items-center justify-center">
@@ -235,11 +233,11 @@
                 <thead class="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                     <tr>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Shipment Info</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Arrival Date</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">PO Number</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Supplier</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Warehouse</th>
+                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Arrival Date</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Vehicle</th>
-                        <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Progress</th>
                         <th class="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">Status</th>
                         <th class="px-6 py-4 text-right text-xs font-semibold text-gray-700 uppercase tracking-wider">Actions</th>
                     </tr>
@@ -254,29 +252,32 @@
                                     </div>
                                     <div>
                                         <div class="text-sm font-mono font-bold text-gray-900">{{ $shipment->shipment_number }}</div>
-                                        @if($shipment->purchaseOrder)
+                                        @if($shipment->container_number)
                                             <div class="text-xs text-gray-500 mt-0.5">
-                                                <i class="fas fa-file-invoice text-gray-400 mr-1"></i>
-                                                {{ $shipment->purchaseOrder->po_number }}
+                                                <i class="fas fa-box text-gray-400 mr-1"></i>
+                                                {{ $shipment->container_number }}
                                             </div>
                                         @endif
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <div class="text-sm font-medium text-gray-900">
-                                    <i class="fas fa-calendar text-blue-500 mr-1"></i>
-                                    {{ $shipment->arrival_date ? $shipment->arrival_date->format('d M Y') : '-' }}
-                                </div>
-                                <div class="text-xs text-gray-500 mt-0.5">
-                                    <i class="fas fa-clock text-gray-400 mr-1"></i>
-                                    {{ $shipment->arrival_date ? $shipment->arrival_date->format('H:i') : '' }}
-                                </div>
+                                @if($shipment->purchaseOrder)
+                                    <div class="text-sm font-medium text-gray-900">
+                                        <i class="fas fa-file-invoice text-blue-500 mr-1"></i>
+                                        {{ $shipment->purchaseOrder->po_number }}
+                                    </div>
+                                    <div class="text-xs text-gray-500 mt-0.5">
+                                        {{ ucfirst($shipment->purchaseOrder->status) }}
+                                    </div>
+                                @else
+                                    <span class="text-sm text-gray-400">-</span>
+                                @endif
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-blue-100 to-blue-200 rounded-lg flex items-center justify-center mr-3">
-                                        <i class="fas fa-building text-blue-600"></i>
+                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-building text-purple-600"></i>
                                     </div>
                                     <div>
                                         <div class="text-sm font-semibold text-gray-900">{{ $shipment->supplier->name }}</div>
@@ -286,8 +287,8 @@
                             </td>
                             <td class="px-6 py-4">
                                 <div class="flex items-center">
-                                    <div class="w-10 h-10 bg-gradient-to-br from-purple-100 to-purple-200 rounded-lg flex items-center justify-center mr-3">
-                                        <i class="fas fa-warehouse text-purple-600"></i>
+                                    <div class="w-10 h-10 bg-gradient-to-br from-green-100 to-green-200 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-warehouse text-green-600"></i>
                                     </div>
                                     <div>
                                         <div class="text-sm font-semibold text-gray-900">{{ $shipment->warehouse->name }}</div>
@@ -295,46 +296,51 @@
                                     </div>
                                 </div>
                             </td>
-                            <td class="px-6 py-4">
-                                @if($shipment->vehicle)
-                                    <div class="text-sm font-semibold text-gray-900">
-                                        <i class="fas fa-truck text-green-500 mr-1"></i>
-                                        {{ $shipment->vehicle->vehicle_number }}
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm font-medium text-gray-900">
+                                    <i class="fas fa-calendar text-blue-500 mr-1"></i>
+                                    {{ \Carbon\Carbon::parse($shipment->arrival_date)->format('d M Y') }}
+                                </div>
+                                @if($shipment->scheduled_date)
+                                    <div class="text-xs text-gray-500 mt-0.5">
+                                        <i class="fas fa-clock text-gray-400 mr-1"></i>
+                                        Scheduled: {{ \Carbon\Carbon::parse($shipment->scheduled_date)->format('d M Y') }}
                                     </div>
-                                    <div class="text-xs text-gray-500">{{ $shipment->vehicle->license_plate }}</div>
-                                @elseif($shipment->vehicle_number)
-                                    <div class="text-sm font-semibold text-gray-900">
+                                @endif
+                            </td>
+                            <td class="px-6 py-4">
+                                @if($shipment->vehicle_number)
+                                    <div class="text-sm font-medium text-gray-900">
                                         <i class="fas fa-truck text-gray-400 mr-1"></i>
                                         {{ $shipment->vehicle_number }}
                                     </div>
                                     @if($shipment->driver_name)
-                                        <div class="text-xs text-gray-500">{{ $shipment->driver_name }}</div>
+                                        <div class="text-xs text-gray-500 mt-0.5">
+                                            <i class="fas fa-user text-gray-400 mr-1"></i>
+                                            {{ $shipment->driver_name }}
+                                        </div>
                                     @endif
                                 @else
-                                    <span class="text-sm text-gray-400">Not assigned</span>
+                                    <span class="text-sm text-gray-400">-</span>
                                 @endif
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                @if($shipment->expected_pallets)
-                                    <div class="text-sm text-gray-900 mb-2">
-                                        <span class="font-bold text-blue-600">{{ $shipment->received_pallets }}</span>
-                                        <span class="text-gray-400 mx-1">/</span>
-                                        <span class="font-medium">{{ $shipment->expected_pallets }}</span>
-                                        <span class="text-xs text-gray-500 ml-1">pallets</span>
-                                    </div>
-                                    <div class="w-full bg-gray-200 rounded-full h-2.5 overflow-hidden">
-                                        <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-2.5 rounded-full transition-all duration-500 shadow-sm" style="width: {{ min($shipment->progress_percentage, 100) }}%"></div>
-                                    </div>
-                                    <div class="text-xs font-medium text-gray-600 mt-1">{{ $shipment->progress_percentage }}% complete</div>
-                                @else
-                                    <div class="text-sm text-gray-900">
-                                        <span class="font-bold text-blue-600">{{ $shipment->received_pallets }}</span>
-                                        <span class="text-xs text-gray-500 ml-1">pallets</span>
-                                    </div>
-                                @endif
-                            </td>
-                            <td class="px-6 py-4 whitespace-nowrap">
-                                {!! $shipment->status_badge !!}
+                                @php
+                                    $statusColors = [
+                                        'scheduled' => 'gray',
+                                        'in_transit' => 'blue',
+                                        'arrived' => 'yellow',
+                                        'unloading' => 'orange',
+                                        'inspection' => 'purple',
+                                        'received' => 'indigo',
+                                        'completed' => 'green',
+                                        'cancelled' => 'red',
+                                    ];
+                                    $color = $statusColors[$shipment->status] ?? 'gray';
+                                @endphp
+                                <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-{{ $color }}-100 text-{{ $color }}-800">
+                                    {{ $statuses[$shipment->status] ?? ucfirst($shipment->status) }}
+                                </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right">
                                 <div class="flex items-center justify-end space-x-2">
@@ -342,13 +348,13 @@
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
                                     
-                                    @if($shipment->can_edit)
+                                    @if(in_array($shipment->status, ['scheduled', 'in_transit', 'arrived']))
                                         <a href="{{ route('inbound.shipments.edit', $shipment) }}" class="w-8 h-8 bg-yellow-100 text-yellow-600 hover:bg-yellow-600 hover:text-white rounded-lg flex items-center justify-center transition-all" title="Edit">
                                             <i class="fas fa-edit text-sm"></i>
                                         </a>
                                     @endif
                                     
-                                    @if($shipment->can_delete)
+                                    @if(in_array($shipment->status, ['scheduled', 'cancelled']))
                                         <form action="{{ route('inbound.shipments.destroy', $shipment) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this shipment?')">
                                             @csrf
                                             @method('DELETE')

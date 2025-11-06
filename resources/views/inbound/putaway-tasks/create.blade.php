@@ -58,7 +58,7 @@
                                 <option value="">Select Good Receiving</option>
                                 @foreach($goodReceivings as $gr)
                                     <option value="{{ $gr->id }}" {{ old('good_receiving_id') == $gr->id ? 'selected' : '' }}>
-                                        {{ $gr->gr_number }} - {{ $gr->vendor->name }}
+                                        {{ $gr->gr_number }} - {{ $gr->supplier->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -106,7 +106,7 @@
                                 Priority <span class="text-red-500">*</span>
                             </label>
                             <select name="priority" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-                                <option value="medium" {{ old('priority') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                <option value="medium" {{ old('priority', 'medium') == 'medium' ? 'selected' : '' }}>Medium</option>
                                 <option value="high" {{ old('priority') == 'high' ? 'selected' : '' }}>High</option>
                                 <option value="low" {{ old('priority') == 'low' ? 'selected' : '' }}>Low</option>
                             </select>
@@ -129,7 +129,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Quantity <span class="text-red-500">*</span>
                             </label>
-                            <input type="number" name="quantity" value="{{ old('quantity') }}" min="1" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="0">
+                            <input type="number" name="quantity" value="{{ old('quantity', 1) }}" min="1" step="1" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="0">
                             @error('quantity')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -139,7 +139,7 @@
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 Unit of Measure <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" name="unit_of_measure" value="{{ old('unit_of_measure') }}" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., PCS, BOX, KG">
+                            <input type="text" name="unit_of_measure" value="{{ old('unit_of_measure', 'PCS') }}" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="e.g., PCS, BOX, KG">
                             @error('unit_of_measure')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
@@ -181,11 +181,13 @@
                             </label>
                             <select name="pallet_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">No Pallet</option>
-                                @foreach(\App\Models\Pallet::orderBy('pallet_number')->get() as $pallet)
-                                    <option value="{{ $pallet->id }}" {{ old('pallet_id') == $pallet->id ? 'selected' : '' }}>
-                                        {{ $pallet->pallet_number }}
-                                    </option>
-                                @endforeach
+                                @if(class_exists(\App\Models\Pallet::class))
+                                    @foreach(\App\Models\Pallet::orderBy('pallet_number')->get() as $pallet)
+                                        <option value="{{ $pallet->id }}" {{ old('pallet_id') == $pallet->id ? 'selected' : '' }}>
+                                            {{ $pallet->pallet_number }}
+                                        </option>
+                                    @endforeach
+                                @endif
                             </select>
                             @error('pallet_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -210,25 +212,36 @@
                             @error('from_location')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-gray-500 mt-1">Current location where items are staged</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Current location where items are staged
+                            </p>
                         </div>
 
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">
                                 To Storage Bin
                             </label>
-                            <select name="to_storage_bin_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            <select name="to_storage_bin_id" id="to_storage_bin_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                                 <option value="">Select Storage Bin</option>
                                 @foreach($storageBins as $bin)
-                                    <option value="{{ $bin->id }}" {{ old('to_storage_bin_id') == $bin->id ? 'selected' : '' }}>
-                                        {{ $bin->bin_code }} ({{ $bin->aisle }}-{{ $bin->rack }}-{{ $bin->level }})
+                                    <option value="{{ $bin->id }}" 
+                                            data-warehouse-id="{{ $bin->warehouse_id }}"
+                                            {{ old('to_storage_bin_id') == $bin->id ? 'selected' : '' }}>
+                                        {{ $bin->code }} | Aisle: {{ $bin->aisle }}, Row: {{ $bin->row }}, Col: {{ $bin->column }}, Level: {{ $bin->level }}
+                                        @if($bin->status !== 'available')
+                                            - ({{ ucfirst($bin->status) }})
+                                        @endif
                                     </option>
                                 @endforeach
                             </select>
                             @error('to_storage_bin_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
-                            <p class="text-xs text-gray-500 mt-1">Can be assigned later during execution</p>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Can be assigned later during execution
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -290,16 +303,20 @@
                     </h2>
                     <ul class="space-y-2 text-sm text-blue-800">
                         <li class="flex items-start">
-                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5 flex-shrink-0"></i>
                             <span>Task will be created with pending status</span>
                         </li>
                         <li class="flex items-start">
-                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5 flex-shrink-0"></i>
                             <span>If assigned, status will be changed to assigned</span>
                         </li>
                         <li class="flex items-start">
-                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5"></i>
+                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5 flex-shrink-0"></i>
                             <span>Storage bin can be updated during execution</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check-circle text-blue-600 mr-2 mt-0.5 flex-shrink-0"></i>
+                            <span>Task number will be auto-generated</span>
                         </li>
                     </ul>
                 </div>
@@ -324,4 +341,50 @@
         </div>
     </form>
 </div>
+
+@push('scripts')
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Filter storage bins by selected warehouse
+    const warehouseSelect = document.getElementById('warehouse_id');
+    const storageBinSelect = document.getElementById('to_storage_bin_id');
+    
+    if (warehouseSelect && storageBinSelect) {
+        // Store all original options
+        const allOptions = Array.from(storageBinSelect.options).slice(1); // Skip first "Select..." option
+        
+        warehouseSelect.addEventListener('change', function() {
+            const selectedWarehouseId = this.value;
+            
+            // Clear current options except the first one
+            storageBinSelect.innerHTML = '<option value="">Select Storage Bin</option>';
+            
+            if (selectedWarehouseId) {
+                // Filter and add matching bins
+                allOptions.forEach(option => {
+                    const binWarehouseId = option.getAttribute('data-warehouse-id');
+                    if (binWarehouseId === selectedWarehouseId) {
+                        storageBinSelect.appendChild(option.cloneNode(true));
+                    }
+                });
+                
+                // If no bins found for this warehouse
+                if (storageBinSelect.options.length === 1) {
+                    const noOption = document.createElement('option');
+                    noOption.value = '';
+                    noOption.textContent = 'No bins available for this warehouse';
+                    noOption.disabled = true;
+                    storageBinSelect.appendChild(noOption);
+                }
+            }
+        });
+        
+        // Trigger change if warehouse is pre-selected (for old input)
+        if (warehouseSelect.value) {
+            warehouseSelect.dispatchEvent(new Event('change'));
+        }
+    }
+});
+</script>
+@endpush
 @endsection

@@ -16,9 +16,6 @@ use Illuminate\Support\Facades\Auth;
 
 class GoodReceivingController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index(Request $request)
     {
         $query = GoodReceiving::with(['warehouse', 'supplier', 'receivedBy', 'purchaseOrder', 'inboundShipment']);
@@ -63,13 +60,16 @@ class GoodReceivingController extends Controller
             $query->whereDate('receiving_date', '<=', $request->date_to);
         }
 
+        // PERBAIKAN: Pagination dengan variabel yang benar
         $goodReceivings = $query->latest('receiving_date')->paginate(15)->withQueryString();
 
+        // Data untuk filter dropdown
         $statuses = ['draft', 'in_progress', 'quality_check', 'completed', 'partial', 'cancelled'];
         $qualityStatuses = ['pending', 'passed', 'failed', 'partial'];
         $warehouses = Warehouse::orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
 
+        // PERBAIKAN: Return view dengan semua variabel yang dibutuhkan
         return view('inbound.good-receivings.index', compact(
             'goodReceivings',
             'statuses',
@@ -79,13 +79,32 @@ class GoodReceivingController extends Controller
         ));
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
+        
+        $products = Product::where('is_active', true)
+            ->with(['unit', 'category', 'supplier'])
+            ->orderBy('name')
+            ->get();
+        
+        $productsData = $products->map(function($p) {
+            return [
+                'id' => $p->id,
+                'name' => $p->name,
+                'sku' => $p->sku,
+                'barcode' => $p->barcode,
+                'unit' => $p->unit ? $p->unit->name : 'PCS',
+                'unit_id' => $p->unit_id,
+                'category' => $p->category ? $p->category->name : '-',
+                'supplier_name' => $p->supplier ? $p->supplier->name : '-',
+                'purchase_price' => $p->purchase_price,
+                'current_stock' => $p->current_stock,
+                'type' => $p->type,
+            ];
+        });
+        
         $purchaseOrders = PurchaseOrder::where('status', 'approved')
             ->whereDoesntHave('goodReceivings', function($query) {
                 $query->whereIn('status', ['completed']);
@@ -103,18 +122,20 @@ class GoodReceivingController extends Controller
         $selectedShipment = null;
 
         if ($request->filled('purchase_order_id')) {
-            $selectedPO = PurchaseOrder::with(['items.product', 'supplier', 'warehouse'])
+            $selectedPO = PurchaseOrder::with(['items.product.unit', 'supplier', 'warehouse'])
                 ->findOrFail($request->purchase_order_id);
         }
 
         if ($request->filled('inbound_shipment_id')) {
-            $selectedShipment = InboundShipment::with(['items.product', 'supplier', 'warehouse'])
+            $selectedShipment = InboundShipment::with(['items.product.unit', 'supplier', 'warehouse'])
                 ->findOrFail($request->inbound_shipment_id);
         }
 
         return view('inbound.good-receivings.create', compact(
             'warehouses',
             'suppliers',
+            'products',
+            'productsData',
             'purchaseOrders',
             'inboundShipments',
             'selectedPO',
@@ -122,9 +143,6 @@ class GoodReceivingController extends Controller
         ));
     }
 
-    /**
-     * Store a newly created resource in storage.
-     */
     public function store(Request $request)
     {
         $validated = $request->validate([
@@ -138,13 +156,16 @@ class GoodReceivingController extends Controller
             'items.*.product_id' => 'required|exists:products,id',
             'items.*.quantity_expected' => 'required|integer|min:1',
             'items.*.quantity_received' => 'required|integer|min:0',
-            'items.*.pallets' => 'nullable|integer|min:0',
+            'items.*.unit_of_measure' => 'nullable|string',
+            'items.*.batch_number' => 'nullable|string',
+            'items.*.serial_number' => 'nullable|string',
+            'items.*.manufacturing_date' => 'nullable|date',
+            'items.*.expiry_date' => 'nullable|date',
             'items.*.notes' => 'nullable|string',
         ]);
 
         DB::beginTransaction();
         try {
-            // Generate GR Number
             $lastGR = GoodReceiving::whereYear('created_at', date('Y'))
                 ->whereMonth('created_at', date('m'))
                 ->latest('id')
@@ -153,12 +174,10 @@ class GoodReceivingController extends Controller
             $nextNumber = $lastGR ? (int)substr($lastGR->gr_number, -5) + 1 : 1;
             $grNumber = 'GR-' . date('Ym') . '-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-            // Calculate totals
             $totalItems = count($validated['items']);
             $totalQuantity = array_sum(array_column($validated['items'], 'quantity_received'));
-            $totalPallets = array_sum(array_column($validated['items'], 'pallets'));
+            $totalPallets = 0;
 
-            // Create Good Receiving
             $goodReceiving = GoodReceiving::create([
                 'gr_number' => $grNumber,
                 'inbound_shipment_id' => $validated['inbound_shipment_id'] ?? null,
@@ -175,14 +194,22 @@ class GoodReceivingController extends Controller
                 'created_by' => Auth::id(),
             ]);
 
-            // Create Good Receiving Items
             foreach ($validated['items'] as $item) {
+                $product = Product::find($item['product_id']);
+                
                 GoodReceivingItem::create([
                     'good_receiving_id' => $goodReceiving->id,
                     'product_id' => $item['product_id'],
                     'quantity_expected' => $item['quantity_expected'],
                     'quantity_received' => $item['quantity_received'],
-                    'pallets' => $item['pallets'] ?? 0,
+                    'quantity_accepted' => 0,
+                    'quantity_rejected' => 0,
+                    'unit_of_measure' => $item['unit_of_measure'] ?? ($product->unit->name ?? 'PCS'),
+                    'batch_number' => $item['batch_number'] ?? null,
+                    'serial_number' => $item['serial_number'] ?? null,
+                    'manufacturing_date' => $item['manufacturing_date'] ?? null,
+                    'expiry_date' => $item['expiry_date'] ?? null,
+                    'quality_status' => 'pending',
                     'notes' => $item['notes'] ?? null,
                 ]);
             }
@@ -198,9 +225,6 @@ class GoodReceivingController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(GoodReceiving $goodReceiving)
     {
         $goodReceiving->load([
@@ -210,7 +234,8 @@ class GoodReceivingController extends Controller
             'qualityCheckedBy',
             'purchaseOrder',
             'inboundShipment',
-            'items.product',
+            'items.product.unit',
+            'items.product.category',
             'createdBy',
             'updatedBy'
         ]);
@@ -218,19 +243,20 @@ class GoodReceivingController extends Controller
         return view('inbound.good-receivings.show', compact('goodReceiving'));
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(GoodReceiving $goodReceiving)
     {
         if (!in_array($goodReceiving->status, ['draft', 'in_progress'])) {
             return back()->with('error', 'Cannot edit Good Receiving with status: ' . $goodReceiving->status);
         }
 
-        $goodReceiving->load(['items.product']);
+        $goodReceiving->load(['items.product.unit']);
         $warehouses = Warehouse::orderBy('name')->get();
         $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
-        $products = Product::where('status', 'active')->orderBy('name')->get();
+        
+        $products = Product::where('is_active', true)
+            ->with(['unit', 'category', 'supplier'])
+            ->orderBy('name')
+            ->get();
 
         return view('inbound.good-receivings.edit', compact(
             'goodReceiving',
@@ -240,9 +266,6 @@ class GoodReceivingController extends Controller
         ));
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, GoodReceiving $goodReceiving)
     {
         if (!in_array($goodReceiving->status, ['draft', 'in_progress'])) {
@@ -264,12 +287,10 @@ class GoodReceivingController extends Controller
 
         DB::beginTransaction();
         try {
-            // Calculate totals
             $totalItems = count($validated['items']);
             $totalQuantity = array_sum(array_column($validated['items'], 'quantity_received'));
             $totalPallets = array_sum(array_column($validated['items'], 'pallets'));
 
-            // Update Good Receiving
             $goodReceiving->update([
                 'warehouse_id' => $validated['warehouse_id'],
                 'supplier_id' => $validated['supplier_id'],
@@ -281,7 +302,6 @@ class GoodReceivingController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            // Delete old items and create new ones
             $goodReceiving->items()->delete();
 
             foreach ($validated['items'] as $item) {
@@ -306,9 +326,6 @@ class GoodReceivingController extends Controller
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(GoodReceiving $goodReceiving)
     {
         if ($goodReceiving->status !== 'draft') {
@@ -331,9 +348,6 @@ class GoodReceivingController extends Controller
         }
     }
 
-    /**
-     * Start receiving process
-     */
     public function start(GoodReceiving $goodReceiving)
     {
         if ($goodReceiving->status !== 'draft') {
@@ -349,9 +363,6 @@ class GoodReceivingController extends Controller
         return back()->with('success', 'Good Receiving started successfully!');
     }
 
-    /**
-     * Perform quality check
-     */
     public function qualityCheck(Request $request, GoodReceiving $goodReceiving)
     {
         if (!in_array($goodReceiving->status, ['in_progress', 'quality_check'])) {
@@ -375,9 +386,6 @@ class GoodReceivingController extends Controller
         return back()->with('success', 'Quality check completed successfully!');
     }
 
-    /**
-     * Complete receiving process
-     */
     public function complete(GoodReceiving $goodReceiving)
     {
         if (!in_array($goodReceiving->status, ['in_progress', 'quality_check'])) {
@@ -386,7 +394,6 @@ class GoodReceivingController extends Controller
 
         DB::beginTransaction();
         try {
-            // Check if all items received match expected
             $allComplete = true;
             foreach ($goodReceiving->items as $item) {
                 if ($item->quantity_received < $item->quantity_expected) {
@@ -402,13 +409,11 @@ class GoodReceivingController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            // Update PO status if linked
             if ($goodReceiving->purchase_order_id) {
                 $po = $goodReceiving->purchaseOrder;
                 $po->update(['status' => 'received']);
             }
 
-            // Update Inbound Shipment status if linked
             if ($goodReceiving->inbound_shipment_id) {
                 $shipment = $goodReceiving->inboundShipment;
                 $shipment->update(['status' => 'received']);
@@ -424,9 +429,6 @@ class GoodReceivingController extends Controller
         }
     }
 
-    /**
-     * Cancel receiving process
-     */
     public function cancel(Request $request, GoodReceiving $goodReceiving)
     {
         if (in_array($goodReceiving->status, ['completed', 'cancelled'])) {
@@ -446,9 +448,6 @@ class GoodReceivingController extends Controller
         return back()->with('success', 'Good Receiving cancelled successfully!');
     }
 
-    /**
-     * Print Good Receiving document
-     */
     public function print(GoodReceiving $goodReceiving)
     {
         $goodReceiving->load([
@@ -456,9 +455,35 @@ class GoodReceivingController extends Controller
             'supplier',
             'receivedBy',
             'qualityCheckedBy',
-            'items.product'
+            'items.product.unit',
+            'items.product.category'
         ]);
 
         return view('inbound.good-receivings.print', compact('goodReceiving'));
+    }
+    
+    public function getProducts(Request $request)
+    {
+        $products = Product::where('is_active', true)
+            ->with(['unit', 'category', 'supplier'])
+            ->orderBy('name')
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'unit' => $product->unit->name ?? 'PCS',
+                    'unit_id' => $product->unit_id,
+                    'category' => $product->category->name ?? '-',
+                    'supplier_name' => $product->supplier->name ?? '-',
+                    'purchase_price' => $product->purchase_price,
+                    'current_stock' => $product->current_stock,
+                    'type' => $product->type,
+                ];
+            });
+            
+        return response()->json($products);
     }
 }
