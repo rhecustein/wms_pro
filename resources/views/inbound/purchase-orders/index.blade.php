@@ -263,7 +263,7 @@
                             </select>
                         </div>
 
-                        {{-- Supplier Filter --}}
+                        {{-- Supplier Filter - SUDAH BENAR ✅ --}}
                         <div>
                             <label class="block text-sm font-semibold text-gray-700 mb-2">
                                 <i class="fas fa-building text-gray-400 mr-1"></i>
@@ -432,17 +432,6 @@
                                         </div>
                                         <span class="text-xs text-gray-500">items</span>
                                     </div>
-                                    @if($po->receiving_progress > 0)
-                                        <div class="mt-2">
-                                            <div class="flex items-center gap-2 mb-1">
-                                                <span class="text-xs font-medium text-gray-600">Progress</span>
-                                                <span class="text-xs font-bold text-blue-600">{{ $po->receiving_progress }}%</span>
-                                            </div>
-                                            <div class="w-full bg-gray-200 rounded-full h-1.5">
-                                                <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-1.5 rounded-full transition-all duration-300" style="width: {{ $po->receiving_progress }}%"></div>
-                                            </div>
-                                        </div>
-                                    @endif
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <div class="flex flex-col">

@@ -64,16 +64,36 @@
                             <input type="date" name="order_date" value="{{ old('order_date', date('Y-m-d')) }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" required>
                         </div>
 
-                        <div>
+                        <div class="md:col-span-2">
                             <label class="block text-sm font-medium text-gray-700 mb-2">Customer <span class="text-red-500">*</span></label>
-                            <select name="customer_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" required>
-                                <option value="">Select Customer</option>
-                                @foreach($customers as $customer)
-                                    <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                        {{ $customer->name }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <div class="relative">
+                                <input type="text" id="customerSearch" placeholder="Search customer by name, email, or phone..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div>
+                            <input type="hidden" name="customer_id" id="customerId" required>
+                            
+                            <div id="customerDropdown" class="hidden absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                                <!-- Customer results will be shown here -->
+                            </div>
+
+                            <div id="selectedCustomerInfo" class="hidden mt-2 p-3 bg-blue-50 rounded-lg">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fas fa-user text-white"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm font-semibold text-gray-900" id="selectedCustomerName"></div>
+                                            <div class="text-xs text-gray-600" id="selectedCustomerEmail"></div>
+                                        </div>
+                                    </div>
+                                    <button type="button" onclick="clearCustomer()" class="text-red-600 hover:text-red-800">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
                         </div>
 
                         <div>
@@ -110,23 +130,23 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Shipping Address</label>
-                            <textarea name="shipping_address" rows="2" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Full shipping address">{{ old('shipping_address') }}</textarea>
+                            <textarea name="shipping_address" id="shippingAddress" rows="2" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Full shipping address">{{ old('shipping_address') }}</textarea>
                         </div>
 
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">City</label>
-                                <input type="text" name="shipping_city" value="{{ old('shipping_city') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="City">
+                                <input type="text" name="shipping_city" id="shippingCity" value="{{ old('shipping_city') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="City">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Province</label>
-                                <input type="text" name="shipping_province" value="{{ old('shipping_province') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Province">
+                                <input type="text" name="shipping_province" id="shippingProvince" value="{{ old('shipping_province') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Province">
                             </div>
 
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Postal Code</label>
-                                <input type="text" name="shipping_postal_code" value="{{ old('shipping_postal_code') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Postal Code">
+                                <input type="text" name="shipping_postal_code" id="shippingPostalCode" value="{{ old('shipping_postal_code') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Postal Code">
                             </div>
                         </div>
                     </div>
@@ -211,7 +231,269 @@
 @push('scripts')
 <script>
     let itemIndex = 0;
-    const products = @json($products);
+    let customers = @json($customers);
+    let products = @json($products);
+    let customerSearchTimeout = null;
+
+    // Customer Search
+    document.getElementById('customerSearch').addEventListener('input', function(e) {
+        clearTimeout(customerSearchTimeout);
+        const searchTerm = e.target.value.toLowerCase();
+        
+        customerSearchTimeout = setTimeout(() => {
+            if (searchTerm.length === 0) {
+                document.getElementById('customerDropdown').classList.add('hidden');
+                return;
+            }
+
+            const filtered = customers.filter(customer => {
+                return customer.name.toLowerCase().includes(searchTerm) ||
+                       (customer.company_name && customer.company_name.toLowerCase().includes(searchTerm)) ||
+                       (customer.code && customer.code.toLowerCase().includes(searchTerm)) ||
+                       (customer.email && customer.email.toLowerCase().includes(searchTerm)) ||
+                       (customer.phone && customer.phone.toLowerCase().includes(searchTerm));
+            });
+
+            showCustomerDropdown(filtered);
+        }, 300);
+    });
+
+    // Click outside to close dropdown
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#customerSearch') && !e.target.closest('#customerDropdown')) {
+            document.getElementById('customerDropdown').classList.add('hidden');
+        }
+    });
+
+    function showCustomerDropdown(filteredCustomers) {
+        const dropdown = document.getElementById('customerDropdown');
+        
+        if (filteredCustomers.length === 0) {
+            dropdown.innerHTML = '<div class="p-3 text-sm text-gray-500">No customers found</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        dropdown.innerHTML = filteredCustomers.map(customer => `
+            <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100" onclick="selectCustomer(${customer.id})">
+                <div class="flex items-center justify-between">
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-sm text-gray-900">${customer.name}</span>
+                            ${customer.customer_type ? `<span class="px-2 py-0.5 text-xs rounded-full ${getCustomerTypeClass(customer.customer_type)}">${customer.customer_type.toUpperCase()}</span>` : ''}
+                        </div>
+                        ${customer.company_name ? `<div class="text-xs text-gray-600 mt-0.5">${customer.company_name}</div>` : ''}
+                        <div class="text-xs text-gray-500 mt-1">
+                            ${customer.code ? `Code: ${customer.code}` : ''} 
+                            ${customer.email ? `• ${customer.email}` : ''} 
+                            ${customer.phone ? `• ${customer.phone}` : ''}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        dropdown.classList.remove('hidden');
+    }
+
+    function getCustomerTypeClass(type) {
+        const classes = {
+            'regular': 'bg-blue-100 text-blue-700',
+            'vip': 'bg-purple-100 text-purple-700',
+            'wholesale': 'bg-green-100 text-green-700'
+        };
+        return classes[type] || 'bg-gray-100 text-gray-700';
+    }
+
+    function selectCustomer(customerId) {
+        const customer = customers.find(c => c.id === customerId);
+        if (!customer) return;
+
+        // Set hidden input
+        document.getElementById('customerId').value = customer.id;
+        
+        // Update search input
+        document.getElementById('customerSearch').value = customer.name + (customer.company_name ? ` (${customer.company_name})` : '');
+        
+        // Show selected customer info
+        document.getElementById('selectedCustomerName').textContent = customer.name + (customer.company_name ? ` - ${customer.company_name}` : '');
+        document.getElementById('selectedCustomerEmail').textContent = [customer.code, customer.email, customer.phone].filter(Boolean).join(' • ');
+        document.getElementById('selectedCustomerInfo').classList.remove('hidden');
+        
+        // Hide dropdown
+        document.getElementById('customerDropdown').classList.add('hidden');
+
+        // Auto-fill shipping information
+        if (customer.address) {
+            document.getElementById('shippingAddress').value = customer.address;
+        }
+        if (customer.city) {
+            document.getElementById('shippingCity').value = customer.city;
+        }
+        if (customer.province) {
+            document.getElementById('shippingProvince').value = customer.province;
+        }
+        if (customer.postal_code) {
+            document.getElementById('shippingPostalCode').value = customer.postal_code;
+        }
+    }
+
+    function clearCustomer() {
+        document.getElementById('customerId').value = '';
+        document.getElementById('customerSearch').value = '';
+        document.getElementById('selectedCustomerInfo').classList.add('hidden');
+    }
+
+    // Product Search for each item
+    function setupProductSearch(index) {
+        const searchInput = document.getElementById(`productSearch-${index}`);
+        const dropdown = document.getElementById(`productDropdown-${index}`);
+        let searchTimeout = null;
+
+        searchInput.addEventListener('input', function(e) {
+            clearTimeout(searchTimeout);
+            const searchTerm = e.target.value.toLowerCase();
+            
+            searchTimeout = setTimeout(() => {
+                if (searchTerm.length === 0) {
+                    dropdown.classList.add('hidden');
+                    return;
+                }
+
+                const filtered = products.filter(product => {
+                    return product.name.toLowerCase().includes(searchTerm) ||
+                           product.sku.toLowerCase().includes(searchTerm) ||
+                           (product.barcode && product.barcode.toLowerCase().includes(searchTerm));
+                });
+
+                showProductDropdown(index, filtered);
+            }, 300);
+        });
+
+        // Click outside to close dropdown
+        searchInput.addEventListener('blur', function() {
+            setTimeout(() => {
+                dropdown.classList.add('hidden');
+            }, 200);
+        });
+    }
+
+    function showProductDropdown(index, filteredProducts) {
+        const dropdown = document.getElementById(`productDropdown-${index}`);
+        
+        if (filteredProducts.length === 0) {
+            dropdown.innerHTML = '<div class="p-3 text-sm text-gray-500">No products found</div>';
+            dropdown.classList.remove('hidden');
+            return;
+        }
+
+        dropdown.innerHTML = filteredProducts.map(product => `
+            <div class="p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100" onclick="selectProduct(${index}, ${product.id})">
+                <div class="flex items-center gap-3">
+                    ${product.image ? 
+                        `<img src="/storage/${product.image}" alt="${product.name}" class="w-12 h-12 object-cover rounded border border-gray-200">` : 
+                        `<div class="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                            <i class="fas fa-box text-gray-400"></i>
+                        </div>`
+                    }
+                    <div class="flex-1">
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold text-sm text-gray-900">${product.name}</span>
+                            ${getProductTypeBadge(product.type)}
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1">
+                            SKU: ${product.sku}
+                            ${product.barcode ? ` • Barcode: ${product.barcode}` : ''}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm font-semibold text-blue-600">Rp ${formatNumber(product.price)}</div>
+                        <div class="text-xs ${getStockClass(product.stock)}">
+                            Stock: ${product.stock || 0} ${product.unit}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        dropdown.classList.remove('hidden');
+    }
+
+    function getProductTypeBadge(type) {
+        const badges = {
+            'raw_material': '<span class="px-2 py-0.5 text-xs rounded-full bg-gray-100 text-gray-700">Raw Material</span>',
+            'finished_goods': '<span class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700">Finished</span>',
+            'spare_parts': '<span class="px-2 py-0.5 text-xs rounded-full bg-yellow-100 text-yellow-700">Spare Parts</span>',
+            'consumable': '<span class="px-2 py-0.5 text-xs rounded-full bg-green-100 text-green-700">Consumable</span>'
+        };
+        return badges[type] || '';
+    }
+
+    function getStockClass(stock) {
+        if (stock <= 0) return 'text-red-600 font-semibold';
+        if (stock < 10) return 'text-orange-600 font-semibold';
+        return 'text-green-600';
+    }
+
+    function formatNumber(number) {
+        return new Intl.NumberFormat('id-ID').format(number);
+    }
+
+    function selectProduct(index, productId) {
+        const product = products.find(p => p.id === productId);
+        if (!product) return;
+
+        // Set hidden input
+        document.querySelector(`input[name="items[${index}][product_id]"]`).value = product.id;
+        
+        // Update search input
+        document.getElementById(`productSearch-${index}`).value = product.name + ' - ' + product.sku;
+        
+        // Set price
+        document.querySelector(`input[name="items[${index}][unit_price]"]`).value = product.price;
+        
+        // Show product info
+        const infoDiv = document.getElementById(`selectedProductInfo-${index}`);
+        infoDiv.classList.remove('hidden');
+        
+        // Update info with image
+        infoDiv.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    ${product.image ? 
+                        `<img src="/storage/${product.image}" alt="${product.name}" class="w-10 h-10 object-cover rounded border border-gray-200">` : 
+                        `<div class="w-10 h-10 bg-gray-100 rounded flex items-center justify-center">
+                            <i class="fas fa-box text-gray-400 text-sm"></i>
+                        </div>`
+                    }
+                    <div>
+                        <div class="text-sm font-semibold text-gray-900">${product.name}</div>
+                        <div class="text-xs text-gray-600">
+                            <span>SKU: ${product.sku}</span>
+                            ${product.barcode ? ` • Barcode: ${product.barcode}` : ''}
+                             • <span class="${getStockClass(product.stock)}">Stock: ${product.stock || 0} ${product.unit}</span>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" onclick="clearProduct(${index})" class="text-red-600 hover:text-red-800">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        
+        // Hide dropdown
+        document.getElementById(`productDropdown-${index}`).classList.add('hidden');
+        
+        calculateItemTotal(index);
+    }
+
+    function clearProduct(index) {
+        document.querySelector(`input[name="items[${index}][product_id]"]`).value = '';
+        document.getElementById(`productSearch-${index}`).value = '';
+        document.getElementById(`selectedProductInfo-${index}`).classList.add('hidden');
+        document.querySelector(`input[name="items[${index}][unit_price]"]`).value = 0;
+        calculateItemTotal(index);
+    }
 
     // Add first item on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -232,10 +514,32 @@
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Product <span class="text-red-500">*</span></label>
-                    <select name="items[${itemIndex}][product_id]" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" required onchange="updatePrice(${itemIndex})">
-                        <option value="">Select Product</option>
-                        ${products.map(product => `<option value="${product.id}" data-price="${product.price}">${product.name} - ${product.sku}</option>`).join('')}
-                    </select>
+                    <div class="relative">
+                        <input type="text" id="productSearch-${itemIndex}" placeholder="Search product by name or SKU..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 pr-10">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                    </div>
+                    <input type="hidden" name="items[${itemIndex}][product_id]" required>
+                    
+                    <div id="productDropdown-${itemIndex}" class="hidden absolute z-10 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-60 overflow-y-auto" style="width: calc(100% - 2rem);">
+                        <!-- Product results will be shown here -->
+                    </div>
+
+                    <div id="selectedProductInfo-${itemIndex}" class="hidden mt-2 p-2 bg-green-50 rounded-lg">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="text-sm font-semibold text-gray-900" id="selectedProductName-${itemIndex}"></div>
+                                <div class="text-xs text-gray-600">
+                                    <span id="selectedProductSku-${itemIndex}"></span> • 
+                                    <span id="selectedProductStock-${itemIndex}"></span>
+                                </div>
+                            </div>
+                            <button type="button" onclick="clearProduct(${itemIndex})" class="text-red-600 hover:text-red-800">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <div>
@@ -261,6 +565,10 @@
         `;
         
         container.appendChild(itemDiv);
+        
+        // Setup product search for this item
+        setupProductSearch(itemIndex);
+        
         itemIndex++;
     }
 
@@ -272,24 +580,16 @@
         }
     }
 
-    function updatePrice(index) {
-        const select = document.querySelector(`select[name="items[${index}][product_id]"]`);
-        const priceInput = document.querySelector(`input[name="items[${index}][unit_price]"]`);
-        
-        if (select.selectedIndex > 0) {
-            const price = select.options[select.selectedIndex].dataset.price;
-            priceInput.value = price;
-            calculateItemTotal(index);
-        }
-    }
-
     function calculateItemTotal(index) {
-        const quantity = parseFloat(document.querySelector(`input[name="items[${index}][quantity]"]`).value) || 0;
-        const unitPrice = parseFloat(document.querySelector(`input[name="items[${index}][unit_price]"]`).value) || 0;
-        const discount = parseFloat(document.querySelector(`input[name="items[${index}][discount]"]`).value) || 0;
+        const quantity = parseFloat(document.querySelector(`input[name="items[${index}][quantity]"]`)?.value) || 0;
+        const unitPrice = parseFloat(document.querySelector(`input[name="items[${index}][unit_price]"]`)?.value) || 0;
+        const discount = parseFloat(document.querySelector(`input[name="items[${index}][discount]"]`)?.value) || 0;
         
         const itemTotal = (quantity * unitPrice) - discount;
-        document.getElementById(`item-total-${index}`).value = itemTotal.toFixed(2);
+        const itemTotalInput = document.getElementById(`item-total-${index}`);
+        if (itemTotalInput) {
+            itemTotalInput.value = itemTotal.toFixed(2);
+        }
         
         calculateTotal();
     }
@@ -305,9 +605,9 @@
             }
         }
         
-        const discount = parseFloat(document.querySelector('input[name="discount_amount"]').value) || 0;
-        const tax = parseFloat(document.querySelector('input[name="tax_amount"]').value) || 0;
-        const shipping = parseFloat(document.querySelector('input[name="shipping_cost"]').value) || 0;
+        const discount = parseFloat(document.querySelector('input[name="discount_amount"]')?.value) || 0;
+        const tax = parseFloat(document.querySelector('input[name="tax_amount"]')?.value) || 0;
+        const shipping = parseFloat(document.querySelector('input[name="shipping_cost"]')?.value) || 0;
         
         const total = subtotal - discount + tax + shipping;
         

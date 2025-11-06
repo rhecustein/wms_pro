@@ -15,7 +15,7 @@ return new class extends Migration
             $table->foreignId('inbound_shipment_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('purchase_order_id')->nullable()->constrained()->nullOnDelete();
             $table->foreignId('warehouse_id')->constrained()->cascadeOnDelete();
-            $table->foreignId('vendor_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('supplier_id')->constrained()->cascadeOnDelete();
             $table->dateTime('receiving_date');
             $table->foreignId('received_by')->nullable()->constrained('users')->nullOnDelete();
             $table->enum('status', ['draft', 'in_progress', 'quality_check', 'completed', 'partial', 'cancelled'])->default('draft');

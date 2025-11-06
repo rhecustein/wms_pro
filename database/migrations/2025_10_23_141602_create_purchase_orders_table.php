@@ -64,7 +64,7 @@ return new class extends Migration
             $table->index('po_date');
             $table->index('status');
             $table->index('payment_status');
-            $table->index(['warehouse_id', 'supplier_id']);
+            $table->index(['warehouse_id', 'supplier_id']); // ✅ FIXED
         });
     }
 

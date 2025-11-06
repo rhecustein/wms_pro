@@ -14,7 +14,7 @@ class InventoryStockController extends Controller
 {
     public function index(Request $request)
     {
-        $query = InventoryStock::with(['warehouse', 'storageBin', 'product', 'customer', 'vendor', 'pallet']);
+        $query = InventoryStock::with(['warehouse', 'storageBin', 'product', 'customer', 'supplier', 'pallet']);
 
         // Search
         if ($request->filled('search')) {
@@ -49,6 +49,11 @@ class InventoryStockController extends Controller
             $query->where('product_id', $request->product_id);
         }
 
+        // Filter by Supplier
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
+        }
+
         $stocks = $query->orderBy('created_at', 'desc')->paginate(20);
         
         $warehouses = Warehouse::where('is_active', true)->get();
@@ -59,7 +64,7 @@ class InventoryStockController extends Controller
 
     public function show(InventoryStock $inventoryStock)
     {
-        $inventoryStock->load(['warehouse', 'storageBin', 'product', 'customer', 'vendor', 'pallet']);
+        $inventoryStock->load(['warehouse', 'storageBin', 'product', 'customer', 'supplier', 'pallet']);
         
         return view('inventory.stocks.show', compact('inventoryStock'));
     }

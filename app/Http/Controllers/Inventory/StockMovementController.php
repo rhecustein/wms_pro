@@ -7,6 +7,8 @@ use App\Models\StockMovement;
 use App\Models\Product;
 use App\Models\Warehouse;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StockMovementsExport;
 
 class StockMovementController extends Controller
 {
@@ -92,6 +94,54 @@ class StockMovementController extends Controller
         $stockMovement->load(['warehouse', 'product', 'fromBin', 'toBin', 'performedBy']);
 
         return view('inventory.movements.show', compact('stockMovement'));
+    }
+
+    /**
+     * Display print page for stock movements
+     */
+    public function print(Request $request)
+    {
+        $query = StockMovement::with(['warehouse', 'product', 'fromBin', 'toBin', 'performedBy'])
+            ->orderBy('movement_date', 'desc');
+
+        // Apply same filters as index
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('reference_number', 'like', "%{$search}%")
+                    ->orWhere('batch_number', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%")
+                    ->orWhereHas('product', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('movement_type')) {
+            $query->where('movement_type', $request->movement_type);
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $query->where('warehouse_id', $request->warehouse_id);
+        }
+
+        if ($request->filled('reference_type')) {
+            $query->where('reference_type', $request->reference_type);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('movement_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('movement_date', '<=', $request->date_to);
+        }
+
+        // Get all results for printing (no pagination)
+        $movements = $query->get();
+
+        return view('inventory.movements.print', compact('movements'));
     }
 
     /**
@@ -200,13 +250,51 @@ class StockMovementController extends Controller
     }
 
     /**
-     * Export stock movements
+     * Export stock movements to Excel
      */
     public function export(Request $request)
     {
-        // Implement export functionality (CSV/Excel)
-        // You can use Laravel Excel package for this
-        
-        return redirect()->back()->with('info', 'Export functionality will be implemented soon.');
+        $query = StockMovement::with(['warehouse', 'product', 'fromBin', 'toBin', 'performedBy'])
+            ->orderBy('movement_date', 'desc');
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('reference_number', 'like', "%{$search}%")
+                    ->orWhere('batch_number', 'like', "%{$search}%")
+                    ->orWhere('serial_number', 'like', "%{$search}%")
+                    ->orWhereHas('product', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('movement_type')) {
+            $query->where('movement_type', $request->movement_type);
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $query->where('warehouse_id', $request->warehouse_id);
+        }
+
+        if ($request->filled('reference_type')) {
+            $query->where('reference_type', $request->reference_type);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('movement_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('movement_date', '<=', $request->date_to);
+        }
+
+        $movements = $query->get();
+
+        $fileName = 'stock-movements-' . date('Y-m-d-His') . '.xlsx';
+
+        return Excel::download(new StockMovementsExport($movements), $fileName);
     }
 }

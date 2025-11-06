@@ -276,13 +276,13 @@ class DashboardController extends Controller
             ->limit(5)
             ->get();
 
-        // Recent Purchase Orders
+        // Recent Purchase Orders - FIXED: Changed vendor_id to supplier_id
         $purchaseOrders = DB::table('purchase_orders as po')
-            ->join('vendors as v', 'po.vendor_id', '=', 'v.id')
+            ->join('suppliers as s', 'po.supplier_id', '=', 's.id')
             ->select(
                 'po.id',
                 'po.po_number',
-                'v.name as vendor_name',
+                's.name as supplier_name',
                 'po.po_date',
                 'po.status',
                 'po.total_amount'

@@ -51,11 +51,6 @@ class GoodReceiving extends Model
         return $this->belongsTo(Warehouse::class);
     }
 
-    public function vendor()
-    {
-        return $this->belongsTo(Vendor::class);
-    }
-
     public function receivedByUser()
     {
         return $this->belongsTo(User::class, 'received_by');

@@ -1,10 +1,13 @@
 <?php
+// app/Models/PurchaseOrder.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PurchaseOrder extends Model
 {
@@ -62,113 +65,175 @@ class PurchaseOrder extends Model
     ];
 
     // Relationships
-    public function warehouse()
+    public function warehouse(): BelongsTo
     {
         return $this->belongsTo(Warehouse::class);
     }
 
-    public function supplier()
+    public function supplier(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(Supplier::class,'supplier_id');
     }
 
-    public function creator()
+    public function items(): HasMany
     {
-        return $this->belongsTo(User::class, 'created_by');
+        return $this->hasMany(PurchaseOrderItem::class)->orderBy('sort_order');
     }
 
-    public function updater()
-    {
-        return $this->belongsTo(User::class, 'updated_by');
-    }
-
-    public function approver()
-    {
-        return $this->belongsTo(User::class, 'approved_by');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(PurchaseOrderItem::class);
-    }
-
-    public function inboundShipments()
+    public function inboundShipments(): HasMany
     {
         return $this->hasMany(InboundShipment::class);
     }
 
+    public function creator(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updater(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function approver(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'approved_by');
+    }
+
     // Accessors
-    public function getStatusBadgeAttribute()
+    public function getStatusBadgeAttribute(): string
     {
         $badges = [
-            'draft' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800"><i class="fas fa-file-alt mr-1"></i>Draft</span>',
-            'submitted' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800"><i class="fas fa-paper-plane mr-1"></i>Submitted</span>',
-            'approved' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-indigo-100 text-indigo-800"><i class="fas fa-thumbs-up mr-1"></i>Approved</span>',
-            'confirmed' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-purple-100 text-purple-800"><i class="fas fa-check-circle mr-1"></i>Confirmed</span>',
-            'partial_received' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-hourglass-half mr-1"></i>Partial Received</span>',
-            'received' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-teal-100 text-teal-800"><i class="fas fa-box-open mr-1"></i>Received</span>',
-            'completed' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-double mr-1"></i>Completed</span>',
-            'cancelled' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-times-circle mr-1"></i>Cancelled</span>',
+            'draft' => '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">Draft</span>',
+            'submitted' => '<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium">Submitted</span>',
+            'approved' => '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Approved</span>',
+            'confirmed' => '<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium">Confirmed</span>',
+            'partial_received' => '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Partial</span>',
+            'received' => '<span class="px-2 py-1 bg-teal-100 text-teal-700 rounded-full text-xs font-medium">Received</span>',
+            'completed' => '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Completed</span>',
+            'cancelled' => '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Cancelled</span>',
         ];
 
-        return $badges[$this->status] ?? $badges['draft'];
+        return $badges[$this->status] ?? '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">Unknown</span>';
     }
 
-    public function getPaymentStatusBadgeAttribute()
+    public function getPaymentStatusBadgeAttribute(): string
     {
         $badges = [
-            'unpaid' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800"><i class="fas fa-exclamation-circle mr-1"></i>Unpaid</span>',
-            'partial' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800"><i class="fas fa-coins mr-1"></i>Partial</span>',
-            'paid' => '<span class="px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800"><i class="fas fa-check-circle mr-1"></i>Paid</span>',
+            'unpaid' => '<span class="px-2 py-1 bg-red-100 text-red-700 rounded-full text-xs font-medium">Unpaid</span>',
+            'partial' => '<span class="px-2 py-1 bg-yellow-100 text-yellow-700 rounded-full text-xs font-medium">Partial</span>',
+            'paid' => '<span class="px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-medium">Paid</span>',
         ];
 
-        return $badges[$this->payment_status] ?? $badges['unpaid'];
+        return $badges[$this->payment_status] ?? '<span class="px-2 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">Unknown</span>';
     }
 
-    public function getRemainingPaymentAttribute()
+    public function getRemainingAmountAttribute(): float
     {
         return max(0, $this->total_amount - $this->paid_amount);
     }
 
-    public function getTotalReceivedItemsAttribute()
+    public function getPaymentProgressAttribute(): float
     {
-        return $this->items()->sum('quantity_received');
+        if ($this->total_amount <= 0) {
+            return 0;
+        }
+        return round(($this->paid_amount / $this->total_amount) * 100, 2);
     }
 
-    public function getTotalOrderedItemsAttribute()
+    // Scopes
+    public function scopeDraft($query)
     {
-        return $this->items()->sum('quantity_ordered');
+        return $query->where('status', 'draft');
     }
 
-    public function getReceivingProgressAttribute()
+    public function scopeApproved($query)
     {
-        $total = $this->total_ordered_items;
-        if ($total == 0) return 0;
-        
-        return min(100, round(($this->total_received_items / $total) * 100, 1));
+        return $query->where('status', 'approved');
     }
 
-    // Generate PO Number
-    public static function generatePoNumber()
-    {
-        $lastPo = self::withTrashed()->orderBy('id', 'desc')->first();
-        $number = $lastPo ? intval(substr($lastPo->po_number, 3)) + 1 : 1;
-        return 'PO-' . str_pad($number, 5, '0', STR_PAD_LEFT);
-    }
-
-    // Scope
     public function scopeActive($query)
     {
-        return $query->whereNotIn('status', ['cancelled', 'completed']);
-    }
-
-    public function scopePending($query)
-    {
-        return $query->whereIn('status', ['draft', 'submitted', 'approved']);
+        return $query->whereNotIn('status', ['completed', 'cancelled']);
     }
 
     public function scopeUnpaid($query)
     {
         return $query->where('payment_status', '!=', 'paid');
     }
+
+    // Helper Methods
+    public static function generatePoNumber(): string
+    {
+        $lastPO = static::latest('id')->first();
+        $nextNumber = $lastPO ? ((int) substr($lastPO->po_number, 3)) + 1 : 1;
+        return 'PO-' . str_pad($nextNumber, 6, '0', STR_PAD_LEFT);
+    }
+
+    public function canEdit(): bool
+    {
+        return in_array($this->status, ['draft', 'submitted']);
+    }
+
+    public function canDelete(): bool
+    {
+        return $this->status === 'draft';
+    }
+
+    public function canApprove(): bool
+    {
+        return $this->status === 'submitted';
+    }
+
+    public function canCancel(): bool
+    {
+        return !in_array($this->status, ['completed', 'cancelled']);
+    }
+
+    public function hasShipments(): bool
+    {
+        return $this->inboundShipments()->count() > 0;
+    }
+
+    public function getTotalShipmentsAttribute(): int
+    {
+        return $this->inboundShipments()->count();
+    }
+
+    public function getCompletedShipmentsAttribute(): int
+    {
+        return $this->inboundShipments()->where('status', 'completed')->count();
+    }
+
+    public function isEditable(): bool
+    {
+        return in_array($this->status, ['draft', 'submitted']);
+    }
+
+    public function isDeletable(): bool
+    {
+        return $this->status === 'draft';
+    }
+
+    public function canBeApproved(): bool
+    {
+        return $this->status === 'submitted';
+    }
+
+    public function canBeCancelled(): bool
+    {
+        return !in_array($this->status, ['completed', 'cancelled']);
+    }
+
+    public function canBeCompleted(): bool
+    {
+        return $this->items()
+            ->whereColumn('quantity_received', '<', 'quantity_ordered')
+            ->count() === 0;
+    }
+
+    public function goodReceivings(): HasMany
+    {
+        return $this->hasMany(GoodReceiving::class);
+    }   
 }

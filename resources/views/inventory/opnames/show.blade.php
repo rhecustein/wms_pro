@@ -16,6 +16,19 @@
             <p class="text-sm text-gray-600 mt-1">{{ $opname->opname_number }}</p>
         </div>
         <div class="flex items-center space-x-2">
+            {{-- Print Button --}}
+            <a href="{{ route('inventory.opnames.print', $opname) }}" 
+               target="_blank"
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                <i class="fas fa-print mr-2"></i>Print
+            </a>
+
+            {{-- Export Excel Button --}}
+            <a href="{{ route('inventory.opnames.export', $opname) }}" 
+               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
+                <i class="fas fa-file-excel mr-2"></i>Export
+            </a>
+
             @if($opname->status === 'in_progress')
                 <a href="{{ route('inventory.opnames.count', $opname) }}" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">
                     <i class="fas fa-clipboard-check mr-2"></i>Count Items
@@ -347,9 +360,13 @@
 
                     <hr class="my-3">
 
-                    <button onclick="window.print()" class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-semibold">
+                    <a href="{{ route('inventory.opnames.print', $opname) }}" target="_blank" class="block w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-semibold text-center">
                         <i class="fas fa-print mr-2"></i>Print
-                    </button>
+                    </a>
+
+                    <a href="{{ route('inventory.opnames.export', $opname) }}" class="block w-full px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition text-sm font-semibold text-center">
+                        <i class="fas fa-file-excel mr-2"></i>Export Excel
+                    </a>
 
                     @if($opname->status === 'planned')
                         <form action="{{ route('inventory.opnames.destroy', $opname) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this opname?')">

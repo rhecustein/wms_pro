@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
             SupplierSeeder::class,
             ProductSeeder::class,
             CustomerSeeder::class,
-            VendorSeeder::class,
+            SupplierSeeder::class,
             VehicleSeeder::class,
             EquipmentSeeder::class,
             PalletSeeder::class,

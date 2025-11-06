@@ -8,7 +8,7 @@ use App\Models\GoodReceivingItem;
 use App\Models\InboundShipment;
 use App\Models\PurchaseOrder;
 use App\Models\Warehouse;
-use App\Models\Vendor;
+use App\Models\Supplier;
 use App\Models\Product;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,7 +21,7 @@ class GoodReceivingController extends Controller
      */
     public function index(Request $request)
     {
-        $query = GoodReceiving::with(['warehouse', 'vendor', 'receivedBy', 'purchaseOrder', 'inboundShipment']);
+        $query = GoodReceiving::with(['warehouse', 'supplier', 'receivedBy', 'purchaseOrder', 'inboundShipment']);
 
         // Search
         if ($request->filled('search')) {
@@ -29,7 +29,7 @@ class GoodReceivingController extends Controller
             $query->where(function($q) use ($search) {
                 $q->where('gr_number', 'like', "%{$search}%")
                   ->orWhere('notes', 'like', "%{$search}%")
-                  ->orWhereHas('vendor', function($q) use ($search) {
+                  ->orWhereHas('supplier', function($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%");
                   });
             });
@@ -50,9 +50,9 @@ class GoodReceivingController extends Controller
             $query->where('warehouse_id', $request->warehouse_id);
         }
 
-        // Vendor Filter
-        if ($request->filled('vendor_id')) {
-            $query->where('vendor_id', $request->vendor_id);
+        // Supplier Filter
+        if ($request->filled('supplier_id')) {
+            $query->where('supplier_id', $request->supplier_id);
         }
 
         // Date Range Filter
@@ -68,14 +68,14 @@ class GoodReceivingController extends Controller
         $statuses = ['draft', 'in_progress', 'quality_check', 'completed', 'partial', 'cancelled'];
         $qualityStatuses = ['pending', 'passed', 'failed', 'partial'];
         $warehouses = Warehouse::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
 
         return view('inbound.good-receivings.index', compact(
             'goodReceivings',
             'statuses',
             'qualityStatuses',
             'warehouses',
-            'vendors'
+            'suppliers'
         ));
     }
 
@@ -85,17 +85,17 @@ class GoodReceivingController extends Controller
     public function create(Request $request)
     {
         $warehouses = Warehouse::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
         $purchaseOrders = PurchaseOrder::where('status', 'approved')
             ->whereDoesntHave('goodReceivings', function($query) {
                 $query->whereIn('status', ['completed']);
             })
-            ->with('vendor')
+            ->with('supplier')
             ->orderBy('po_date', 'desc')
             ->get();
         
         $inboundShipments = InboundShipment::where('status', 'in_transit')
-            ->with('vendor')
+            ->with('supplier')
             ->orderBy('shipment_date', 'desc')
             ->get();
 
@@ -103,18 +103,18 @@ class GoodReceivingController extends Controller
         $selectedShipment = null;
 
         if ($request->filled('purchase_order_id')) {
-            $selectedPO = PurchaseOrder::with(['items.product', 'vendor', 'warehouse'])
+            $selectedPO = PurchaseOrder::with(['items.product', 'supplier', 'warehouse'])
                 ->findOrFail($request->purchase_order_id);
         }
 
         if ($request->filled('inbound_shipment_id')) {
-            $selectedShipment = InboundShipment::with(['items.product', 'vendor', 'warehouse'])
+            $selectedShipment = InboundShipment::with(['items.product', 'supplier', 'warehouse'])
                 ->findOrFail($request->inbound_shipment_id);
         }
 
         return view('inbound.good-receivings.create', compact(
             'warehouses',
-            'vendors',
+            'suppliers',
             'purchaseOrders',
             'inboundShipments',
             'selectedPO',
@@ -131,7 +131,7 @@ class GoodReceivingController extends Controller
             'purchase_order_id' => 'nullable|exists:purchase_orders,id',
             'inbound_shipment_id' => 'nullable|exists:inbound_shipments,id',
             'warehouse_id' => 'required|exists:warehouses,id',
-            'vendor_id' => 'required|exists:vendors,id',
+            'supplier_id' => 'required|exists:suppliers,id',
             'receiving_date' => 'required|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
@@ -164,7 +164,7 @@ class GoodReceivingController extends Controller
                 'inbound_shipment_id' => $validated['inbound_shipment_id'] ?? null,
                 'purchase_order_id' => $validated['purchase_order_id'] ?? null,
                 'warehouse_id' => $validated['warehouse_id'],
-                'vendor_id' => $validated['vendor_id'],
+                'supplier_id' => $validated['supplier_id'],
                 'receiving_date' => $validated['receiving_date'],
                 'status' => 'draft',
                 'total_items' => $totalItems,
@@ -205,7 +205,7 @@ class GoodReceivingController extends Controller
     {
         $goodReceiving->load([
             'warehouse',
-            'vendor',
+            'supplier',
             'receivedBy',
             'qualityCheckedBy',
             'purchaseOrder',
@@ -229,13 +229,13 @@ class GoodReceivingController extends Controller
 
         $goodReceiving->load(['items.product']);
         $warehouses = Warehouse::orderBy('name')->get();
-        $vendors = Vendor::orderBy('name')->get();
+        $suppliers = Supplier::where('is_active', true)->orderBy('name')->get();
         $products = Product::where('status', 'active')->orderBy('name')->get();
 
         return view('inbound.good-receivings.edit', compact(
             'goodReceiving',
             'warehouses',
-            'vendors',
+            'suppliers',
             'products'
         ));
     }
@@ -251,7 +251,7 @@ class GoodReceivingController extends Controller
 
         $validated = $request->validate([
             'warehouse_id' => 'required|exists:warehouses,id',
-            'vendor_id' => 'required|exists:vendors,id',
+            'supplier_id' => 'required|exists:suppliers,id',
             'receiving_date' => 'required|date',
             'notes' => 'nullable|string',
             'items' => 'required|array|min:1',
@@ -272,7 +272,7 @@ class GoodReceivingController extends Controller
             // Update Good Receiving
             $goodReceiving->update([
                 'warehouse_id' => $validated['warehouse_id'],
-                'vendor_id' => $validated['vendor_id'],
+                'supplier_id' => $validated['supplier_id'],
                 'receiving_date' => $validated['receiving_date'],
                 'total_items' => $totalItems,
                 'total_quantity' => $totalQuantity,
@@ -453,7 +453,7 @@ class GoodReceivingController extends Controller
     {
         $goodReceiving->load([
             'warehouse',
-            'vendor',
+            'supplier',
             'receivedBy',
             'qualityCheckedBy',
             'items.product'

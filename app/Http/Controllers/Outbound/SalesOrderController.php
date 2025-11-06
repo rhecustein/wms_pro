@@ -82,9 +82,31 @@ class SalesOrderController extends Controller
      */
     public function create()
     {
-        $warehouses = Warehouse::orderBy('name')->get();
-        $customers = Customer::orderBy('name')->get();
-        $products = Product::where('is_active', true)->orderBy('name')->get();
+        $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        $customers = Customer::where('is_active', true)
+            ->select('id', 'code', 'name', 'company_name', 'email', 'phone', 'address', 'city', 'province', 'postal_code', 'customer_type')
+            ->orderBy('name')
+            ->get();
+        $products = Product::with('unit:id,name,short_code')
+            ->where('is_active', true)
+            ->select('id', 'sku', 'barcode', 'name', 'description', 'selling_price', 'current_stock', 'unit_id', 'type', 'image')
+            ->orderBy('name')
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'price' => $product->selling_price,
+                    'stock' => $product->current_stock,
+                    'unit' => $product->unit ? $product->unit->short_code : 'pcs',
+                    'unit_name' => $product->unit ? $product->unit->name : 'Pieces',
+                    'type' => $product->type,
+                    'image' => $product->image,
+                ];
+            });
         $soNumber = SalesOrder::generateSONumber();
 
         return view('outbound.sales-orders.create', compact(
@@ -174,7 +196,7 @@ class SalesOrderController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('sales-orders.show', $salesOrder)
+                ->route('outbound.sales-orders.show', $salesOrder)
                 ->with('success', 'Sales Order created successfully!');
 
         } catch (\Exception $e) {
@@ -202,14 +224,36 @@ class SalesOrderController extends Controller
     {
         if (!$salesOrder->canEdit()) {
             return redirect()
-                ->route('sales-orders.show', $salesOrder)
+                ->route('outbound.sales-orders.show', $salesOrder)
                 ->with('error', 'Cannot edit Sales Order with status: ' . $salesOrder->status);
         }
 
-        $warehouses = Warehouse::orderBy('name')->get();
-        $customers = Customer::orderBy('name')->get();
-        $products = Product::where('is_active', true)->orderBy('name')->get();
-        $salesOrder->load('items.product');
+        $warehouses = Warehouse::where('is_active', true)->orderBy('name')->get();
+        $customers = Customer::where('is_active', true)
+            ->select('id', 'code', 'name', 'company_name', 'email', 'phone', 'address', 'city', 'province', 'postal_code', 'customer_type')
+            ->orderBy('name')
+            ->get();
+        $products = Product::with('unit:id,name,short_code')
+            ->where('is_active', true)
+            ->select('id', 'sku', 'barcode', 'name', 'description', 'selling_price', 'current_stock', 'unit_id', 'type', 'image')
+            ->orderBy('name')
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'name' => $product->name,
+                    'description' => $product->description,
+                    'price' => $product->selling_price,
+                    'stock' => $product->current_stock,
+                    'unit' => $product->unit ? $product->unit->short_code : 'pcs',
+                    'unit_name' => $product->unit ? $product->unit->name : 'Pieces',
+                    'type' => $product->type,
+                    'image' => $product->image,
+                ];
+            });
+        $salesOrder->load('items.product', 'customer');
 
         return view('outbound.sales-orders.edit', compact(
             'salesOrder',
@@ -226,7 +270,7 @@ class SalesOrderController extends Controller
     {
         if (!$salesOrder->canEdit()) {
             return redirect()
-                ->route('sales-orders.show', $salesOrder)
+                ->route('outbound.sales-orders.show', $salesOrder)
                 ->with('error', 'Cannot edit Sales Order with status: ' . $salesOrder->status);
         }
 
@@ -302,7 +346,7 @@ class SalesOrderController extends Controller
             DB::commit();
 
             return redirect()
-                ->route('sales-orders.show', $salesOrder)
+                ->route('outbound.sales-orders.show', $salesOrder)
                 ->with('success', 'Sales Order updated successfully!');
 
         } catch (\Exception $e) {
@@ -325,7 +369,7 @@ class SalesOrderController extends Controller
         try {
             $salesOrder->delete();
             return redirect()
-                ->route('sales-orders.index')
+                ->route('outbound.sales-orders.index')
                 ->with('success', 'Sales Order deleted successfully!');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to delete Sales Order: ' . $e->getMessage());
@@ -407,5 +451,150 @@ class SalesOrderController extends Controller
         $salesOrder->load(['warehouse', 'customer', 'items.product', 'createdBy']);
 
         return view('outbound.sales-orders.print', compact('salesOrder'));
+    }
+
+    /**
+     * Search customers for Select2 (AJAX)
+     */
+    public function searchCustomers(Request $request)
+    {
+        $search = $request->get('q', '');
+        $page = $request->get('page', 1);
+        $perPage = 10;
+
+        $query = Customer::query()
+            ->where('is_active', true)
+            ->orderBy('name');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('email', 'like', "%{$search}%")
+                  ->orWhere('phone', 'like', "%{$search}%")
+                  ->orWhere('code', 'like', "%{$search}%");
+            });
+        }
+
+        $total = $query->count();
+        $customers = $query->skip(($page - 1) * $perPage)
+                          ->take($perPage)
+                          ->get();
+
+        $results = $customers->map(function($customer) {
+            return [
+                'id' => $customer->id,
+                'text' => $customer->name,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'address' => $customer->address,
+                'city' => $customer->city,
+                'province' => $customer->province,
+                'postal_code' => $customer->postal_code,
+            ];
+        });
+
+        return response()->json([
+            'results' => $results,
+            'pagination' => [
+                'more' => ($page * $perPage) < $total
+            ]
+        ]);
+    }
+
+    /**
+     * Search products for Select2 (AJAX)
+     */
+    public function searchProducts(Request $request)
+    {
+        $search = $request->get('q', '');
+        $page = $request->get('page', 1);
+        $perPage = 10;
+
+        $query = Product::with('unit:id,name,short_code')
+            ->where('is_active', true)
+            ->orderBy('name');
+
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('name', 'like', "%{$search}%")
+                  ->orWhere('sku', 'like', "%{$search}%")
+                  ->orWhere('barcode', 'like', "%{$search}%");
+            });
+        }
+
+        $total = $query->count();
+        $products = $query->skip(($page - 1) * $perPage)
+                         ->take($perPage)
+                         ->get();
+
+        $results = $products->map(function($product) {
+            return [
+                'id' => $product->id,
+                'text' => $product->name . ' - ' . $product->sku,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'barcode' => $product->barcode,
+                'price' => $product->selling_price,
+                'stock' => $product->current_stock ?? 0,
+                'unit' => $product->unit ? $product->unit->short_code : 'pcs',
+                'unit_name' => $product->unit ? $product->unit->name : 'Pieces',
+                'type' => $product->type,
+                'image' => $product->image,
+            ];
+        });
+
+        return response()->json([
+            'results' => $results,
+            'pagination' => [
+                'more' => ($page * $perPage) < $total
+            ]
+        ]);
+    }
+
+    /**
+     * Get customer details by ID (AJAX)
+     */
+    public function getCustomer($id)
+    {
+        $customer = Customer::findOrFail($id);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $customer->id,
+                'name' => $customer->name,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'address' => $customer->address,
+                'city' => $customer->city,
+                'province' => $customer->province,
+                'postal_code' => $customer->postal_code,
+            ]
+        ]);
+    }
+
+    /**
+     * Get product details by ID (AJAX)
+     */
+    public function getProduct($id)
+    {
+        $product = Product::with('unit:id,name,short_code')->findOrFail($id);
+        
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'id' => $product->id,
+                'name' => $product->name,
+                'sku' => $product->sku,
+                'barcode' => $product->barcode,
+                'price' => $product->selling_price,
+                'stock' => $product->current_stock ?? 0,
+                'unit' => $product->unit ? $product->unit->short_code : 'pcs',
+                'unit_name' => $product->unit ? $product->unit->name : 'Pieces',
+                'description' => $product->description,
+                'type' => $product->type,
+                'image' => $product->image,
+            ]
+        ]);
     }
 }

@@ -71,8 +71,8 @@ class InventoryStock extends Model
         return $this->belongsTo(Customer::class);
     }
 
-    public function vendor()
+    public function supplier()
     {
-        return $this->belongsTo(Vendor::class);
+        return $this->belongsTo(Supplier::class);
     }
 }

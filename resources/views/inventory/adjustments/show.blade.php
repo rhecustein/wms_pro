@@ -16,6 +16,11 @@
             <p class="text-sm text-gray-600 mt-1">{{ $adjustment->adjustment_number }}</p>
         </div>
         <div class="flex items-center space-x-2">
+            <a href="{{ route('inventory.adjustments.print', $adjustment) }}" 
+               target="_blank"
+               class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition inline-flex items-center">
+                <i class="fas fa-print mr-2"></i>Print
+            </a>
             @if($adjustment->status === 'draft')
                 <a href="{{ route('inventory.adjustments.edit', $adjustment) }}" class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition">
                     <i class="fas fa-edit mr-2"></i>Edit
@@ -301,9 +306,11 @@
 
                     <hr class="my-3">
 
-                    <button onclick="window.print()" class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-semibold">
+                    <a href="{{ route('inventory.adjustments.print', $adjustment) }}" 
+                       target="_blank"
+                       class="block w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition text-sm font-semibold text-center">
                         <i class="fas fa-print mr-2"></i>Print
-                    </button>
+                    </a>
 
                     @if($adjustment->status === 'draft')
                         <form action="{{ route('inventory.adjustments.destroy', $adjustment) }}" method="POST" onsubmit="return confirm('Are you sure you want to delete this adjustment?')">

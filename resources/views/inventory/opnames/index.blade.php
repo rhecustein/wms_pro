@@ -7,7 +7,7 @@
 <div class="container-fluid px-4 py-6">
     
     {{-- Page Header --}}
-    <div class="flex items-center justify-between mb-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
         <div>
             <h1 class="text-2xl font-bold text-gray-800">
                 <i class="fas fa-clipboard-check text-blue-600 mr-2"></i>
@@ -15,9 +15,11 @@
             </h1>
             <p class="text-sm text-gray-600 mt-1">Physical inventory count and stock verification</p>
         </div>
-        <a href="{{ route('inventory.opnames.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-            <i class="fas fa-plus mr-2"></i>New Opname
-        </a>
+        <div class="mt-4 md:mt-0">
+            <a href="{{ route('inventory.opnames.create') }}" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
+                <i class="fas fa-plus mr-2"></i>New Opname
+            </a>
+        </div>
     </div>
 
     {{-- Success/Error Messages --}}
@@ -45,20 +47,94 @@
         </div>
     @endif
 
+    {{-- Stats Cards --}}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Total Opnames</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ $opnames->total() }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-clipboard-check text-xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Planned</p>
+                    <p class="text-2xl font-bold text-yellow-600">
+                        {{ $opnames->where('status', 'planned')->count() }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-calendar-alt text-xl text-yellow-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">In Progress</p>
+                    <p class="text-2xl font-bold text-blue-600">
+                        {{ $opnames->where('status', 'in_progress')->count() }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-sync text-xl text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-600 mb-1">Completed</p>
+                    <p class="text-2xl font-bold text-green-600">
+                        {{ $opnames->where('status', 'completed')->count() }}
+                    </p>
+                </div>
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-check-circle text-xl text-green-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- Filters --}}
     <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
         <form method="GET" action="{{ route('inventory.opnames.index') }}">
-            <div class="grid grid-cols-1 md:grid-cols-6 gap-4">
-                {{-- Search --}}
-                <div class="md:col-span-2">
+            
+            {{-- Search Bar --}}
+            <div class="flex flex-col md:flex-row gap-4 mb-4">
+                <div class="flex-1">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="Opname Number, Notes..." class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <div class="relative">
+                        <input type="text" 
+                               name="search" 
+                               value="{{ request('search') }}" 
+                               placeholder="Search by opname number, notes, or warehouse..." 
+                               class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
                 </div>
+                <div class="flex items-end">
+                    <button type="submit" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                        <i class="fas fa-search mr-2"></i>Search
+                    </button>
+                </div>
+            </div>
 
+            {{-- Filter Dropdowns --}}
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                
                 {{-- Status Filter --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
-                    <select name="status" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">All Status</option>
                         @foreach($statuses as $status)
                             <option value="{{ $status }}" {{ request('status') === $status ? 'selected' : '' }}>
@@ -71,7 +147,7 @@
                 {{-- Type Filter --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Type</label>
-                    <select name="opname_type" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <select name="opname_type" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">All Types</option>
                         @foreach($types as $type)
                             <option value="{{ $type }}" {{ request('opname_type') === $type ? 'selected' : '' }}>
@@ -84,7 +160,7 @@
                 {{-- Warehouse Filter --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Warehouse</label>
-                    <select name="warehouse_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <select name="warehouse_id" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">All Warehouses</option>
                         @foreach($warehouses as $warehouse)
                             <option value="{{ $warehouse->id }}" {{ request('warehouse_id') == $warehouse->id ? 'selected' : '' }}>
@@ -94,28 +170,36 @@
                     </select>
                 </div>
 
-                {{-- Filter Button --}}
-                <div class="flex items-end space-x-2">
-                    <button type="submit" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-                        <i class="fas fa-filter mr-2"></i>Filter
-                    </button>
-                    <a href="{{ route('inventory.opnames.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
-                        <i class="fas fa-redo"></i>
-                    </a>
-                </div>
-            </div>
-
-            {{-- Date Range --}}
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                {{-- Date From --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
-                    <input type="date" name="date_from" value="{{ request('date_from') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <input type="date" 
+                           name="date_from" 
+                           value="{{ request('date_from') }}" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
+
+                {{-- Date To --}}
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Date To</label>
-                    <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <input type="date" 
+                           name="date_to" 
+                           value="{{ request('date_to') }}" 
+                           class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
+
             </div>
+
+            {{-- Filter Actions --}}
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                    <i class="fas fa-filter mr-2"></i>Apply Filters
+                </button>
+                <a href="{{ route('inventory.opnames.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
+                    <i class="fas fa-times mr-2"></i>Clear Filters
+                </a>
+            </div>
+
         </form>
     </div>
 
@@ -167,17 +251,19 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <div class="text-sm">
                                     <div class="flex items-center justify-between mb-1">
-                                        <span class="text-gray-600">Items:</span>
-                                        <span class="font-semibold text-gray-900">
+                                        <span class="text-xs text-gray-600">Items:</span>
+                                        <span class="font-semibold text-gray-900 text-xs">
                                             {{ $opname->total_items_counted }} / {{ $opname->total_items_planned }}
                                         </span>
                                     </div>
                                     @php
                                         $progress = $opname->total_items_planned > 0 ? ($opname->total_items_counted / $opname->total_items_planned) * 100 : 0;
+                                        $progressColor = $progress == 100 ? 'bg-green-600' : ($progress > 0 ? 'bg-blue-600' : 'bg-gray-300');
                                     @endphp
                                     <div class="w-full bg-gray-200 rounded-full h-2">
-                                        <div class="bg-blue-600 h-2 rounded-full" style="width: {{ $progress }}%"></div>
+                                        <div class="{{ $progressColor }} h-2 rounded-full transition-all" style="width: {{ $progress }}%"></div>
                                     </div>
+                                    <div class="text-xs text-gray-500 mt-1">{{ number_format($progress, 0) }}%</div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
@@ -194,25 +280,36 @@
                                 {!! $opname->status_badge !!}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <div class="flex items-center justify-end space-x-2">
-                                    <a href="{{ route('inventory.opnames.show', $opname) }}" class="text-blue-600 hover:text-blue-900" title="View Details">
+                                <div class="flex items-center justify-end space-x-3">
+                                    <a href="{{ route('inventory.opnames.show', $opname) }}" 
+                                       class="text-blue-600 hover:text-blue-900" 
+                                       title="View Details">
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     
                                     @if($opname->status === 'in_progress')
-                                        <a href="{{ route('inventory.opnames.count', $opname) }}" class="text-green-600 hover:text-green-900" title="Count Items">
+                                        <a href="{{ route('inventory.opnames.count', $opname) }}" 
+                                           class="text-green-600 hover:text-green-900" 
+                                           title="Count Items">
                                             <i class="fas fa-clipboard-check"></i>
                                         </a>
                                     @endif
                                     
                                     @if($opname->status === 'planned')
-                                        <a href="{{ route('inventory.opnames.edit', $opname) }}" class="text-yellow-600 hover:text-yellow-900" title="Edit">
+                                        <a href="{{ route('inventory.opnames.edit', $opname) }}" 
+                                           class="text-yellow-600 hover:text-yellow-900" 
+                                           title="Edit">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        <form action="{{ route('inventory.opnames.destroy', $opname) }}" method="POST" class="inline" onsubmit="return confirm('Are you sure you want to delete this opname?')">
+                                        <form action="{{ route('inventory.opnames.destroy', $opname) }}" 
+                                              method="POST" 
+                                              class="inline" 
+                                              onsubmit="return confirm('Are you sure you want to delete this opname?')">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="text-red-600 hover:text-red-900" title="Delete">
+                                            <button type="submit" 
+                                                    class="text-red-600 hover:text-red-900" 
+                                                    title="Delete">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </form>
@@ -223,13 +320,12 @@
                     @empty
                         <tr>
                             <td colspan="8" class="px-6 py-12 text-center">
-                                <div class="flex flex-col items-center">
-                                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fas fa-clipboard-check text-4xl text-gray-400"></i>
-                                    </div>
-                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">No Opnames Found</h3>
-                                    <p class="text-gray-600 mb-4">Get started by creating your first stock opname</p>
-                                    <a href="{{ route('inventory.opnames.create') }}" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                <div class="flex flex-col items-center justify-center text-gray-400">
+                                    <i class="fas fa-clipboard-check text-5xl mb-4"></i>
+                                    <p class="text-lg font-medium text-gray-800 mb-2">No Opnames Found</p>
+                                    <p class="text-sm text-gray-600 mb-4">Get started by creating your first stock opname</p>
+                                    <a href="{{ route('inventory.opnames.create') }}" 
+                                       class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition inline-block">
                                         <i class="fas fa-plus mr-2"></i>New Opname
                                     </a>
                                 </div>

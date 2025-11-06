@@ -12,6 +12,8 @@ use App\Models\StorageBin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use App\Exports\StockOpnameExport;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StockOpnameController extends Controller
 {
@@ -398,6 +400,42 @@ class StockOpnameController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to update item count: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Print stock opname
+     */
+    public function print(StockOpname $opname)
+    {
+        $opname->load([
+            'warehouse', 
+            'storageArea', 
+            'items.product', 
+            'items.storageBin', 
+            'items.countedBy',
+            'scheduledBy', 
+            'completedBy'
+        ]);
+        
+        return view('inventory.opnames.print', compact('opname'));
+    }
+
+    /**
+     * Export stock opname to Excel
+     */
+    public function export(StockOpname $opname)
+    {
+        $opname->load([
+            'warehouse', 
+            'storageArea', 
+            'items.product', 
+            'items.storageBin', 
+            'items.countedBy'
+        ]);
+
+        $fileName = 'stock-opname-' . $opname->opname_number . '-' . date('Y-m-d') . '.xlsx';
+        
+        return Excel::download(new StockOpnameExport($opname), $fileName);
     }
 
     /**

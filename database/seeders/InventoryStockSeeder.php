@@ -8,7 +8,7 @@ use App\Models\StorageBin;
 use App\Models\Product;
 use App\Models\Pallet;
 use App\Models\Customer;
-use App\Models\Vendor;
+use App\Models\Supplier;
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 
@@ -25,7 +25,7 @@ class InventoryStockSeeder extends Seeder
         $products = Product::all();
         $pallets = Pallet::all();
         $customers = Customer::all();
-        $vendors = Vendor::all();
+        $suppliers = Supplier::all();
 
         // Pastikan ada data yang dibutuhkan
         if ($warehouses->isEmpty() || $storageBins->isEmpty() || $products->isEmpty()) {
@@ -92,7 +92,7 @@ class InventoryStockSeeder extends Seeder
                     'status' => $status,
                     'location_type' => $locationType,
                     'customer_id' => $customers->isNotEmpty() && rand(0, 10) > 7 ? $customers->random()->id : null,
-                    'vendor_id' => $vendors->isNotEmpty() && rand(0, 10) > 6 ? $vendors->random()->id : null,
+                    'supplier_id' => $suppliers->isNotEmpty() && rand(0, 10) > 6 ? $suppliers->random()->id : null,
                     'cost_per_unit' => rand(1000, 100000) / 100,
                     'notes' => $this->generateNotes($status),
                     'created_at' => $receivedDate,
@@ -126,7 +126,7 @@ class InventoryStockSeeder extends Seeder
                     'status' => 'available',
                     'location_type' => 'high_rack',
                     'customer_id' => null,
-                    'vendor_id' => $vendors->isNotEmpty() ? $vendors->first()->id : null,
+                    'supplier_id' => $suppliers->isNotEmpty() ? $suppliers->first()->id : null,
                     'cost_per_unit' => 15000.00,
                     'notes' => 'High volume stock - Fast moving item',
                     'created_at' => Carbon::now()->subMonths(1),
@@ -150,7 +150,7 @@ class InventoryStockSeeder extends Seeder
                     'status' => 'expired',
                     'location_type' => 'quarantine',
                     'customer_id' => null,
-                    'vendor_id' => null,
+                    'supplier_id' => null,
                     'cost_per_unit' => 25000.00,
                     'notes' => 'Expired - Awaiting disposal approval',
                     'created_at' => Carbon::now()->subMonths(23),

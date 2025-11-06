@@ -27,7 +27,7 @@ return new class extends Migration
             $table->enum('status', ['available', 'reserved', 'quarantine', 'damaged', 'expired'])->default('available');
             $table->enum('location_type', ['pick_face', 'high_rack', 'staging', 'quarantine'])->default('high_rack');
             $table->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
-            $table->foreignId('vendor_id')->nullable()->constrained()->nullOnDelete();
+            $table->foreignId('supplier_id')->nullable()->constrained()->nullOnDelete();
             $table->decimal('cost_per_unit', 15, 2)->nullable();
             $table->text('notes')->nullable();
             $table->timestamps();

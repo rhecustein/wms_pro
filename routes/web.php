@@ -14,7 +14,7 @@ use App\Http\Controllers\Master\StorageBinController;
 use App\Http\Controllers\Master\ProductController;
 use App\Http\Controllers\Master\ProductCategoryController;
 use App\Http\Controllers\Master\CustomerController;
-use App\Http\Controllers\Master\VendorController;
+use App\Http\Controllers\Master\SupplierController;
 use App\Http\Controllers\Master\UnitController;
 
 // ============================================
@@ -82,6 +82,7 @@ use App\Http\Controllers\Mobile\PickingMobileController;
 use App\Http\Controllers\Mobile\StockCountMobileController;
 use App\Http\Controllers\Mobile\TransferMobileController;
 use App\Http\Controllers\Mobile\PackingMobileController;
+use App\Models\Role;
 
 // ============================================
 // PUBLIC ROUTES
@@ -134,6 +135,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Storage Areas Management
         Route::resource('storage-areas', StorageAreaController::class);
         Route::get('warehouses/{warehouse}/storage-areas', [StorageAreaController::class, 'byWarehouse'])->name('storage-areas.by-warehouse');
+        Route::post('storage-areas/{storageArea}/activate', [StorageAreaController::class, 'activate'])->name('storage-areas.activate');
+        Route::post('storage-areas/{storageArea}/deactivate', [StorageAreaController::class, 'deactivate'])->name('storage-areas.deactivate');
     
         // Storage Bins Management
         Route::resource('storage-bins', StorageBinController::class);
@@ -142,8 +145,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('storage-bins/{storageBin}/activate', [StorageBinController::class, 'activate'])->name('storage-bins.activate');
         Route::post('storage-bins/{storageBin}/deactivate', [StorageBinController::class, 'deactivate'])->name('storage-bins.deactivate');
         Route::get('storage-bins/{storageBin}/current-stock', [StorageBinController::class, 'currentStock'])->name('storage-bins.current-stock');
-
-        // Quick Actions Routes
         Route::get('storage-bins/{storageBin}/add-stock', [StorageBinController::class, 'addStockForm'])->name('storage-bins.add-stock');
         Route::post('storage-bins/{storageBin}/add-stock', [StorageBinController::class, 'addStockStore'])->name('storage-bins.add-stock.store');
         Route::get('storage-bins/{storageBin}/transfer-stock', [StorageBinController::class, 'transferStockForm'])->name('storage-bins.transfer-stock');
@@ -151,15 +152,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryForm'])->name('storage-bins.adjust-inventory');
         Route::post('storage-bins/{storageBin}/adjust-inventory', [StorageBinController::class, 'adjustInventoryStore'])->name('storage-bins.adjust-inventory.store');
         Route::get('storage-bins/{storageBin}/history', [StorageBinController::class, 'viewHistory'])->name('storage-bins.history');
-        Route::post('storage-areas/{storageArea}/activate', [StorageAreaController::class, 'activate'])->name('storage-areas.activate');
-        Route::post('storage-areas/{storageArea}/deactivate', [StorageAreaController::class, 'deactivate'])->name('storage-areas.deactivate');
                 
         // Product Categories Management
         Route::resource('product-categories', ProductCategoryController::class);
-        Route::post('product-categories/{id}/restore', [ProductCategoryController::class, 'restore'])
-            ->name('product-categories.restore');
-        Route::delete('product-categories/{id}/force-delete', [ProductCategoryController::class, 'forceDelete'])
-         ->name('product-categories.force-delete');
+        Route::post('product-categories/{id}/restore', [ProductCategoryController::class, 'restore'])->name('product-categories.restore');
+        Route::delete('product-categories/{id}/force-delete', [ProductCategoryController::class, 'forceDelete'])->name('product-categories.force-delete');
         
         // Products Management
         Route::resource('products', ProductController::class);
@@ -170,8 +167,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('products/import', [ProductController::class, 'import'])->name('products.import');
         Route::get('products/export', [ProductController::class, 'export'])->name('products.export');
 
-        //  Route::resource('units', UnitController::class);
-          Route::resource('units', UnitController::class);
+        // Units Management
+        Route::resource('units', UnitController::class);
         
         // Customers Management
         Route::resource('customers', CustomerController::class);
@@ -180,11 +177,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('customers/{customer}/orders', [CustomerController::class, 'orders'])->name('customers.orders');
         Route::get('customers/{customer}/stock', [CustomerController::class, 'stock'])->name('customers.stock');
         
-        // Vendors Management
-        Route::resource('vendors', VendorController::class);
-        Route::post('vendors/{vendor}/activate', [VendorController::class, 'activate'])->name('vendors.activate');
-        Route::post('vendors/{vendor}/deactivate', [VendorController::class, 'deactivate'])->name('vendors.deactivate');
-        Route::get('vendors/{vendor}/purchase-orders', [VendorController::class, 'purchaseOrders'])->name('vendors.purchase-orders');
+        // Suppliers Management
+        Route::resource('suppliers', SupplierController::class);
     });
 
     // ============================================
@@ -194,40 +188,47 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Inventory Stocks
         Route::prefix('stocks')->name('stocks.')->group(function () {
-            // Routes dengan keyword harus di atas route dengan parameter
             Route::get('/', [InventoryStockController::class, 'index'])->name('index');
             Route::get('expiring', [InventoryStockController::class, 'expiring'])->name('expiring');
             Route::get('expired', [InventoryStockController::class, 'expired'])->name('expired');
             Route::get('low-stock', [InventoryStockController::class, 'lowStock'])->name('low-stock');
-            
-            // Routes dengan parameter product, warehouse, bin
             Route::get('product/{product}', [InventoryStockController::class, 'byProduct'])->name('by-product');
-            Route::get('product/{product}/card', [InventoryStockController::class, 'stockCard'])->name('card');
+            Route::get('product/{product}/card', [InventoryStockController::class, 'stockCard'])->name('stock-card');
             Route::get('warehouse/{warehouse}', [InventoryStockController::class, 'byWarehouse'])->name('by-warehouse');
             Route::get('bin/{storageBin}', [InventoryStockController::class, 'byBin'])->name('by-bin');
-            
-            // Route detail stock - harus paling bawah
             Route::get('{inventoryStock}', [InventoryStockController::class, 'show'])->name('show');
         });
+
         // Pallets Management
         Route::resource('pallets', PalletController::class);
         Route::post('pallets/{pallet}/activate', [PalletController::class, 'activate'])->name('pallets.activate');
         Route::post('pallets/{pallet}/deactivate', [PalletController::class, 'deactivate'])->name('pallets.deactivate');
         Route::get('pallets/{pallet}/history', [PalletController::class, 'history'])->name('pallets.history');
         Route::post('pallets/generate', [PalletController::class, 'generate'])->name('pallets.generate');
-        
+    
         // Stock Movements
         Route::get('movements', [StockMovementController::class, 'index'])->name('movements.index');
-        Route::get('movements/{stockMovement}', [StockMovementController::class, 'show'])->name('movements.show');
+        Route::get('movements/print', [StockMovementController::class, 'print'])->name('movements.print');
+        Route::get('movements/export', [StockMovementController::class, 'export'])->name('movements.export');
         Route::get('movements/product/{product}', [StockMovementController::class, 'byProduct'])->name('movements.by-product');
         Route::get('movements/warehouse/{warehouse}', [StockMovementController::class, 'byWarehouse'])->name('movements.by-warehouse');
-        Route::get('movements/export', [StockMovementController::class, 'export'])->name('movements.export');
+        Route::get('movements/{stockMovement}', [StockMovementController::class, 'show'])->name('movements.show');
         
-        // Stock Adjustments
+        // Stock Adjustments - URUTAN SANGAT PENTING!
+        // 1. Routes dengan keyword/action HARUS di atas
+        Route::get('adjustments/search-products', [StockAdjustmentController::class, 'searchProducts'])->name('adjustments.search-products');
+        Route::get('adjustments/storage-bins/{warehouseId}', [StockAdjustmentController::class, 'getStorageBins'])->name('adjustments.storage-bins');
+        Route::get('adjustments/print-list', [StockAdjustmentController::class, 'printList'])->name('adjustments.print-list');
+        Route::get('adjustments/export', [StockAdjustmentController::class, 'export'])->name('adjustments.export');
+        
+        // 2. Routes dengan parameter adjustment dan action
+        Route::get('adjustments/{adjustment}/print', [StockAdjustmentController::class, 'print'])->name('adjustments.print');
+        Route::post('adjustments/{adjustment}/approve', [StockAdjustmentController::class, 'approve'])->name('adjustments.approve');
+        Route::post('adjustments/{adjustment}/post', [StockAdjustmentController::class, 'post'])->name('adjustments.post');
+        Route::post('adjustments/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])->name('adjustments.cancel');
+        
+        // 3. Resource routes HARUS paling bawah
         Route::resource('adjustments', StockAdjustmentController::class);
-        Route::post('adjustments/{stockAdjustment}/approve', [StockAdjustmentController::class, 'approve'])->name('adjustments.approve');
-        Route::post('adjustments/{stockAdjustment}/post', [StockAdjustmentController::class, 'post'])->name('adjustments.post');
-        Route::post('adjustments/{stockAdjustment}/cancel', [StockAdjustmentController::class, 'cancel'])->name('adjustments.cancel');
         
         // Stock Opnames
         Route::resource('opnames', StockOpnameController::class);
@@ -236,6 +237,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('opnames/{opname}/cancel', [StockOpnameController::class, 'cancel'])->name('opnames.cancel');
         Route::get('opnames/{opname}/count', [StockOpnameController::class, 'count'])->name('opnames.count');
         Route::post('opnames/{opname}/items/{item}/update-count', [StockOpnameController::class, 'updateCount'])->name('opnames.update-count');
+        Route::get('opnames/{opname}/print', [StockOpnameController::class, 'print'])->name('opnames.print');
+        Route::get('opnames/{opname}/export', [StockOpnameController::class, 'export'])->name('opnames.export');
         Route::get('warehouses/{warehouse}/storage-areas', [StockOpnameController::class, 'getStorageAreas'])->name('warehouses.storage-areas');
         Route::get('warehouses/{warehouse}/storage-bins', [StockOpnameController::class, 'getStorageBins'])->name('warehouses.storage-bins');
     });
@@ -252,13 +255,39 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/cancel', [PurchaseOrderController::class, 'cancel'])->name('purchase-orders.cancel');
         Route::get('purchase-orders/{purchaseOrder}/print', [PurchaseOrderController::class, 'print'])->name('purchase-orders.print');
         Route::post('purchase-orders/{purchaseOrder}/update-status', [PurchaseOrderController::class, 'updateStatus'])->name('purchase-orders.update-status');
+        Route::get('purchase-orders/{purchaseOrder}/duplicate', [PurchaseOrderController::class, 'duplicate'])->name('purchase-orders.duplicate');
+        Route::post('purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
         
-        // Inbound Shipments
         Route::resource('shipments', InboundShipmentController::class);
-        Route::post('shipments/{inboundShipment}/mark-arrived', [InboundShipmentController::class, 'markArrived'])->name('shipments.mark-arrived');
-        Route::post('shipments/{inboundShipment}/start-unloading', [InboundShipmentController::class, 'startUnloading'])->name('shipments.start-unloading');
-        Route::post('shipments/{inboundShipment}/complete', [InboundShipmentController::class, 'complete'])->name('shipments.complete');
         
+        // Status transition routes
+        Route::post('shipments/{shipment}/mark-in-transit', [InboundShipmentController::class, 'markInTransit'])
+            ->name('shipments.mark-in-transit');
+        
+        Route::post('shipments/{shipment}/mark-arrived', [InboundShipmentController::class, 'markArrived'])
+            ->name('shipments.mark-arrived');
+        
+        Route::post('shipments/{shipment}/start-unloading', [InboundShipmentController::class, 'startUnloading'])
+            ->name('shipments.start-unloading');
+        
+        Route::post('shipments/{shipment}/start-inspection', [InboundShipmentController::class, 'startInspection'])
+            ->name('shipments.start-inspection');
+        
+        Route::post('shipments/{shipment}/complete-inspection', [InboundShipmentController::class, 'completeInspection'])
+            ->name('shipments.complete-inspection');
+        
+        Route::post('shipments/{shipment}/complete', [InboundShipmentController::class, 'complete'])
+            ->name('shipments.complete');
+        
+        Route::post('shipments/{shipment}/cancel', [InboundShipmentController::class, 'cancel'])
+            ->name('shipments.cancel');
+        
+        // Additional utility routes
+        Route::get('shipments/{shipment}/print', [InboundShipmentController::class, 'print'])
+            ->name('shipments.print');
+        
+        Route::get('shipments/{shipment}/tracking', [InboundShipmentController::class, 'tracking'])
+            ->name('shipments.tracking');
         // Good Receiving
         Route::resource('good-receivings', GoodReceivingController::class);
         Route::post('good-receivings/{goodReceiving}/start', [GoodReceivingController::class, 'start'])->name('good-receivings.start');
@@ -267,14 +296,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('good-receivings/{goodReceiving}/cancel', [GoodReceivingController::class, 'cancel'])->name('good-receivings.cancel');
         Route::get('good-receivings/{goodReceiving}/print', [GoodReceivingController::class, 'print'])->name('good-receivings.print');
         
+        // Putaway Tasks
         Route::get('putaway-tasks/pending', [PutawayTaskController::class, 'pending'])->name('putaway-tasks.pending');
         Route::get('putaway-tasks/{putawayTask}/execute', [PutawayTaskController::class, 'execute'])->name('putaway-tasks.execute');
         Route::post('putaway-tasks/{putawayTask}/assign', [PutawayTaskController::class, 'assign'])->name('putaway-tasks.assign');
         Route::post('putaway-tasks/{putawayTask}/start', [PutawayTaskController::class, 'start'])->name('putaway-tasks.start');
         Route::post('putaway-tasks/{putawayTask}/complete', [PutawayTaskController::class, 'complete'])->name('putaway-tasks.complete');
         Route::post('putaway-tasks/{putawayTask}/cancel', [PutawayTaskController::class, 'cancel'])->name('putaway-tasks.cancel');
-        
-        // Resource routes
         Route::resource('putaway-tasks', PutawayTaskController::class);
     });
 
@@ -283,18 +311,29 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('outbound')->name('outbound.')->group(function () {
         
-        // Sales Orders
+        // Sales Orders CRUD
         Route::resource('sales-orders', SalesOrderController::class);
-        Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])->name('sales-orders.confirm');
-        Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])->name('sales-orders.cancel');
-        Route::post('sales-orders/{salesOrder}/generate-picking', [SalesOrderController::class, 'generatePicking'])->name('sales-orders.generate-picking');
-        Route::get('sales-orders/{salesOrder}/print', [SalesOrderController::class, 'print'])->name('sales-orders.print');
+        Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])
+            ->name('sales-orders.confirm');
+        Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])
+            ->name('sales-orders.cancel');
+        Route::post('sales-orders/{salesOrder}/generate-picking', [SalesOrderController::class, 'generatePicking'])
+            ->name('sales-orders.generate-picking');
+        Route::get('sales-orders/{salesOrder}/print', [SalesOrderController::class, 'print'])
+            ->name('sales-orders.print');
+            
+        Route::get('sales-orders/ajax/search-customers', [SalesOrderController::class, 'searchCustomers'])
+            ->name('sales-orders.search-customers');
+        Route::get('sales-orders/ajax/search-products', [SalesOrderController::class, 'searchProducts'])
+            ->name('sales-orders.search-products');
+        Route::get('sales-orders/ajax/customer/{id}', [SalesOrderController::class, 'getCustomer'])
+            ->name('sales-orders.get-customer');
+        Route::get('sales-orders/ajax/product/{id}', [SalesOrderController::class, 'getProduct'])
+            ->name('sales-orders.get-product');
 
-        // Wave Picking - Harus di atas resource route
+        // Picking Orders - Wave Picking harus di atas resource
         Route::get('picking-orders/wave', [PickingOrderController::class, 'wave'])->name('picking-orders.wave');
         Route::post('picking-orders/batch-generate', [PickingOrderController::class, 'batchGenerate'])->name('picking-orders.batch-generate');
-        
-        // Other routes
         Route::get('picking-orders/pending', [PickingOrderController::class, 'pending'])->name('picking-orders.pending');
         Route::get('picking-orders/{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('picking-orders.execute');
         Route::get('picking-orders/{pickingOrder}/print', [PickingOrderController::class, 'print'])->name('picking-orders.print');
@@ -302,38 +341,36 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('picking-orders/{pickingOrder}/start', [PickingOrderController::class, 'start'])->name('picking-orders.start');
         Route::post('picking-orders/{pickingOrder}/complete', [PickingOrderController::class, 'complete'])->name('picking-orders.complete');
         Route::post('picking-orders/{pickingOrder}/cancel', [PickingOrderController::class, 'cancel'])->name('picking-orders.cancel');
-        
-        // Resource route terakhir
         Route::resource('picking-orders', PickingOrderController::class);
         
         // Packing Orders
-        Route::resource('packing-orders', PackingOrderController::class);
         Route::get('packing-orders/pending', [PackingOrderController::class, 'pending'])->name('packing-orders.pending');
+        Route::get('packing-orders/{packingOrder}/execute', [PackingOrderController::class, 'execute'])->name('packing-orders.execute');
+        Route::get('packing-orders/{packingOrder}/print-label', [PackingOrderController::class, 'printLabel'])->name('packing-orders.print-label');
         Route::post('packing-orders/{packingOrder}/assign', [PackingOrderController::class, 'assign'])->name('packing-orders.assign');
         Route::post('packing-orders/{packingOrder}/start', [PackingOrderController::class, 'start'])->name('packing-orders.start');
         Route::post('packing-orders/{packingOrder}/complete', [PackingOrderController::class, 'complete'])->name('packing-orders.complete');
-        Route::get('packing-orders/{packingOrder}/execute', [PackingOrderController::class, 'execute'])->name('packing-orders.execute');
-        Route::get('packing-orders/{packingOrder}/print-label', [PackingOrderController::class, 'printLabel'])->name('packing-orders.print-label');
+        Route::resource('packing-orders', PackingOrderController::class);
         
         // Delivery Orders
-        Route::resource('delivery-orders', DeliveryOrderController::class);
+        Route::get('delivery-orders/{deliveryOrder}/proof', [DeliveryOrderController::class, 'proof'])->name('delivery-orders.proof');
+        Route::post('delivery-orders/{deliveryOrder}/upload-proof', [DeliveryOrderController::class, 'uploadProof'])->name('delivery-orders.upload-proof');
+        Route::get('delivery-orders/{deliveryOrder}/print', [DeliveryOrderController::class, 'print'])->name('delivery-orders.print');
+        Route::get('delivery-orders/{deliveryOrder}/tracking', [DeliveryOrderController::class, 'tracking'])->name('delivery-orders.tracking');
         Route::post('delivery-orders/{deliveryOrder}/load', [DeliveryOrderController::class, 'load'])->name('delivery-orders.load');
         Route::post('delivery-orders/{deliveryOrder}/dispatch', [DeliveryOrderController::class, 'dispatch'])->name('delivery-orders.dispatch');
         Route::post('delivery-orders/{deliveryOrder}/in-transit', [DeliveryOrderController::class, 'inTransit'])->name('delivery-orders.in-transit');
         Route::post('delivery-orders/{deliveryOrder}/deliver', [DeliveryOrderController::class, 'deliver'])->name('delivery-orders.deliver');
         Route::post('delivery-orders/{deliveryOrder}/cancel', [DeliveryOrderController::class, 'cancel'])->name('delivery-orders.cancel');
-        Route::get('delivery-orders/{deliveryOrder}/proof', [DeliveryOrderController::class, 'proof'])->name('delivery-orders.proof');
-        Route::post('delivery-orders/{deliveryOrder}/upload-proof', [DeliveryOrderController::class, 'uploadProof'])->name('delivery-orders.upload-proof');
-        Route::get('delivery-orders/{deliveryOrder}/print', [DeliveryOrderController::class, 'print'])->name('delivery-orders.print');
-        Route::get('delivery-orders/{deliveryOrder}/tracking', [DeliveryOrderController::class, 'tracking'])->name('delivery-orders.tracking');
+        Route::resource('delivery-orders', DeliveryOrderController::class);
         
         // Return Orders
-        Route::resource('returns', ReturnOrderController::class);
+        Route::get('returns/{returnOrder}/print', [ReturnOrderController::class, 'print'])->name('returns.print');
         Route::post('returns/{returnOrder}/receive', [ReturnOrderController::class, 'receive'])->name('returns.receive');
         Route::post('returns/{returnOrder}/inspect', [ReturnOrderController::class, 'inspect'])->name('returns.inspect');
         Route::post('returns/{returnOrder}/restock', [ReturnOrderController::class, 'restock'])->name('returns.restock');
         Route::post('returns/{returnOrder}/cancel', [ReturnOrderController::class, 'cancel'])->name('returns.cancel');
-        Route::get('returns/{returnOrder}/print', [ReturnOrderController::class, 'print'])->name('returns.print');
+        Route::resource('returns', ReturnOrderController::class);
     });
 
     // ============================================
@@ -341,7 +378,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('operations')->name('operations.')->group(function () {
         
-          // Replenishment Tasks
+        // Replenishment Tasks
         Route::get('replenishments/suggestions', [ReplenishmentTaskController::class, 'suggestions'])->name('replenishments.suggestions');
         Route::post('replenishments/generate-suggestions', [ReplenishmentTaskController::class, 'generateSuggestions'])->name('replenishments.generate-suggestions');
         Route::get('replenishments/{replenishment}/execute', [ReplenishmentTaskController::class, 'execute'])->name('replenishments.execute');
@@ -352,21 +389,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('replenishments', ReplenishmentTaskController::class);
         
         // Transfer Orders
-        Route::resource('transfer-orders', TransferOrderController::class);
+        Route::get('transfer-orders/{transferOrder}/print', [TransferOrderController::class, 'print'])->name('transfer-orders.print');
         Route::post('transfer-orders/{transferOrder}/approve', [TransferOrderController::class, 'approve'])->name('transfer-orders.approve');
         Route::post('transfer-orders/{transferOrder}/ship', [TransferOrderController::class, 'ship'])->name('transfer-orders.ship');
         Route::post('transfer-orders/{transferOrder}/receive', [TransferOrderController::class, 'receive'])->name('transfer-orders.receive');
         Route::post('transfer-orders/{transferOrder}/complete', [TransferOrderController::class, 'complete'])->name('transfer-orders.complete');
         Route::post('transfer-orders/{transferOrder}/cancel', [TransferOrderController::class, 'cancel'])->name('transfer-orders.cancel');
-        Route::get('transfer-orders/{transferOrder}/print', [TransferOrderController::class, 'print'])->name('transfer-orders.print');
+        Route::resource('transfer-orders', TransferOrderController::class);
         
         // Cross Docking
-        Route::resource('cross-docking', CrossDockingOrderController::class);
         Route::post('cross-docking/{crossDockingOrder}/start-receiving', [CrossDockingOrderController::class, 'startReceiving'])->name('cross-docking.start-receiving');
         Route::post('cross-docking/{crossDockingOrder}/start-sorting', [CrossDockingOrderController::class, 'startSorting'])->name('cross-docking.start-sorting');
         Route::post('cross-docking/{crossDockingOrder}/start-loading', [CrossDockingOrderController::class, 'startLoading'])->name('cross-docking.start-loading');
         Route::post('cross-docking/{crossDockingOrder}/complete', [CrossDockingOrderController::class, 'complete'])->name('cross-docking.complete');
         Route::post('cross-docking/{crossDockingOrder}/cancel', [CrossDockingOrderController::class, 'cancel'])->name('cross-docking.cancel');
+        Route::resource('cross-docking', CrossDockingOrderController::class);
     });
 
     // ============================================
@@ -375,18 +412,18 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('equipment')->name('equipment.')->group(function () {
         
         // Vehicles Management
-        Route::resource('vehicles', VehicleController::class);
+        Route::get('vehicles/{vehicle}/history', [VehicleController::class, 'history'])->name('vehicles.history');
         Route::post('vehicles/{vehicle}/activate', [VehicleController::class, 'activate'])->name('vehicles.activate');
         Route::post('vehicles/{vehicle}/deactivate', [VehicleController::class, 'deactivate'])->name('vehicles.deactivate');
         Route::post('vehicles/{vehicle}/maintenance', [VehicleController::class, 'maintenance'])->name('vehicles.maintenance');
-        Route::get('vehicles/{vehicle}/history', [VehicleController::class, 'history'])->name('vehicles.history');
+        Route::resource('vehicles', VehicleController::class);
         
         // Equipment Management
-        Route::resource('equipments', EquipmentController::class);
+        Route::get('equipments/{equipment}/history', [EquipmentController::class, 'history'])->name('equipments.history');
         Route::post('equipments/{equipment}/activate', [EquipmentController::class, 'activate'])->name('equipments.activate');
         Route::post('equipments/{equipment}/deactivate', [EquipmentController::class, 'deactivate'])->name('equipments.deactivate');
         Route::post('equipments/{equipment}/maintenance', [EquipmentController::class, 'maintenance'])->name('equipments.maintenance');
-        Route::get('equipments/{equipment}/history', [EquipmentController::class, 'history'])->name('equipments.history');
+        Route::resource('equipments', EquipmentController::class);
     });
 
     // ============================================
@@ -446,45 +483,35 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // ============================================
     Route::prefix('system')->name('system.')->group(function () {
         
+        // Settings
         Route::prefix('settings')->name('settings.')->group(function () {
-        // Main pages
-        Route::get('/', [SettingController::class, 'index'])->name('index');
-        Route::get('/{group}', [SettingController::class, 'show'])->name('show');
-        
-        // Update operations
-        Route::put('/{group}', [SettingController::class, 'updateGroup'])->name('update-group');
-        
-        // File operations
-        Route::post('/files', [SettingController::class, 'uploadFile'])->name('upload-file');
-        Route::delete('/files/{key}', [SettingController::class, 'deleteFile'])->name('delete-file');
-        
-        // Utility operations
-        Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('clear-cache');
-        Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
-        
-        // Import/Export
-        Route::get('/export', [SettingController::class, 'export'])->name('export');
-        Route::post('/import', [SettingController::class, 'import'])->name('import');
-        
+            Route::get('/', [SettingController::class, 'index'])->name('index');
+            Route::get('/{group}', [SettingController::class, 'show'])->name('show');
+            Route::put('/{group}', [SettingController::class, 'updateGroup'])->name('update-group');
+            Route::post('/files', [SettingController::class, 'uploadFile'])->name('upload-file');
+            Route::delete('/files/{key}', [SettingController::class, 'deleteFile'])->name('delete-file');
+            Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('clear-cache');
+            Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
+            Route::get('/export', [SettingController::class, 'export'])->name('export');
+            Route::post('/import', [SettingController::class, 'import'])->name('import');
         });
         
         // Activity Logs
+        Route::post('activity-logs/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activity-logs.bulk-delete');
+        Route::delete('activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
         Route::get('activity-logs', [ActivityLogController::class, 'index'])->name('activity-logs.index');
         Route::get('activity-logs/{activityLog}', [ActivityLogController::class, 'show'])->name('activity-logs.show');
-        Route::delete('activity-logs/clear', [ActivityLogController::class, 'clear'])->name('activity-logs.clear');
         Route::delete('activity-logs/{activityLog}', [ActivityLogController::class, 'destroy'])->name('activity-logs.destroy');
-        //bulk-delete
-        Route::post('activity-logs/bulk-delete', [ActivityLogController::class, 'bulkDelete'])->name('activity-logs.bulk-delete');
         
         // Notifications
         Route::prefix('notifications')->name('notifications.')->group(function () {
-        Route::get('/', [NotificationController::class, 'index'])->name('index');
-        Route::post('{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
-        Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
-        Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
-        Route::delete('delete-all-read', [NotificationController::class, 'deleteAllRead'])->name('delete-all-read');
-        Route::get('unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
-    });
+            Route::get('/', [NotificationController::class, 'index'])->name('index');
+            Route::get('unread-count', [NotificationController::class, 'getUnreadCount'])->name('unread-count');
+            Route::post('mark-all-as-read', [NotificationController::class, 'markAllAsRead'])->name('mark-all-as-read');
+            Route::delete('delete-all-read', [NotificationController::class, 'deleteAllRead'])->name('delete-all-read');
+            Route::post('{id}/mark-as-read', [NotificationController::class, 'markAsRead'])->name('mark-as-read');
+            Route::delete('{id}', [NotificationController::class, 'destroy'])->name('destroy');
+        });
     });
 
     // ============================================

@@ -12,7 +12,7 @@
                 <i class="fas fa-box-open text-green-600 mr-2"></i>
                 Create Good Receiving
             </h1>
-            <p class="text-sm text-gray-600 mt-1">Record incoming goods from vendors</p>
+            <p class="text-sm text-gray-600 mt-1">Record incoming goods from suppliers</p>
         </div>
         <a href="{{ route('inbound.good-receivings.index') }}" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition">
             <i class="fas fa-arrow-left mr-2"></i>Back to List
@@ -51,8 +51,8 @@
                             <select name="purchase_order_id" id="purchase_order_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                                 <option value="">Select Purchase Order...</option>
                                 @foreach($purchaseOrders as $po)
-                                    <option value="{{ $po->id }}" data-vendor="{{ $po->vendor_id }}" data-warehouse="{{ $po->warehouse_id }}" {{ old('purchase_order_id') == $po->id ? 'selected' : '' }}>
-                                        {{ $po->po_number }} - {{ $po->vendor->name }}
+                                    <option value="{{ $po->id }}" data-supplier="{{ $po->supplier_id }}" data-warehouse="{{ $po->warehouse_id }}" {{ old('purchase_order_id') == $po->id ? 'selected' : '' }}>
+                                        {{ $po->po_number }} - {{ $po->supplier->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -66,8 +66,8 @@
                             <select name="inbound_shipment_id" id="inbound_shipment_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                                 <option value="">Select Inbound Shipment...</option>
                                 @foreach($inboundShipments as $shipment)
-                                    <option value="{{ $shipment->id }}" data-vendor="{{ $shipment->vendor_id }}" data-warehouse="{{ $shipment->warehouse_id }}" {{ old('inbound_shipment_id') == $shipment->id ? 'selected' : '' }}>
-                                        {{ $shipment->shipment_number }} - {{ $shipment->vendor->name }}
+                                    <option value="{{ $shipment->id }}" data-supplier="{{ $shipment->supplier_id }}" data-warehouse="{{ $shipment->warehouse_id }}" {{ old('inbound_shipment_id') == $shipment->id ? 'selected' : '' }}>
+                                        {{ $shipment->shipment_number }} - {{ $shipment->supplier->name }}
                                     </option>
                                 @endforeach
                             </select>
@@ -111,16 +111,16 @@
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Vendor <span class="text-red-500">*</span></label>
-                            <select name="vendor_id" id="vendor_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500" required>
-                                <option value="">Select Vendor...</option>
-                                @foreach($vendors as $vendor)
-                                    <option value="{{ $vendor->id }}" {{ old('vendor_id', $selectedPO->vendor_id ?? $selectedShipment->vendor_id ?? '') == $vendor->id ? 'selected' : '' }}>
-                                        {{ $vendor->name }}
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Supplier <span class="text-red-500">*</span></label>
+                            <select name="supplier_id" id="supplier_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500" required>
+                                <option value="">Select Supplier...</option>
+                                @foreach($suppliers as $supplier)
+                                    <option value="{{ $supplier->id }}" {{ old('supplier_id', $selectedPO->supplier_id ?? $selectedShipment->supplier_id ?? '') == $supplier->id ? 'selected' : '' }}>
+                                        {{ $supplier->name }}
                                     </option>
                                 @endforeach
                             </select>
-                            @error('vendor_id')
+                            @error('supplier_id')
                                 <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
@@ -170,6 +170,33 @@
                             <tbody id="itemsBody">
                                 @if($selectedPO && $selectedPO->items->count() > 0)
                                     @foreach($selectedPO->items as $index => $item)
+                                        <tr class="border-b border-gray-200">
+                                            <td class="px-4 py-3">
+                                                <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
+                                                <div class="text-sm font-semibold text-gray-900">{{ $item->product->name }}</div>
+                                                <div class="text-xs text-gray-500">{{ $item->product->sku }}</div>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <input type="number" name="items[{{ $index }}][quantity_expected]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm" readonly>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <input type="number" name="items[{{ $index }}][quantity_received]" value="{{ $item->quantity }}" class="w-24 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0" required>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <input type="number" name="items[{{ $index }}][pallets]" value="0" class="w-20 rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" min="0">
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <input type="text" name="items[{{ $index }}][notes]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" placeholder="Notes...">
+                                            </td>
+                                            <td class="px-4 py-3 text-center">
+                                                <button type="button" onclick="removeItem(this)" class="text-red-600 hover:text-red-900">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                @elseif($selectedShipment && $selectedShipment->items->count() > 0)
+                                    @foreach($selectedShipment->items as $index => $item)
                                         <tr class="border-b border-gray-200">
                                             <td class="px-4 py-3">
                                                 <input type="hidden" name="items[{{ $index }}][product_id]" value="{{ $item->product_id }}">
@@ -258,7 +285,7 @@
 
 @push('scripts')
 <script>
-let itemIndex = {{ $selectedPO && $selectedPO->items->count() > 0 ? $selectedPO->items->count() : 0 }};
+let itemIndex = {{ ($selectedPO && $selectedPO->items->count() > 0) ? $selectedPO->items->count() : (($selectedShipment && $selectedShipment->items->count() > 0) ? $selectedShipment->items->count() : 0) }};
 
 function addItem() {
     const tbody = document.getElementById('itemsBody');
@@ -274,9 +301,6 @@ function addItem() {
             <td class="px-4 py-3">
                 <select name="items[${itemIndex}][product_id]" class="w-full rounded-lg border-gray-300 text-sm focus:border-green-500 focus:ring-green-500" required>
                     <option value="">Select Product...</option>
-                    @foreach($products ?? [] as $product)
-                        <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->sku }})</option>
-                    @endforeach
                 </select>
             </td>
             <td class="px-4 py-3">

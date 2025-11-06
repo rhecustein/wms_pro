@@ -51,7 +51,7 @@
                 {{-- Search --}}
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                    <input type="text" name="search" value="{{ request('search') }}" placeholder="GR Number, Vendor, Notes..." class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                    <input type="text" name="search" value="{{ request('search') }}" placeholder="GR Number, Supplier, Notes..." class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                 </div>
 
                 {{-- Status Filter --}}
@@ -104,7 +104,7 @@
                 </div>
             </div>
 
-            {{-- Date Range --}}
+            {{-- Date Range & Supplier --}}
             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">Date From</label>
@@ -115,12 +115,12 @@
                     <input type="date" name="date_to" value="{{ request('date_to') }}" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Vendor</label>
-                    <select name="vendor_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
-                        <option value="">All Vendors</option>
-                        @foreach($vendors as $vendor)
-                            <option value="{{ $vendor->id }}" {{ request('vendor_id') == $vendor->id ? 'selected' : '' }}>
-                                {{ $vendor->name }}
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                    <select name="supplier_id" class="w-full rounded-lg border-gray-300 focus:border-green-500 focus:ring-green-500">
+                        <option value="">All Suppliers</option>
+                        @foreach($suppliers as $supplier)
+                            <option value="{{ $supplier->id }}" {{ request('supplier_id') == $supplier->id ? 'selected' : '' }}>
+                                {{ $supplier->name }}
                             </option>
                         @endforeach
                     </select>
@@ -137,7 +137,7 @@
                     <tr>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">GR Number</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Receiving Date</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vendor</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Supplier</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Warehouse</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Items/Qty</th>
                         <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
@@ -171,8 +171,8 @@
                                         <i class="fas fa-building text-blue-600"></i>
                                     </div>
                                     <div>
-                                        <div class="text-sm font-semibold text-gray-900">{{ $gr->vendor->name }}</div>
-                                        <div class="text-xs text-gray-500">{{ $gr->vendor->code ?? '-' }}</div>
+                                        <div class="text-sm font-semibold text-gray-900">{{ $gr->supplier->name }}</div>
+                                        <div class="text-xs text-gray-500">{{ $gr->supplier->code ?? '-' }}</div>
                                     </div>
                                 </div>
                             </td>

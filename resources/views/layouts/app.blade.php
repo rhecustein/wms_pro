@@ -244,9 +244,9 @@
                            class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.customers.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
                             <i class="fas fa-users w-4 mr-2"></i> Customers
                         </a>
-                        <a href="{{ route('master.vendors.index') }}" 
-                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.vendors.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
-                            <i class="fas fa-truck w-4 mr-2"></i> Vendors
+                        <a href="{{ route('master.suppliers.index') }}" 
+                           class="flex items-center px-4 py-2 text-sm rounded-lg transition-all duration-200 {{ request()->routeIs('master.suppliers.*') ? 'submenu-active' : 'text-gray-400 hover:bg-gray-800 hover:text-white hover:translate-x-1' }}">
+                            <i class="fas fa-truck w-4 mr-2"></i> Supplier
                         </a>
                     </div>
                 </div>
@@ -583,7 +583,7 @@
             {{-- Main Content --}}
             <main class="flex-1 overflow-y-auto custom-scrollbar grid-background">
                 <div class="p-6">
-                    {{-- Flash Messages --}}
+                    <!-- {{-- Flash Messages --}}
                     @if(session('success'))
                         <div class="mb-6 px-4 py-3 bg-green-50 border-l-4 border-green-500 text-green-800 rounded-lg flex items-center justify-between shadow-sm animate-fade-in">
                             <div class="flex items-center">
@@ -622,7 +622,7 @@
                                 </div>
                             </div>
                         </div>
-                    @endif
+                    @endif -->
 
                     {{-- Main Content --}}
                     @yield('content')

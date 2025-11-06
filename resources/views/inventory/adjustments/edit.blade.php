@@ -3,6 +3,49 @@
 
 @section('title', 'Edit Stock Adjustment')
 
+{{-- Select2 CSS --}}
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<style>
+    .select2-container--default .select2-selection--single {
+        height: 42px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px;
+        padding-left: 12px;
+        color: #374151;
+    }
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 40px;
+    }
+    .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .select2-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+    }
+    .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #3b82f6;
+    }
+    .select2-container--default .select2-search--dropdown .select2-search__field {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 8px 12px;
+    }
+    .select2-results__option {
+        padding: 8px 12px;
+    }
+    .select2-container {
+        width: 100% !important;
+    }
+</style>
+@endpush
+
 @section('content')
 <div class="container-fluid px-4 py-6">
     
@@ -32,6 +75,15 @@
                     <li>{{ $error }}</li>
                 @endforeach
             </ul>
+        </div>
+    @endif
+
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-6 flex items-center justify-between">
+            <div class="flex items-center">
+                <i class="fas fa-exclamation-circle mr-2"></i>
+                <span>{{ session('error') }}</span>
+            </div>
         </div>
     @endif
 
@@ -127,21 +179,15 @@
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Product *</label>
-                                        <select name="items[{{ $index }}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
-                                            <option value="">Select Product</option>
-                                            @foreach($products as $product)
-                                                <option value="{{ $product->id }}" {{ $item->product_id == $product->id ? 'selected' : '' }}>
-                                                    {{ $product->name }} ({{ $product->sku }})
-                                                </option>
-                                            @endforeach
+                                        <select name="items[{{ $index }}][product_id]" required class="product-select w-full text-sm" data-product-id="{{ $item->product_id }}" data-product-text="{{ $item->product->name }} ({{ $item->product->sku }})">
+                                            <option value="{{ $item->product_id }}" selected>{{ $item->product->name }} ({{ $item->product->sku }})</option>
                                         </select>
                                     </div>
 
                                     <div class="md:col-span-2">
                                         <label class="block text-sm font-medium text-gray-700 mb-1">Storage Bin *</label>
-                                        <select name="items[{{ $index }}][storage_bin_id]" required class="storage-bin-select w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
-                                            <option value="">Select Storage Bin</option>
-                                            {{-- Will be populated via JavaScript --}}
+                                        <select name="items[{{ $index }}][storage_bin_id]" required class="storage-bin-select w-full text-sm" data-selected="{{ $item->storage_bin_id }}" data-bin-text="{{ $item->storageBin->code }} ({{ ucfirst($item->storageBin->status) }})">
+                                            <option value="{{ $item->storage_bin_id }}" selected>{{ $item->storageBin->code }} ({{ ucfirst($item->storageBin->status) }})</option>
                                         </select>
                                     </div>
 
@@ -237,8 +283,8 @@
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-gray-600">Status:</span>
-                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                <span class="w-2 h-2 bg-gray-500 rounded-full mr-1"></span>
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                <span class="w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
                                 Draft
                             </span>
                         </div>
@@ -264,18 +310,15 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Product *</label>
-                <select name="items[INDEX][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm">
-                    <option value="">Select Product</option>
-                    @foreach($products as $product)
-                        <option value="{{ $product->id }}">{{ $product->name }} ({{ $product->sku }})</option>
-                    @endforeach
+                <select name="items[INDEX][product_id]" required class="product-select w-full text-sm">
+                    <option value="">Search Product...</option>
                 </select>
             </div>
 
             <div class="md:col-span-2">
                 <label class="block text-sm font-medium text-gray-700 mb-1">Storage Bin *</label>
-                <select name="items[INDEX][storage_bin_id]" required class="storage-bin-select w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" disabled>
-                    <option value="">Select Storage Bin</option>
+                <select name="items[INDEX][storage_bin_id]" required class="storage-bin-select w-full text-sm" disabled>
+                    <option value="">Select Warehouse First</option>
                 </select>
             </div>
 
@@ -291,17 +334,17 @@
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Current Quantity *</label>
-                <input type="number" name="items[INDEX][current_quantity]" min="0" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" onchange="calculateDifference(this)">
+                <input type="number" name="items[INDEX][current_quantity]" min="0" value="0" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" onchange="calculateDifference(this)">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Adjusted Quantity *</label>
-                <input type="number" name="items[INDEX][adjusted_quantity]" min="0" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" onchange="calculateDifference(this)">
+                <input type="number" name="items[INDEX][adjusted_quantity]" min="0" value="0" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" onchange="calculateDifference(this)">
             </div>
 
             <div>
                 <label class="block text-sm font-medium text-gray-700 mb-1">Unit of Measure *</label>
-                <input type="text" name="items[INDEX][unit_of_measure]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="PCS, KG, etc">
+                <input type="text" name="items[INDEX][unit_of_measure]" value="PCS" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 text-sm" placeholder="PCS, KG, etc">
             </div>
 
             <div>
@@ -322,64 +365,166 @@
     </div>
 </template>
 
-@endsection
-
 @push('scripts')
+{{-- jQuery (HARUS PERTAMA) --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+{{-- Select2 JS (SETELAH jQuery) --}}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
 <script>
 let itemIndex = {{ $adjustment->items->count() }};
+const storageBinsUrl = '/inventory/adjustments/storage-bins';
+const searchProductsUrl = '/inventory/adjustments/search-products';
 
-// Load storage bins for existing items on page load
+// Load storage bins and initialize Select2 for existing items on page load
 document.addEventListener('DOMContentLoaded', function() {
     const warehouseId = document.getElementById('warehouse_id').value;
+    
+    // Initialize Select2 for existing product selects
+    document.querySelectorAll('.product-select').forEach(select => {
+        initializeProductSelect(select);
+    });
+    
+    // Initialize Select2 for existing storage bin selects
     if (warehouseId) {
-        loadStorageBinsForExistingItems(warehouseId);
+        document.querySelectorAll('.storage-bin-select').forEach(select => {
+            initializeStorageBinSelectWithValue(select, warehouseId);
+        });
     }
+    
+    // Calculate differences for existing items
+    document.querySelectorAll('.item-row').forEach(row => {
+        const currentQtyInput = row.querySelector('[name*="current_quantity"]');
+        if (currentQtyInput) {
+            calculateDifference(currentQtyInput);
+        }
+    });
 });
 
-function loadStorageBinsForExistingItems(warehouseId) {
-    const storageBinSelects = document.querySelectorAll('.storage-bin-select');
+function initializeProductSelect(element) {
+    $(element).select2({
+        placeholder: 'Search Product...',
+        allowClear: true,
+        ajax: {
+            url: searchProductsUrl,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    q: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.results
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0
+    });
+}
+
+function initializeStorageBinSelectWithValue(element, warehouseId) {
+    $(element).select2({
+        placeholder: 'Search Storage Bin...',
+        allowClear: true,
+        ajax: {
+            url: `${storageBinsUrl}/${warehouseId}`,
+            dataType: 'json',
+            delay: 250,
+            data: function(params) {
+                return {
+                    q: params.term
+                };
+            },
+            processResults: function(data) {
+                return {
+                    results: data.results
+                };
+            },
+            cache: true
+        },
+        minimumInputLength: 0
+    });
+}
+
+function initializeStorageBinSelect(element) {
+    const warehouseId = document.getElementById('warehouse_id').value;
     
-    fetch(`/inventory/warehouses/${warehouseId}/storage-bins`)
-        .then(response => response.json())
-        .then(data => {
-            storageBinSelects.forEach((select, index) => {
-                const selectedValue = {{ json_encode($adjustment->items->pluck('storage_bin_id')->toArray()) }}[index];
-                select.innerHTML = '<option value="">Select Storage Bin</option>';
-                data.forEach(bin => {
-                    const selected = bin.id == selectedValue ? 'selected' : '';
-                    select.innerHTML += `<option value="${bin.id}" ${selected}>${bin.bin_code} - ${bin.bin_name}</option>`;
-                });
-                select.disabled = false;
-            });
+    if (warehouseId) {
+        $(element).prop('disabled', false);
+        $(element).select2({
+            placeholder: 'Search Storage Bin...',
+            allowClear: true,
+            ajax: {
+                url: `${storageBinsUrl}/${warehouseId}`,
+                dataType: 'json',
+                delay: 250,
+                data: function(params) {
+                    return {
+                        q: params.term
+                    };
+                },
+                processResults: function(data) {
+                    return {
+                        results: data.results
+                    };
+                },
+                cache: true
+            },
+            minimumInputLength: 0
         });
+    } else {
+        $(element).html('<option value="">Select Warehouse First</option>');
+        $(element).prop('disabled', true);
+    }
 }
 
 // Warehouse change handler
 document.getElementById('warehouse_id').addEventListener('change', function() {
     const warehouseId = this.value;
-    const storageBinSelects = document.querySelectorAll('.storage-bin-select');
     
-    storageBinSelects.forEach(select => {
-        select.innerHTML = '<option value="">Loading...</option>';
-        select.disabled = true;
+    // Update all storage bin selects
+    document.querySelectorAll('.storage-bin-select').forEach(select => {
+        const $select = $(select);
         
         if (warehouseId) {
-            fetch(`/inventory/warehouses/${warehouseId}/storage-bins`)
-                .then(response => response.json())
-                .then(data => {
-                    select.innerHTML = '<option value="">Select Storage Bin</option>';
-                    data.forEach(bin => {
-                        select.innerHTML += `<option value="${bin.id}">${bin.bin_code} - ${bin.bin_name}</option>`;
-                    });
-                    select.disabled = false;
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    select.innerHTML = '<option value="">Error loading bins</option>';
-                });
+            $select.prop('disabled', false);
+            
+            // Reinitialize Select2 with warehouse filter
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
+            }
+            
+            $select.select2({
+                placeholder: 'Search Storage Bin...',
+                allowClear: true,
+                ajax: {
+                    url: `${storageBinsUrl}/${warehouseId}`,
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term
+                        };
+                    },
+                    processResults: function(data) {
+                        return {
+                            results: data.results
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 0
+            });
         } else {
-            select.innerHTML = '<option value="">Select Storage Bin</option>';
-            select.disabled = true;
+            $select.prop('disabled', true);
+            if ($select.hasClass('select2-hidden-accessible')) {
+                $select.select2('destroy');
+            }
+            $select.html('<option value="">Select Warehouse First</option>');
         }
     });
 });
@@ -404,30 +549,48 @@ function addItem() {
     document.getElementById('items-container').appendChild(clone);
     document.getElementById('empty-state').style.display = 'none';
     
-    // Load storage bins for new item
-    const lastStorageBinSelect = document.querySelectorAll('.storage-bin-select');
-    const newSelect = lastStorageBinSelect[lastStorageBinSelect.length - 1];
+    // Get the newly added selects
+    const allProductSelects = document.querySelectorAll('.product-select');
+    const allStorageBinSelects = document.querySelectorAll('.storage-bin-select');
     
-    fetch(`/inventory/warehouses/${warehouseId}/storage-bins`)
-        .then(response => response.json())
-        .then(data => {
-            newSelect.innerHTML = '<option value="">Select Storage Bin</option>';
-            data.forEach(bin => {
-                newSelect.innerHTML += `<option value="${bin.id}">${bin.bin_code} - ${bin.bin_name}</option>`;
-            });
-            newSelect.disabled = false;
-        });
+    const newProductSelect = allProductSelects[allProductSelects.length - 1];
+    const newStorageBinSelect = allStorageBinSelects[allStorageBinSelects.length - 1];
+    
+    // Initialize Select2
+    initializeProductSelect(newProductSelect);
+    initializeStorageBinSelect(newStorageBinSelect);
     
     itemIndex++;
     updateSummary();
 }
 
 function removeItem(button) {
-    button.closest('.item-row').remove();
-    updateSummary();
-    
-    if (document.querySelectorAll('.item-row').length === 0) {
-        document.getElementById('empty-state').style.display = 'block';
+    if (confirm('Are you sure you want to remove this item?')) {
+        const row = button.closest('.item-row');
+        
+        // Destroy Select2 before removing
+        $(row).find('.product-select').each(function() {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
+            }
+        });
+        $(row).find('.storage-bin-select').each(function() {
+            if ($(this).hasClass('select2-hidden-accessible')) {
+                $(this).select2('destroy');
+            }
+        });
+        
+        row.remove();
+        updateSummary();
+        
+        // Renumber items
+        document.querySelectorAll('.item-row').forEach((row, index) => {
+            row.querySelector('.item-number').textContent = index + 1;
+        });
+        
+        if (document.querySelectorAll('.item-row').length === 0) {
+            document.getElementById('empty-state').style.display = 'block';
+        }
     }
 }
 
@@ -438,15 +601,16 @@ function calculateDifference(input) {
     const difference = adjustedQty - currentQty;
     
     const diffDisplay = row.querySelector('.difference-display');
-    diffDisplay.value = difference;
+    diffDisplay.value = difference > 0 ? '+' + difference : difference;
     
     if (difference > 0) {
         diffDisplay.classList.add('text-green-600');
-        diffDisplay.classList.remove('text-red-600');
+        diffDisplay.classList.remove('text-red-600', 'text-gray-900');
     } else if (difference < 0) {
         diffDisplay.classList.add('text-red-600');
-        diffDisplay.classList.remove('text-green-600');
+        diffDisplay.classList.remove('text-green-600', 'text-gray-900');
     } else {
+        diffDisplay.classList.add('text-gray-900');
         diffDisplay.classList.remove('text-green-600', 'text-red-600');
     }
 }
@@ -464,16 +628,6 @@ document.getElementById('adjustmentForm').addEventListener('submit', function(e)
         alert('Please add at least one item');
         return false;
     }
-});
-
-// Calculate differences for existing items on page load
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.item-row').forEach(row => {
-        const currentQtyInput = row.querySelector('[name*="current_quantity"]');
-        if (currentQtyInput) {
-            calculateDifference(currentQtyInput);
-        }
-    });
 });
 </script>
 @endpush

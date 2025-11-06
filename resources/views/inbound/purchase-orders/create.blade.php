@@ -150,7 +150,7 @@
                                     @enderror
                                 </div>
 
-                                {{-- Supplier --}}
+                                {{-- Supplier - SUDAH BENAR ✅ --}}
                                 <div>
                                     <label class="block text-sm font-semibold text-gray-700 mb-2">
                                         <i class="fas fa-building text-gray-400 mr-1"></i>
@@ -160,7 +160,8 @@
                                         <option value="">Select Supplier</option>
                                         @foreach($suppliers as $supplier)
                                             <option value="{{ $supplier->id }}" 
-                                                data-payment-terms="{{ $supplier->payment_term_days }}"
+                                                data-payment-terms="{{ $supplier->payment_terms ?? '' }}"
+                                                data-payment-days="{{ $supplier->payment_term_days ?? 30 }}"
                                                 {{ old('supplier_id') == $supplier->id ? 'selected' : '' }}>
                                                 {{ $supplier->name }} ({{ $supplier->code }})
                                             </option>
@@ -477,10 +478,10 @@
                         @foreach($products as $product)
                             <option value="{{ $product->id }}" 
                                 data-sku="{{ $product->sku }}"
-                                data-unit="{{ $product->unit->id }}"
-                                data-unit-name="{{ $product->unit->name }}"
-                                data-price="{{ $product->purchase_price }}">
-                                {{ $product->name }} ({{ $product->sku }})
+                                data-unit="{{ $product->unit->id ?? '' }}"
+                                data-unit-name="{{ $product->unit->name ?? '' }}"
+                                data-price="{{ $product->purchase_price ?? 0 }}">
+                                {{ $product->name }} @if($product->sku)({{ $product->sku }})@endif
                             </option>
                         @endforeach
                     </select>
@@ -548,11 +549,17 @@ let itemIndex = 0;
 // Auto-fill payment terms when supplier is selected
 document.getElementById('supplier_id').addEventListener('change', function() {
     const selectedOption = this.options[this.selectedIndex];
+    const paymentDays = selectedOption.getAttribute('data-payment-days');
     const paymentTerms = selectedOption.getAttribute('data-payment-terms');
     
+    if (paymentDays) {
+        document.getElementById('payment_due_days').value = paymentDays;
+    }
+    
     if (paymentTerms) {
-        document.getElementById('payment_due_days').value = paymentTerms;
-        document.getElementById('payment_terms').value = `Net ${paymentTerms}`;
+        document.getElementById('payment_terms').value = paymentTerms;
+    } else if (paymentDays) {
+        document.getElementById('payment_terms').value = `Net ${paymentDays}`;
     }
 });
 
@@ -611,8 +618,13 @@ function updateProductInfo(select) {
         const unitId = option.getAttribute('data-unit');
         const price = option.getAttribute('data-price');
         
-        row.querySelector('.unit-select').value = unitId;
-        row.querySelector('.unit-price-input').value = price;
+        if (unitId) {
+            row.querySelector('.unit-select').value = unitId;
+        }
+        
+        if (price) {
+            row.querySelector('.unit-price-input').value = price;
+        }
         
         calculateItemTotal(select);
     }

@@ -11,6 +11,8 @@ use App\Models\StorageBin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StockAdjustmentsExport;
 
 class StockAdjustmentController extends Controller
 {
@@ -71,14 +73,13 @@ class StockAdjustmentController extends Controller
     public function create()
     {
         $warehouses = Warehouse::where('is_active', true)->get();
-        $products = Product::where('is_active', true)->get();
         
         // Generate adjustment number
         $lastAdjustment = StockAdjustment::latest('id')->first();
         $nextNumber = $lastAdjustment ? intval(substr($lastAdjustment->adjustment_number, 4)) + 1 : 1;
         $adjustmentNumber = 'ADJ-' . str_pad($nextNumber, 5, '0', STR_PAD_LEFT);
 
-        return view('inventory.adjustments.create', compact('warehouses', 'products', 'adjustmentNumber'));
+        return view('inventory.adjustments.create', compact('warehouses', 'adjustmentNumber'));
     }
 
     /**
@@ -161,6 +162,106 @@ class StockAdjustmentController extends Controller
     }
 
     /**
+     * Display print page for specific adjustment
+     */
+    public function print(StockAdjustment $adjustment)
+    {
+        $adjustment->load(['warehouse', 'items.product', 'items.storageBin', 'createdBy', 'approvedBy', 'updatedBy']);
+        
+        return view('inventory.adjustments.print', compact('adjustment'));
+    }
+
+    /**
+     * Display print page for adjustments list
+     */
+    public function printList(Request $request)
+    {
+        $query = StockAdjustment::with(['warehouse', 'createdBy', 'approvedBy']);
+
+        // Apply same filters as index
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('adjustment_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('warehouse', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('adjustment_type')) {
+            $query->where('adjustment_type', $request->adjustment_type);
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $query->where('warehouse_id', $request->warehouse_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('adjustment_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('adjustment_date', '<=', $request->date_to);
+        }
+
+        $adjustments = $query->latest('adjustment_date')->get();
+
+        return view('inventory.adjustments.print-list', compact('adjustments'));
+    }
+
+    /**
+     * Export adjustments to Excel
+     */
+    public function export(Request $request)
+    {
+        $query = StockAdjustment::with(['warehouse', 'createdBy', 'approvedBy']);
+
+        // Apply filters
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function ($q) use ($search) {
+                $q->where('adjustment_number', 'like', "%{$search}%")
+                    ->orWhere('notes', 'like', "%{$search}%")
+                    ->orWhereHas('warehouse', function ($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+            });
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('adjustment_type')) {
+            $query->where('adjustment_type', $request->adjustment_type);
+        }
+
+        if ($request->filled('warehouse_id')) {
+            $query->where('warehouse_id', $request->warehouse_id);
+        }
+
+        if ($request->filled('date_from')) {
+            $query->whereDate('adjustment_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->whereDate('adjustment_date', '<=', $request->date_to);
+        }
+
+        $adjustments = $query->latest('adjustment_date')->get();
+
+        $fileName = 'stock-adjustments-' . date('Y-m-d-His') . '.xlsx';
+
+        return Excel::download(new StockAdjustmentsExport($adjustments), $fileName);
+    }
+
+    /**
      * Show the form for editing the specified resource.
      */
     public function edit(StockAdjustment $adjustment)
@@ -169,11 +270,10 @@ class StockAdjustmentController extends Controller
             return back()->with('error', 'Only draft adjustments can be edited.');
         }
 
-        $adjustment->load('items');
+        $adjustment->load('items.product', 'items.storageBin');
         $warehouses = Warehouse::where('is_active', true)->get();
-        $products = Product::where('is_active', true)->get();
 
-        return view('inventory.adjustments.edit', compact('adjustment', 'warehouses', 'products'));
+        return view('inventory.adjustments.edit', compact('adjustment', 'warehouses'));
     }
 
     /**
@@ -340,14 +440,75 @@ class StockAdjustmentController extends Controller
     }
 
     /**
-     * Get storage bins by warehouse (AJAX)
+     * Search products (AJAX) - For Select2
+     */
+    public function searchProducts(Request $request)
+    {
+        $search = $request->get('q', '');
+        
+        $products = Product::where('is_active', true)
+            ->where(function($query) use ($search) {
+                $query->where('name', 'like', "%{$search}%")
+                      ->orWhere('sku', 'like', "%{$search}%")
+                      ->orWhere('barcode', 'like', "%{$search}%");
+            })
+            ->select('id', 'name', 'sku', 'barcode', 'current_stock')
+            ->limit(50)
+            ->get()
+            ->map(function($product) {
+                return [
+                    'id' => $product->id,
+                    'text' => $product->name . ' (' . $product->sku . ')',
+                    'name' => $product->name,
+                    'sku' => $product->sku,
+                    'barcode' => $product->barcode,
+                    'current_stock' => $product->current_stock
+                ];
+            });
+
+        return response()->json([
+            'results' => $products,
+            'pagination' => ['more' => false]
+        ]);
+    }
+
+    /**
+     * Get storage bins by warehouse (AJAX) - With search support
      */
     public function getStorageBins($warehouseId)
     {
-        $storageBins = StorageBin::where('warehouse_id', $warehouseId)
-            ->where('is_active', true)
-            ->get(['id', 'bin_code', 'bin_name']);
+        $search = request()->get('q', '');
+        
+        $query = StorageBin::where('warehouse_id', $warehouseId)
+            ->where('is_active', true);
+        
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('code', 'like', "%{$search}%")
+                  ->orWhere('aisle', 'like', "%{$search}%")
+                  ->orWhere('row', 'like', "%{$search}%");
+            });
+        }
+        
+        $storageBins = $query->orderBy('code')
+            ->limit(100)
+            ->get(['id', 'code', 'aisle', 'row', 'column', 'level', 'status'])
+            ->map(function($bin) {
+                return [
+                    'id' => $bin->id,
+                    'text' => $bin->code . ' (' . ucfirst($bin->status) . ')',
+                    'code' => $bin->code,
+                    'aisle' => $bin->aisle,
+                    'row' => $bin->row,
+                    'column' => $bin->column,
+                    'level' => $bin->level,
+                    'status' => $bin->status
+                ];
+            });
 
-        return response()->json($storageBins);
+        return response()->json([
+            'results' => $storageBins,
+            'pagination' => ['more' => false]
+        ]);
     }
 }
