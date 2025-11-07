@@ -1,136 +1,294 @@
-# WMS Pro - License Agreement
+===========================================
+  WMS PRO - LICENSE AGREEMENT
+===========================================
 
-## Copyright Notice
-© 2025 Bintang Wijaya. All rights reserved.
+Version: 1.0.0
+Date: November 2025
+Author: Bintang Wijaya
+Email: bintangwijaya18@gmail.com
 
-This product is licensed under the Envato Market License Terms.
+===========================================
+  ENVATO MARKET LICENSE
+===========================================
 
----
+This product is licensed under the Envato Market License.
+By purchasing and using WMS Pro, you agree to be bound by
+the terms of this license.
 
-## License Types Available
+===========================================
+  LICENSE TYPES
+===========================================
 
-### Regular License
-One license grants the right to use WMS Pro for a single end product (domain/site).
+REGULAR LICENSE:
+- Use in a single end product
+- End product is not sold to users
+- Free end product distribution
 
-**You CAN:**
-- Use the item to create a single end product for yourself or for a client
-- Modify or manipulate the item
-- Combine the item with other works to make a derivative work
-- Use the item to create an end product where the end user is NOT charged
-- Use the item in a commercial project for a client
+EXTENDED LICENSE:
+- Use in a single end product
+- End product is sold to users
+- SaaS applications allowed
+- Multi-tenant applications allowed
 
-**You CANNOT:**
-- Resell, redistribute, or sublicense the source code
-- Use the item to create an end product where the end user IS charged (requires Extended License)
-- Use the item in a product offered for sale on any marketplace
-- Share your license with another person or organization
-- Extract and use a single component separately from the item
-- Use the item in any application allowing users to customize the product to their needs
-  (e.g., "website builder" or "application builder")
-
-### Extended License
-Required if the end product is sold to end users for a fee.
-
-**Includes everything in Regular License, PLUS:**
-- Use the item to create an end product where the end user IS charged
-- The item may be used in unlimited end products sold to multiple end users
-
----
-
-## General Terms
-
-### Support
-- Regular License includes 6 months of support
-- Extended License includes 6 months of support
-- Support extension available for purchase
-- Support includes: bug fixes, minor updates, and installation assistance
-- Support does NOT include: customization, server configuration, or feature development
-
-### Updates
-- You will receive free updates for the lifetime of this product
-- Updates include bug fixes, security patches, and minor enhancements
-- Major version updates may require additional purchase
-
-### Refund Policy
-- Refunds are handled according to Envato Market's refund policy
-- No refunds for downloaded items unless the item is defective
-- Contact support first before requesting a refund
-
-### Warranty Disclaimer
-THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED
-OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY
-AND FITNESS FOR A PARTICULAR PURPOSE.
-
----
-
-## Usage Guidelines
-
-### Allowed Use Cases
-1. **Single Website/Application**: Install on one domain or subdomain
-2. **Client Projects**: Create a solution for a single client
-3. **Internal Use**: Use within your organization on one instance
-4. **Development**: Use on localhost and staging servers for development
-
-### Prohibited Use Cases
-1. **Multiple Installations**: One license = one installation
-2. **Resale**: Cannot resell or redistribute the source code
-3. **SaaS**: Cannot use in a Software-as-a-Service offering (requires Extended License)
-4. **Sublicensing**: Cannot transfer your license to another party
-
----
-
-## Third-Party Components
-
-This product includes the following open-source components:
-
-- **Laravel Framework** - MIT License
-- **Tailwind CSS** - MIT License
-- **Spatie Laravel Activity Log** - MIT License
-- **Font Awesome Icons** - Font Awesome Free License
-- Other dependencies as listed in composer.json and package.json
-
-All third-party components are subject to their respective licenses.
-
----
-
-## Trademark Notice
-
-"WMS Pro" is a trademark of Bintang Wijaya. You may not use this trademark in
-any way without written permission, except as necessary to reference the product.
-
----
-
-## Liability Limitation
-
-IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY SPECIAL, INCIDENTAL, INDIRECT,
-OR CONSEQUENTIAL DAMAGES WHATSOEVER ARISING OUT OF OR RELATED TO YOUR USE OR
-INABILITY TO USE THE SOFTWARE.
-
----
-
-## Support & Contact
-
-**Email**: bintangwijaya@example.com
-**WhatsApp**: +62 81350000965
-**Documentation**: Available in the documentation folder
-**Updates**: Available through CodeCanyon
-
----
-
-## Acknowledgments
-
-Thank you for purchasing WMS Pro! Your support helps us continue developing
-and improving this product.
-
----
-
-**Last Updated**: January 2025
-**License Version**: 1.0
-
-For complete terms and conditions, please refer to:
+For complete license details, visit:
 https://codecanyon.net/licenses/standard
 https://codecanyon.net/licenses/terms/extended
 
----
+===========================================
+  USAGE RIGHTS
+===========================================
 
+✓ ALLOWED:
+
+1. Single Installation
+   - Install on one domain or subdomain per license
+   
+2. Client Projects
+   - Create a solution for a single client
+   
+3. Internal Use
+   - Use within your organization on one instance
+   
+4. Development & Staging
+   - Use on localhost and staging servers for testing
+   
+5. Modifications
+   - Modify the code to suit your needs
+   - Customize features and design
+   
+6. End Product Creation
+   - Create an end product for yourself or a client
+
+===========================================
+  USAGE RESTRICTIONS
+===========================================
+
+✗ PROHIBITED:
+
+1. Multiple Installations
+   - One license = one installation only
+   - Each domain requires separate license
+   
+2. Resale or Redistribution
+   - Cannot resell or redistribute source code
+   - Cannot share with competitors
+   
+3. SaaS Without Extended License
+   - Regular license doesn't permit SaaS applications
+   - Multi-tenant apps require Extended License
+   
+4. Sublicensing
+   - Cannot transfer license to another party
+   - Cannot sublicense to third parties
+   
+5. Template/Theme Distribution
+   - Cannot use as template for resale
+   - Cannot create competing products
+
+===========================================
+  COPYRIGHT & OWNERSHIP
+===========================================
+
+WMS Pro © 2025 Bintang Wijaya
+All rights reserved.
+
+The source code, design, structure, and organization
+of WMS Pro are proprietary and protected by copyright
+laws and international treaty provisions.
+
+You are granted a license to use the software,
+not ownership of it.
+
+===========================================
+  TRADEMARK NOTICE
+===========================================
+
+"WMS Pro" is a trademark of Bintang Wijaya.
+
+You may not use this trademark in any way without
+written permission, except as necessary to reference
+the product.
+
+===========================================
+  THIRD-PARTY COMPONENTS
+===========================================
+
+This product includes open-source components:
+
+- Laravel Framework (MIT License)
+- Tailwind CSS (MIT License)
+- Alpine.js (MIT License)
+- Spatie Laravel Permission (MIT License)
+- Chart.js (MIT License)
+- Heroicons (MIT License)
+
+All third-party components are subject to their
+respective licenses.
+
+Full list available in:
+- composer.json (PHP dependencies)
+- package.json (JavaScript dependencies)
+
+===========================================
+  WARRANTY DISCLAIMER
+===========================================
+
+THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY
+OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING
+BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF
+MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
+
+The entire risk as to the quality and performance
+of the software is with you.
+
+===========================================
+  LIABILITY LIMITATION
+===========================================
+
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+SPECIAL, INCIDENTAL, INDIRECT, OR CONSEQUENTIAL
+DAMAGES WHATSOEVER ARISING OUT OF OR RELATED TO
+YOUR USE OR INABILITY TO USE THE SOFTWARE.
+
+This includes but is not limited to:
+- Loss of data
+- Loss of profits
+- Business interruption
+- System failures
+- Security breaches
+
+===========================================
+  SUPPORT & UPDATES
+===========================================
+
+INCLUDED WITH LICENSE:
+✓ 6 months of support from purchase date
+✓ Bug fixes and security updates
+✓ Documentation updates
+✓ Minor version updates (1.x.x)
+
+NOT INCLUDED:
+✗ Major version upgrades (2.0.0+)
+✗ Custom feature development
+✗ Server configuration
+✗ Third-party integration
+✗ Data migration services
+
+Extended support available separately.
+
+===========================================
+  REFUND POLICY
+===========================================
+
+Refunds are subject to Envato Market's refund policy.
+
+Grounds for refund:
+- Item not as described
+- Item doesn't work as advertised
+- Item contains security vulnerabilities
+
+Not grounds for refund:
+- Changed mind
+- Bought wrong item
+- Found cheaper alternative
+- Didn't read description
+
+For refund requests, contact Envato Support:
+https://help.market.envato.com/hc/en-us
+
+===========================================
+  COMPLIANCE REQUIREMENTS
+===========================================
+
+By using WMS Pro, you agree to:
+
+1. Not remove or modify copyright notices
+2. Not reverse engineer the software
+3. Comply with all applicable laws
+4. Use only for lawful purposes
+5. Maintain security of your installation
+6. Keep your license information secure
+
+===========================================
+  TERMINATION
+===========================================
+
+This license is effective until terminated.
+
+Your rights under this license will terminate
+automatically without notice if you fail to
+comply with any term of this agreement.
+
+Upon termination:
+- Stop all use of WMS Pro
+- Delete all copies from your systems
+- Remove from all production environments
+
+===========================================
+  GOVERNING LAW
+===========================================
+
+This license agreement shall be governed by and
+construed in accordance with the laws of the
+jurisdiction where the author resides.
+
+Any disputes shall be resolved in the courts
+of that jurisdiction.
+
+===========================================
+  UPDATES TO LICENSE
+===========================================
+
+We reserve the right to update this license
+agreement at any time. Updates will be posted
+with new versions of WMS Pro.
+
+Continued use of WMS Pro after license updates
+constitutes acceptance of the new terms.
+
+===========================================
+  CONTACT INFORMATION
+===========================================
+
+For license inquiries:
+
+Email: bintangwijaya18@gmail.com
+GitHub: https://github.com/rhecustein
+
+For Envato Market license questions:
+https://help.market.envato.com/
+
+===========================================
+  ACKNOWLEDGMENTS
+===========================================
+
+WMS Pro is built using:
+- Laravel by Taylor Otwell
+- Tailwind CSS by Tailwind Labs
+- Various open-source packages
+
+We're grateful to the open-source community
+for their contributions.
+
+===========================================
+  ACCEPTANCE
+===========================================
+
+BY INSTALLING OR USING WMS PRO, YOU ACKNOWLEDGE
+THAT YOU HAVE READ THIS LICENSE AGREEMENT,
+UNDERSTAND IT, AND AGREE TO BE BOUND BY ITS
+TERMS AND CONDITIONS.
+
+IF YOU DO NOT AGREE TO THESE TERMS, DO NOT
+INSTALL OR USE WMS PRO.
+
+===========================================
+
+© 2025 Bintang Wijaya. All rights reserved.
+
+Last Updated: November 2025
+License Version: 1.0
+
+===========================================
 END OF LICENSE
+===========================================

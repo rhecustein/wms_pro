@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WMS Pro - Warehouse Management System Documentation</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-8">
+        <div class="max-w-5xl mx-auto px-6">
+            <h1 class="text-4xl font-bold text-center mb-2">WMS Pro</h1>
+            <p class="text-xl text-center text-blue-100">Professional Warehouse Management System</p>
+            <p class="text-center text-blue-200 mt-2">Documentation v1.0.0</p>
+        </div>
+    </div>
+
+    <!-- Author Info -->
+    <div class="bg-white border-b border-gray-200">
+        <div class="max-w-5xl mx-auto px-6 py-6">
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-600"><span class="font-semibold text-gray-900">Created:</span> November 08, 2025</p>
+                    <p class="text-sm text-gray-600"><span class="font-semibold text-gray-900">Last Update:</span> November 08, 2025</p>
+                    <p class="text-sm text-gray-600"><span class="font-semibold text-gray-900">By:</span> Bintang Wijaya</p>
+                </div>
+                <div class="space-y-2">
+                    <p class="text-sm text-gray-600"><span class="font-semibold text-gray-900">Email:</span> <a href="mailto:bintangwijaya18@gmail.com" class="text-blue-600 hover:underline">bintangwijaya18@gmail.com</a></p>
+                    <p class="text-sm text-gray-600"><span class="font-semibold text-gray-900">GitHub:</span> <a href="https://github.com/rhecustein" class="text-blue-600 hover:underline" target="_blank">rhecustein</a></p>
+                </div>
+            </div>
+            <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <p class="text-sm text-gray-700">Thank you for purchasing WMS Pro! If you have any questions that are beyond the scope of this help file, please feel free to contact us via email. Thanks so much!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-6 py-8">
+        
+        <!-- Table of Contents -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="toc">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Table of Contents</h2>
+            <ol class="space-y-2 list-decimal list-inside text-gray-700">
+                <li><a href="#introduction" class="text-blue-600 hover:underline">Introduction</a></li>
+                <li><a href="#requirements" class="text-blue-600 hover:underline">System Requirements</a></li>
+                <li><a href="#installation" class="text-blue-600 hover:underline">Installation</a></li>
+                <li><a href="#configuration" class="text-blue-600 hover:underline">Initial Configuration</a></li>
+                <li><a href="#dashboard" class="text-blue-600 hover:underline">Dashboard</a></li>
+                <li><a href="#masterdata" class="text-blue-600 hover:underline">Master Data Management</a></li>
+                <li><a href="#warehouse" class="text-blue-600 hover:underline">Warehouse Management</a></li>
+                <li><a href="#inventory" class="text-blue-600 hover:underline">Inventory Management</a></li>
+                <li><a href="#inbound" class="text-blue-600 hover:underline">Inbound Operations</a></li>
+                <li><a href="#outbound" class="text-blue-600 hover:underline">Outbound Operations</a></li>
+                <li><a href="#reports" class="text-blue-600 hover:underline">Reports & Analytics</a></li>
+                <li><a href="#users" class="text-blue-600 hover:underline">Users & Permissions</a></li>
+                <li><a href="#settings" class="text-blue-600 hover:underline">System Settings</a></li>
+                <li><a href="#api" class="text-blue-600 hover:underline">API Documentation</a></li>
+                <li><a href="#troubleshooting" class="text-blue-600 hover:underline">Troubleshooting</a></li>
+                <li><a href="#changelog" class="text-blue-600 hover:underline">Changelog</a></li>
+            </ol>
+        </div>
+
+        <!-- Introduction -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="introduction">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">A) Introduction</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+            
+            <p class="text-gray-700 mb-4"><strong class="text-gray-900">WMS Pro</strong> is a professional Warehouse Management System built with <strong class="text-gray-900">Laravel 12</strong> and <strong class="text-gray-900">Tailwind CSS v4</strong>. This comprehensive solution helps businesses efficiently manage warehouse operations, from inventory tracking to order fulfillment.</p>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Technology Stack:</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-700 ml-4">
+                    <li><strong class="text-gray-900">Backend Framework:</strong> Laravel 12 (PHP 8.2+)</li>
+                    <li><strong class="text-gray-900">Frontend Framework:</strong> Tailwind CSS v4 (Modern utility-first CSS)</li>
+                    <li><strong class="text-gray-900">Database:</strong> MySQL 5.7+ or PostgreSQL 10+</li>
+                    <li><strong class="text-gray-900">JavaScript:</strong> Alpine.js for interactive components</li>
+                    <li><strong class="text-gray-900">Icons:</strong> Heroicons</li>
+                    <li><strong class="text-gray-900">Authentication:</strong> Laravel Sanctum</li>
+                    <li><strong class="text-gray-900">Authorization:</strong> Spatie Laravel Permission</li>
+                </ul>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Key Features:</h3>
+                <div class="grid md:grid-cols-2 gap-3">
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Multi-Warehouse Support</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Real-time Stock Tracking</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Barcode/QR Code Support</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Advanced Reporting & Analytics</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">User Role Management</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Batch & Serial Tracking</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Automated Alerts & Notifications</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Order Management (Purchase & Sales)</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Location Management</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Stock Opname (Physical Count)</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">FIFO/FEFO Picking Strategies</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Auto Replenishment</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Responsive Design (Mobile, Tablet, Desktop)</span>
+                    </div>
+                    <div class="flex items-start space-x-2">
+                        <span class="text-blue-600 mt-1">✓</span>
+                        <span class="text-gray-700">Dark Mode Support</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Requirements -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="requirements">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">B) System Requirements</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+                <p class="text-sm text-yellow-800"><strong>Important:</strong> Please ensure your server meets all requirements before proceeding with installation.</p>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Server Requirements:</h3>
+                <ul class="list-disc list-inside space-y-2 text-gray-700 ml-4">
+                    <li>PHP >= 8.2</li>
+                    <li>MySQL >= 5.7 or PostgreSQL >= 10</li>
+                    <li>Apache 2.4+ or Nginx 1.18+</li>
+                    <li>Composer (Latest stable version)</li>
+                    <li>Node.js >= 18.x</li>
+                    <li>NPM >= 9.x or Yarn >= 1.22</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Required PHP Extensions:</h3>
+                <div class="grid md:grid-cols-2 gap-2">
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                        <li>PDO PHP extension</li>
+                        <li>OpenSSL PHP extension</li>
+                        <li>mbstring PHP extension</li>
+                        <li>fileinfo PHP extension</li>
+                        <li>xml PHP extension</li>
+                        <li>Ctype PHP extension</li>
+                    </ul>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                        <li>JSON PHP extension</li>
+                        <li>Tokenizer PHP extension</li>
+                        <li>cURL PHP extension</li>
+                        <li>zip PHP extension</li>
+                        <li>iconv PHP extension</li>
+                        <li>GD Library & BCMath</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Recommended Server Specifications:</h3>
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Minimum</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Recommended</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">RAM</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">512 MB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">2 GB or more</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Disk Space</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">1 GB</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">10 GB or more</td>
+                            </tr>
+                            <tr>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">CPU</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">1 Core</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">2 Cores or more</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Installation -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="installation">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">C) Installation</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Via Installation Wizard (Recommended):</h3>
+                <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                    <li>Upload all project files to your web server root directory (public_html or www)</li>
+                    <li>Open your website URL in a web browser (e.g., https://yourdomain.com)</li>
+                    <li>The system will automatically redirect you to <code class="bg-gray-100 px-2 py-1 rounded text-sm">/install</code></li>
+                    <li>Follow the installation wizard steps:
+                        <ul class="list-disc list-inside ml-6 mt-2 space-y-1">
+                            <li><strong>Step 1:</strong> Requirements Check</li>
+                            <li><strong>Step 2:</strong> Permissions Check</li>
+                            <li><strong>Step 3:</strong> Database Setup</li>
+                            <li><strong>Step 4:</strong> Admin Account Creation</li>
+                            <li><strong>Step 5:</strong> Final Configuration</li>
+                        </ul>
+                    </li>
+                    <li>Click "Install" to complete the installation</li>
+                    <li>Login to your dashboard with the admin credentials you created</li>
+                </ol>
+            </div>
+
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-green-900 mb-2">Installation Wizard Benefits:</h4>
+                <ul class="list-disc list-inside space-y-1 text-sm text-green-800 ml-4">
+                    <li>Automatic server requirements validation</li>
+                    <li>Automatic database creation and migration</li>
+                    <li>Sample data seeding for testing</li>
+                    <li>User-friendly step-by-step guidance</li>
+                    <li>Reduced chance of configuration errors</li>
+                </ul>
+            </div>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Or Manual Installation:</h3>
+                <ol class="list-decimal list-inside space-y-2 text-gray-700 ml-4">
+                    <li>Upload all project files to your web server root directory</li>
+                    <li>Create a new MySQL or PostgreSQL database on your server</li>
+                    <li>Import the database file located at <code class="bg-gray-100 px-2 py-1 rounded text-sm">database/wms_pro.sql</code></li>
+                    <li>Navigate to your project root directory via SSH or terminal</li>
+                    <li>Copy the environment file: <code class="bg-gray-100 px-2 py-1 rounded text-sm">cp .env.example .env</code></li>
+                    <li>Edit the <code class="bg-gray-100 px-2 py-1 rounded text-sm">.env</code> file and configure your database credentials</li>
+                    <li>Run the following commands:
+                        <div class="bg-gray-900 text-gray-100 p-4 rounded mt-2 overflow-x-auto">
+                            <code class="text-sm">
+composer install --optimize-autoloader --no-dev<br>
+npm install<br>
+npm run build<br>
+php artisan key:generate<br>
+php artisan migrate --seed<br>
+php artisan storage:link<br>
+php artisan optimize
+                            </code>
+                        </div>
+                    </li>
+                    <li>Set proper folder permissions (755 for directories, 644 for files)</li>
+                    <li>Configure your web server to point to the <code class="bg-gray-100 px-2 py-1 rounded text-sm">public</code> directory</li>
+                </ol>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <h4 class="font-semibold text-blue-900 mb-2">Default Admin Login Information:</h4>
+                <p class="text-sm text-blue-800">Email: <code class="bg-blue-100 px-2 py-1 rounded">superadmin@wms.com</code></p>
+                <p class="text-sm text-blue-800">Password: <code class="bg-blue-100 px-2 py-1 rounded">password</code></p>
+                <p class="text-sm text-red-600 mt-2"><strong>⚠️ Important:</strong> Change these credentials immediately after your first login!</p>
+            </div>
+
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <h4 class="font-semibold text-red-900 mb-2">Post-Installation Security Steps:</h4>
+                <ul class="list-disc list-inside space-y-1 text-sm text-red-800 ml-4">
+                    <li>Delete or rename the <code class="bg-red-100 px-2 py-1 rounded">/install</code> directory after successful installation</li>
+                    <li>Change default administrator password immediately</li>
+                    <li>Set <code class="bg-red-100 px-2 py-1 rounded">APP_DEBUG=false</code> in production environment</li>
+                    <li>Configure HTTPS/SSL certificate for secure connections</li>
+                    <li>Secure your <code class="bg-red-100 px-2 py-1 rounded">.env</code> file</li>
+                    <li>Enable firewall and configure proper security rules</li>
+                    <li>Regular backup database and files</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Configuration -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="configuration">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">D) Initial Configuration</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <p class="text-gray-700 mb-6">After successful installation, configure your WMS Pro system with these essential settings:</p>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1) General System Settings</h3>
+                    <p class="text-gray-700 mb-2">Navigate to <strong>Settings > General Settings</strong> from the main menu</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">2) Create Your First Warehouse</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 ml-4">
+                        <li>Go to <strong>Master Data > Warehouses</strong></li>
+                        <li>Click the <strong>"Add New Warehouse"</strong> button</li>
+                        <li>Fill in warehouse details and click Save</li>
+                        <li>Set the warehouse status to Active</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">3) Configure Product Categories</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 ml-4">
+                        <li>Navigate to <strong>Master Data > Categories</strong></li>
+                        <li>Create main categories for organizing your products</li>
+                        <li>Add subcategories as needed</li>
+                    </ol>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">4) Set Up Units of Measure</h3>
+                    <ol class="list-decimal list-inside space-y-1 text-gray-700 ml-4">
+                        <li>Go to <strong>Master Data > Units of Measure</strong></li>
+                        <li>Add standard units: Pieces, Box, Carton, Kg, Liter, Meter, etc.</li>
+                        <li>Configure conversion factors if using multiple units</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="dashboard">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">E) Dashboard</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">Controller:</strong> DashboardController</p>
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">View:</strong> resources/views/dashboard/index.blade.php</p>
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">Route:</strong> GET /dashboard</p>
+            </div>
+
+            <p class="text-gray-700 mb-4">The Dashboard is your central command center, providing real-time insights into warehouse operations and key performance indicators (KPIs).</p>
+
+            <div class="mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Dashboard Widgets:</h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">📊 Stock Summary Card</h4>
+                        <p class="text-sm text-gray-700">Total products, stock quantity, low stock items, out of stock items</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">📦 Transaction Overview</h4>
+                        <p class="text-sm text-gray-700">Today's receipts, issues, pending orders</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">🏭 Warehouse Utilization</h4>
+                        <p class="text-sm text-gray-700">Current capacity usage percentage</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">💰 Inventory Value</h4>
+                        <p class="text-sm text-gray-700">Total inventory value and breakdown</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">⏱️ Recent Activities</h4>
+                        <p class="text-sm text-gray-700">Latest transactions and adjustments</p>
+                    </div>
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">🔔 Alerts & Notifications</h4>
+                        <p class="text-sm text-gray-700">Low stock alerts, expiring products</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-3">Charts & Analytics:</h3>
+                <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                    <li>Stock Movement Trends (Line chart)</li>
+                    <li>Category Distribution (Pie chart)</li>
+                    <li>Warehouse Comparison (Bar chart)</li>
+                    <li>Monthly Transaction Volume (Column chart)</li>
+                    <li>Stock Value Analysis (Area chart)</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Master Data -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="masterdata">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">F) Master Data Management</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <p class="text-gray-700 mb-6">Master Data forms the foundation of your WMS system. Properly configured master data ensures smooth operations.</p>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1) Products Management</h3>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Model:</strong> App\Models\Product</p>
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Controller:</strong> ProductController</p>
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Route:</strong> /master-data/products</p>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Field</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Required</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Product Code/SKU</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Unique product identifier</td>
+                                    <td class="px-6 py-4 text-sm text-green-600">Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Product Name</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Full product name</td>
+                                    <td class="px-6 py-4 text-sm text-green-600">Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Category</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Product category</td>
+                                    <td class="px-6 py-4 text-sm text-green-600">Yes</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Batch Tracking</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Enable/Disable batch tracking</td>
+                                    <td class="px-6 py-4 text-sm text-gray-500">No</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">2) Categories Management</h3>
+                    <p class="text-sm text-gray-700">Organize products with hierarchical category structure with unlimited levels.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">3) Suppliers Management</h3>
+                    <p class="text-sm text-gray-700">Manage supplier information including contact details, payment terms, and credit limits.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">4) Customers Management</h3>
+                    <p class="text-sm text-gray-700">Track customer information for sales orders including billing/shipping addresses.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Warehouse Management -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="warehouse">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">G) Warehouse Management</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1) Warehouse Configuration</h3>
+                    <p class="text-gray-700">Configure and manage multiple warehouse facilities with complete details.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">2) Location Management System</h3>
+                    <p class="text-gray-700 mb-3">Organize warehouse space efficiently with a structured location system:</p>
+                    <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                        <li><strong>Zone Level:</strong> Large areas (Receiving, Storage, Picking, Shipping)</li>
+                        <li><strong>Aisle Level:</strong> Pathways between racks</li>
+                        <li><strong>Rack Level:</strong> Storage rack numbers</li>
+                        <li><strong>Shelf Level:</strong> Shelves within racks</li>
+                        <li><strong>Bin Level:</strong> Individual storage bins</li>
+                    </ul>
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-3">
+                        <p class="text-sm text-blue-800"><strong>Location Code Format:</strong> Zone-Aisle-Rack-Shelf-Bin (e.g., STR-A-R1-S2-B3)</p>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">3) Warehouse Transfer</h3>
+                    <p class="text-gray-700">Transfer inventory between warehouses with full approval workflow and tracking.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory Management -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="inventory">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">H) Inventory Management</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <p class="text-gray-700 mb-6">Complete control over inventory with real-time tracking and management tools.</p>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">1) Current Stock View</h3>
+                    <p class="text-gray-700">Real-time inventory visibility across all warehouses with multi-location view, batch information, serial numbers, and expiry dates.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">2) Stock Adjustment</h3>
+                    <p class="text-gray-700 mb-3">Adjust stock quantities for various reasons:</p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Effect</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Damage</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Products damaged in warehouse</td>
+                                    <td class="px-6 py-4 text-sm text-red-600">Decrease</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Loss/Theft</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Missing or stolen items</td>
+                                    <td class="px-6 py-4 text-sm text-red-600">Decrease</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Found/Surplus</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Discovered inventory</td>
+                                    <td class="px-6 py-4 text-sm text-green-600">Increase</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 text-sm font-medium text-gray-900">Expired</td>
+                                    <td class="px-6 py-4 text-sm text-gray-700">Products past expiry date</td>
+                                    <td class="px-6 py-4 text-sm text-red-600">Decrease</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">3) Stock Opname (Physical Count)</h3>
+                    <p class="text-gray-700">Conduct physical inventory counts and reconcile with system records.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">4) Batch & Serial Number Tracking</h3>
+                    <p class="text-gray-700">Complete traceability with FIFO/FEFO picking strategies.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inbound Operations -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="inbound">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">I) Inbound Operations</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1) Purchase Orders (PO)</h3>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Controller:</strong> PurchaseOrderController</p>
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Route:</strong> /transactions/purchase-orders</p>
+                    </div>
+                    <p class="text-gray-700 mb-3">Manage purchase orders from suppliers with approval workflow.</p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">PO Status Flow:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded">Draft</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-yellow-200 text-yellow-700 text-sm rounded">Submitted</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-blue-200 text-blue-700 text-sm rounded">Approved</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-green-200 text-green-700 text-sm rounded">Received</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">2) Goods Receipt (GR)</h3>
+                    <p class="text-gray-700">Process incoming goods with quality inspection and putaway.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">3) Purchase Returns</h3>
+                    <p class="text-gray-700">Process returns to suppliers with automatic stock adjustment.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Outbound Operations -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="outbound">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">J) Outbound Operations</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="space-y-6">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">1) Sales Orders (SO)</h3>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Controller:</strong> SalesOrderController</p>
+                        <p class="text-sm text-gray-600"><strong class="text-gray-900">Route:</strong> /transactions/sales-orders</p>
+                    </div>
+                    <p class="text-gray-700 mb-3">Manage sales orders from customers with integrated delivery tracking.</p>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-semibold text-gray-900 mb-2">SO Status Flow:</h4>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-gray-200 text-gray-700 text-sm rounded">Draft</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-blue-200 text-blue-700 text-sm rounded">Confirmed</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-yellow-200 text-yellow-700 text-sm rounded">Picked</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-purple-200 text-purple-700 text-sm rounded">Packed</span>
+                            <span class="text-gray-400">→</span>
+                            <span class="px-3 py-1 bg-green-200 text-green-700 text-sm rounded">Delivered</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">2) Goods Issue (GI)</h3>
+                    <p class="text-gray-700">Process outgoing goods with picking, packing, and quality checking.</p>
+                </div>
+
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-2">3) Sales Returns</h3>
+                    <p class="text-gray-700">Handle customer returns with quality inspection and disposition logic.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Reports & Analytics -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="reports">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">K) Reports & Analytics</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <p class="text-gray-700 mb-6">Comprehensive reporting system with various report types and export options (PDF, Excel, CSV).</p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📊 Inventory Reports</h3>
+                    <ul class="space-y-1 text-sm text-gray-700">
+                        <li>• Current Stock Report</li>
+                        <li>• Stock by Location</li>
+                        <li>• Low Stock Report</li>
+                        <li>• Expiry Report</li>
+                        <li>• ABC Analysis</li>
+                    </ul>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📥 Inbound Reports</h3>
+                    <ul class="space-y-1 text-sm text-gray-700">
+                        <li>• Receiving Report</li>
+                        <li>• PO Status Report</li>
+                        <li>• Vendor Performance</li>
+                        <li>• Receiving Accuracy</li>
+                        <li>• Putaway Efficiency</li>
+                    </ul>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📤 Outbound Reports</h3>
+                    <ul class="space-y-1 text-sm text-gray-700">
+                        <li>• Picking Report</li>
+                        <li>• Shipping Report</li>
+                        <li>• Customer Orders</li>
+                        <li>• Picking Accuracy</li>
+                        <li>• Order Fulfillment Rate</li>
+                    </ul>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-3">📈 KPI Dashboard</h3>
+                    <ul class="space-y-1 text-sm text-gray-700">
+                        <li>• Order Fulfillment Rate</li>
+                        <li>• Picking Accuracy</li>
+                        <li>• Inventory Accuracy</li>
+                        <li>• Warehouse Utilization</li>
+                        <li>• Inventory Turnover</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Users & Permissions -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="users">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">L) Users & Permissions</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">Models:</strong> User, Role, Permission</p>
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">Controllers:</strong> UserController, RoleController</p>
+                <p class="text-sm text-gray-600"><strong class="text-gray-900">Package:</strong> Spatie Laravel Permission</p>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Predefined User Roles:</h3>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Super Admin</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Full system access</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Warehouse Manager</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Manage warehouse operations</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Warehouse Supervisor</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Supervise daily operations</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Warehouse Operator</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Execute warehouse tasks</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Inventory Controller</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Control inventory accuracy</td>
+                        </tr>
+                        <tr>
+                            <td class="px-6 py-4 text-sm font-medium text-gray-900">Quality Inspector</td>
+                            <td class="px-6 py-4 text-sm text-gray-700">Quality control</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- System Settings -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="settings">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">M) System Settings</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">⚙️ General Settings</h3>
+                    <p class="text-sm text-gray-700">Company info, regional settings, system preferences</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">📦 Inventory Settings</h3>
+                    <p class="text-sm text-gray-700">Valuation method, tracking options, thresholds</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">📝 Transaction Settings</h3>
+                    <p class="text-sm text-gray-700">Auto-numbering, approval workflow, picking strategy</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">📧 Email Configuration</h3>
+                    <p class="text-sm text-gray-700">SMTP settings, email templates</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">💾 Backup & Restore</h3>
+                    <p class="text-sm text-gray-700">Database backup and restoration</p>
+                </div>
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">📋 Activity Logs</h3>
+                    <p class="text-sm text-gray-700">System activity tracking and audit trail</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Documentation -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="api">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">N) API Documentation</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <p class="text-gray-700 mb-4">WMS Pro provides RESTful API for integration with external systems using Laravel Sanctum for token-based authentication.</p>
+
+            <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 class="font-semibold text-gray-900 mb-2">Authentication:</h3>
+                <p class="text-sm text-gray-700 mb-2">POST /api/v1/auth/login</p>
+                <div class="bg-gray-900 text-gray-100 p-4 rounded text-sm overflow-x-auto">
+                    <code>Authorization: Bearer {your_token}</code>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-semibold text-gray-900 mb-3">Available Endpoints:</h3>
+            <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                <li>Products: GET, POST, PUT, DELETE</li>
+                <li>Stock: GET current stock, adjustments</li>
+                <li>Purchase Orders: CRUD operations</li>
+                <li>Sales Orders: CRUD operations</li>
+                <li>Goods Receipt: Create and confirm</li>
+                <li>Goods Issue: Create and confirm</li>
+            </ul>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4">
+                <p class="text-sm text-blue-800"><strong>Rate Limiting:</strong> 60 requests per minute (default), 120 for authenticated users</p>
+            </div>
+        </div>
+
+        <!-- Troubleshooting -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="troubleshooting">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">O) Troubleshooting</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="space-y-4">
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">1. "500 Internal Server Error"</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
+                        <li>Check file permissions: <code class="bg-gray-100 px-2 py-1 rounded">chmod -R 755 storage</code></li>
+                        <li>Clear cache: <code class="bg-gray-100 px-2 py-1 rounded">php artisan optimize:clear</code></li>
+                        <li>Check .env configuration</li>
+                    </ul>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">2. "Database connection error"</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
+                        <li>Verify database credentials in .env</li>
+                        <li>Ensure database server is running</li>
+                        <li>Check if database exists</li>
+                    </ul>
+                </div>
+
+                <div class="border border-gray-200 rounded-lg p-4">
+                    <h3 class="font-semibold text-gray-900 mb-2">3. "CSS/JS not loading"</h3>
+                    <ul class="list-disc list-inside space-y-1 text-sm text-gray-700 ml-4">
+                        <li>Run: <code class="bg-gray-100 px-2 py-1 rounded">npm run build</code></li>
+                        <li>Clear browser cache</li>
+                        <li>Verify APP_URL in .env</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Changelog -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8" id="changelog">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-2xl font-bold text-gray-900">P) Changelog</h2>
+                <a href="#toc" class="text-sm text-blue-600 hover:underline">↑ top</a>
+            </div>
+
+            <div class="bg-gray-50 rounded-lg p-6">
+                <h3 class="font-semibold text-gray-900 mb-2">Version 1.0.0 (November 08, 2025)</h3>
+                <ul class="list-disc list-inside space-y-1 text-gray-700 ml-4">
+                    <li>Initial release of WMS Pro</li>
+                    <li>Built with Laravel 12 & Tailwind CSS v4</li>
+                    <li>Multi-warehouse support</li>
+                    <li>Real-time inventory tracking</li>
+                    <li>Batch & serial number tracking</li>
+                    <li>Auto replenishment system</li>
+                    <li>FIFO/FEFO picking strategies</li>
+                    <li>Advanced reporting & analytics</li>
+                    <li>RESTful API support</li>
+                    <li>Role-based access control</li>
+                    <li>Complete audit trail</li>
+                    <li>Barcode/QR code support</li>
+                    <li>Responsive design with dark mode</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

@@ -5,8 +5,10 @@
 Thank you for purchasing WMS Pro!
 
 VERSION: 1.0.0
-RELEASE DATE: Oktober 2025
+RELEASE DATE: November 2025
 AUTHOR: Bintang Wijaya
+EMAIL: bintangwijaya18@gmail.com
+GITHUB: https://github.com/rhecustein
 LICENSE: Envato Regular/Extended License
 
 ===========================================
@@ -37,17 +39,17 @@ LICENSE: Envato Regular/Extended License
    
    a) Create database:
       mysql -u root -p
-      CREATE DATABASE wms_pro;
+      CREATE DATABASE wms_pro_db;
       exit;
    
    b) Import SQL file:
-      mysql -u root -p wms_pro < database/wms_database.sql
+      mysql -u root -p wms_pro_db < database/wms_database.sql
    
    c) Configure .env file:
       cp .env.example .env
       
       Edit .env and update:
-      DB_DATABASE=wms_pro
+      DB_DATABASE=wms_pro_db
       DB_USERNAME=your_username
       DB_PASSWORD=your_password
 
@@ -59,7 +61,7 @@ LICENSE: Envato Regular/Extended License
 
 6. SET PERMISSIONS (Linux/Mac)
    
-   chmod -R 775 storage bootstrap/cache
+   chmod -R 755 storage bootstrap/cache
    chown -R www-data:www-data storage bootstrap/cache
 
 7. ACCESS YOUR APPLICATION
@@ -77,7 +79,7 @@ LICENSE: Envato Regular/Extended License
 ⚠️  IMPORTANT: Change these passwords immediately after first login!
 
 SUPER ADMIN:
-Email: admin@wms.com
+Email: superadmin@wms.com
 Password: password
 
 WAREHOUSE MANAGER:
@@ -93,16 +95,29 @@ Password: password
 ===========================================
 
 wms-pro/
-├── main-files/
-│   ├── wms-laravel-full/    → Complete source code
-│   └── database/            → SQL dump file
+├── app/
+│   ├── Http/Controllers/      → All controllers
+│   ├── Models/                → Eloquent models
+│   └── Services/              → Business logic
+├── database/
+│   ├── migrations/            → Database migrations
+│   ├── seeders/               → Database seeders
+│   └── wms_database.sql       → SQL dump file
+├── resources/
+│   ├── views/                 → Blade templates
+│   └── js/                    → JavaScript files
+├── public/
+│   ├── uploads/               → User uploads
+│   └── build/                 → Compiled assets
+├── routes/
+│   ├── web.php                → Web routes
+│   └── api.php                → API routes
+├── storage/                   → Storage files
 ├── documentation/
-│   ├── index.html           → Full documentation
-│   ├── documentation.pdf    → PDF version
-│   └── screenshots/         → Feature screenshots
-├── LICENSE.txt              → License agreement
-├── README.txt               → This file
-└── CHANGELOG.txt            → Version history
+│   └── index.html             → Full documentation
+├── .env.example               → Environment template
+├── composer.json              → PHP dependencies
+└── package.json               → Node dependencies
 
 ===========================================
   DOCUMENTATION
@@ -110,7 +125,6 @@ wms-pro/
 
 📖 Complete documentation available in:
    documentation/index.html
-   documentation/documentation.pdf
 
 Topics covered:
 - Detailed installation guide
@@ -162,17 +176,18 @@ Topics covered:
    - Inventory accuracy
    - Space utilization
 
-✅ Mobile Ready
+✅ Modern Technology
+   - Laravel 12 (PHP 8.2+)
+   - Tailwind CSS v4
    - Responsive design
-   - Dedicated mobile API
-   - Barcode scanning support
+   - Dark mode support
+   - RESTful API ready
 
 ===========================================
   SUPPORT
 ===========================================
 
-📧 Email: bintangwijaya@example.com
-📱 WhatsApp: +62 81350000965
+📧 Email: bintangwijaya18@gmail.com
 🐙 GitHub: https://github.com/rhecustein
 
 SUPPORT INCLUDES:
@@ -199,7 +214,7 @@ COMMON ISSUES:
 
 1. "500 Internal Server Error"
    → Check file permissions
-   → Clear cache: php artisan cache:clear
+   → Clear cache: php artisan optimize:clear
    → Check .env configuration
 
 2. "Database connection error"
@@ -213,7 +228,7 @@ COMMON ISSUES:
    → Check public/build folder exists
 
 4. "Permission denied"
-   → Run: chmod -R 775 storage bootstrap/cache
+   → Run: chmod -R 755 storage bootstrap/cache
    → Ensure web server has write permissions
 
 For more troubleshooting tips, see documentation/index.html
@@ -259,6 +274,27 @@ To customize:
 Refer to Laravel documentation: https://laravel.com/docs
 
 ===========================================
+  TECHNOLOGY STACK
+===========================================
+
+Backend:
+- Laravel 12 (PHP 8.2+)
+- MySQL 5.7+ / PostgreSQL 10+
+- Laravel Sanctum (API Authentication)
+- Spatie Laravel Permission (RBAC)
+
+Frontend:
+- Tailwind CSS v4
+- Alpine.js
+- Heroicons
+- Chart.js for analytics
+
+Tools:
+- Composer for PHP dependencies
+- NPM for JavaScript dependencies
+- Vite for asset bundling
+
+===========================================
   RATE & REVIEW
 ===========================================
 
@@ -274,7 +310,19 @@ Your feedback helps us improve!
   CHANGELOG
 ===========================================
 
-See CHANGELOG.txt for version history and updates.
+Version 1.0.0 (November 2025)
+- Initial release
+- Multi-warehouse support
+- Real-time inventory tracking
+- Batch & serial tracking
+- FIFO/FEFO picking
+- Auto replenishment
+- Advanced reporting
+- RESTful API
+- Role-based access control
+- Responsive design with dark mode
+
+See documentation/index.html for detailed changelog
 
 ===========================================
   LICENSE
@@ -298,8 +346,9 @@ Happy warehouse management! 📦🚀
 
 ---
 
-© 2025 Bintang Wijaya. All rights reserved.
-Visit: https://github.com/rhecustein
+Developed by: Bintang Wijaya
+Email: bintangwijaya18@gmail.com
+GitHub: https://github.com/rhecustein
 
 ===========================================
 END OF README
