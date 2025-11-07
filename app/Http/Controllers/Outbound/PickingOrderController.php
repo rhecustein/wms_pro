@@ -8,9 +8,9 @@ use App\Models\PickingOrderItem;
 use App\Models\SalesOrder;
 use App\Models\SalesOrderItem;
 use App\Models\Warehouse;
+use App\Models\WarehouseLocation; // FIXED: Ganti StorageBin dengan WarehouseLocation
 use App\Models\User;
 use App\Models\Product;
-use App\Models\StorageBin;
 use App\Models\Inventory;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -26,7 +26,7 @@ class PickingOrderController extends Controller
     public function index(Request $request)
     {
         try {
-            $query = PickingOrder::with(['salesOrder', 'warehouse', 'assignedUser', 'createdBy']);
+            $query = PickingOrder::with(['salesOrder.customer', 'warehouse', 'assignedUser', 'createdBy']);
 
             // Search
             if ($request->filled('search')) {
@@ -42,37 +42,15 @@ class PickingOrderController extends Controller
                 });
             }
 
-            // Status Filter
-            if ($request->filled('status')) {
-                $query->where('status', $request->status);
-            }
-
-            // Priority Filter
-            if ($request->filled('priority')) {
-                $query->where('priority', $request->priority);
-            }
-
-            // Picking Type Filter
-            if ($request->filled('picking_type')) {
-                $query->where('picking_type', $request->picking_type);
-            }
-
-            // Warehouse Filter
-            if ($request->filled('warehouse_id')) {
-                $query->where('warehouse_id', $request->warehouse_id);
-            }
-
-            // Date Range Filter
-            if ($request->filled('date_from')) {
-                $query->whereDate('picking_date', '>=', $request->date_from);
-            }
-            if ($request->filled('date_to')) {
-                $query->whereDate('picking_date', '<=', $request->date_to);
-            }
+            if ($request->filled('status')) $query->where('status', $request->status);
+            if ($request->filled('priority')) $query->where('priority', $request->priority);
+            if ($request->filled('picking_type')) $query->where('picking_type', $request->picking_type);
+            if ($request->filled('warehouse_id')) $query->where('warehouse_id', $request->warehouse_id);
+            if ($request->filled('date_from')) $query->whereDate('picking_date', '>=', $request->date_from);
+            if ($request->filled('date_to')) $query->whereDate('picking_date', '<=', $request->date_to);
 
             $pickingOrders = $query->latest()->paginate(15)->withQueryString();
 
-            // Data for filters
             $statuses = ['pending', 'assigned', 'in_progress', 'completed', 'cancelled'];
             $priorities = ['urgent', 'high', 'medium', 'low'];
             $pickingTypes = ['single_order', 'batch', 'wave', 'zone'];
@@ -86,21 +64,15 @@ class PickingOrderController extends Controller
                 'warehouses'
             ));
         } catch (\Exception $e) {
-            Log::error('Error loading picking orders: ' . $e->getMessage(), [
-                'trace' => $e->getTraceAsString()
-            ]);
-            
+            Log::error('Error loading picking orders: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to load picking orders. Please try again.');
         }
     }
 
-    /**
-     * Display pending picking orders.
-     */
     public function pending()
     {
         try {
-            $pickingOrders = PickingOrder::with(['salesOrder', 'warehouse', 'assignedUser'])
+            $pickingOrders = PickingOrder::with(['salesOrder.customer', 'warehouse', 'assignedUser'])
                 ->where('status', 'pending')
                 ->latest()
                 ->paginate(15);
@@ -111,15 +83,11 @@ class PickingOrderController extends Controller
             return view('outbound.picking-orders.pending', compact('pickingOrders', 'warehouses', 'users'));
         } catch (\Exception $e) {
             Log::error('Error loading pending picking orders: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.index')
+            return redirect()->route('outbound.picking-orders.index')
                 ->with('error', 'Failed to load pending orders. Please try again.');
         }
     }
 
-    /**
-     * Show the form for creating a new resource.
-     */
     public function create()
     {
         try {
@@ -135,36 +103,30 @@ class PickingOrderController extends Controller
             $users = User::where('is_active', true)->orderBy('name')->get();
 
             if ($warehouses->isEmpty()) {
-                return redirect()->route('picking-orders.index')
+                return redirect()->route('outbound.picking-orders.index')
                     ->with('warning', 'No active warehouses available. Please create a warehouse first.');
             }
 
             if ($salesOrders->isEmpty()) {
-                return redirect()->route('picking-orders.index')
+                return redirect()->route('outbound.picking-orders.index')
                     ->with('warning', 'No confirmed sales orders available for picking.');
             }
 
             return view('outbound.picking-orders.create', compact('warehouses', 'salesOrders', 'users'));
         } catch (\Exception $e) {
             Log::error('Error loading create form: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.index')
+            return redirect()->route('outbound.picking-orders.index')
                 ->with('error', 'Failed to load form. Please try again.');
         }
     }
 
     /**
      * Get sales order items for picking (AJAX endpoint)
+     * OPTIMIZED & FIXED
      */
     public function getSalesOrderItems(Request $request, $salesOrderId)
     {
         try {
-            Log::info('Getting sales order items', [
-                'sales_order_id' => $salesOrderId,
-                'warehouse_id' => $request->warehouse_id
-            ]);
-
-            // Validate warehouse
             if (!$request->filled('warehouse_id')) {
                 return response()->json([
                     'success' => false,
@@ -172,73 +134,100 @@ class PickingOrderController extends Controller
                 ], 400);
             }
 
-            // Get Sales Order with items
-            $salesOrder = SalesOrder::with(['items.product'])->findOrFail($salesOrderId);
+            $warehouseId = $request->warehouse_id;
 
-            Log::info('Sales order found', [
-                'so_number' => $salesOrder->so_number,
-                'items_count' => $salesOrder->items->count()
-            ]);
+            // Get Sales Order with items
+            $salesOrder = SalesOrder::with([
+                'items' => function($q) {
+                    $q->select('id', 'sales_order_id', 'product_id', 'quantity_ordered', 'quantity_picked', 'unit_of_measure');
+                }, 
+                'items.product' => function($q) {
+                    $q->select('id', 'name', 'sku', 'barcode');
+                }
+            ])->findOrFail($salesOrderId);
+
+            // Get product IDs for bulk query
+            $productIds = $salesOrder->items->pluck('product_id')->toArray();
+
+            if (empty($productIds)) {
+                return response()->json([
+                    'success' => true,
+                    'data' => []
+                ]);
+            }
+
+            // OPTIMIZED: Get all inventories in ONE query with warehouse locations
+            $inventories = Inventory::select([
+                    'id', 'product_id', 'location_id', 'quantity_available', 
+                    'batch_number', 'lot_number', 'serial_number', 'expiry_date'
+                ])
+                ->whereIn('product_id', $productIds)
+                ->where('warehouse_id', $warehouseId)
+                ->where('quantity_available', '>', 0)
+                ->where('stock_status', 'in_stock')
+                ->where('quality_status', 'good')
+                ->with(['location' => function($q) {
+                    $q->select('id', 'name', 'code', 'warehouse_id');
+                }])
+                ->orderBy('expiry_date', 'asc')
+                ->orderBy('created_at', 'asc')
+                ->get()
+                ->groupBy('product_id');
 
             // Map items with inventory data
-            $items = $salesOrder->items->map(function ($item) use ($request) {
+            $items = $salesOrder->items->map(function ($item) use ($inventories) {
                 $product = $item->product;
                 
-                if (!$product) {
-                    Log::warning('Product not found for sales order item', [
-                        'sales_order_item_id' => $item->id
-                    ]);
-                    return null;
-                }
+                if (!$product) return null;
 
-                // Get inventories for this product in the selected warehouse
-                $inventories = Inventory::with('storageBin')
-                    ->where('product_id', $product->id)
-                    ->where('warehouse_id', $request->warehouse_id)
-                    ->where('quantity', '>', 0)
-                    ->get();
+                // Get inventories for this specific product
+                $productInventories = $inventories->get($product->id, collect());
 
-                Log::info('Inventories found', [
-                    'product_id' => $product->id,
-                    'product_name' => $product->name,
-                    'warehouse_id' => $request->warehouse_id,
-                    'inventories_count' => $inventories->count()
-                ]);
+                // Hitung remaining quantity yang belum dipick
+                $remainingQuantity = $item->quantity_ordered - $item->quantity_picked;
 
                 return [
                     'id' => $item->id,
                     'product_id' => $product->id,
-                    'product_code' => $product->code ?? $product->sku ?? 'N/A',
+                    'product_code' => $product->sku ?? $product->barcode ?? 'N/A',
                     'product_name' => $product->name,
-                    'quantity_ordered' => $item->quantity,
+                    'quantity_ordered' => (int) $item->quantity_ordered,
+                    'quantity_picked' => (int) $item->quantity_picked,
+                    'remaining_quantity' => (int) $remainingQuantity,
                     'unit_of_measure' => $item->unit_of_measure ?? 'PCS',
-                    'inventories' => $inventories->map(function ($inv) {
+                    'inventories' => $productInventories->map(function ($inv) {
+                        $locationName = 'Unknown';
+                        $locationCode = '';
+                        
+                        if ($inv->location) {
+                            $locationName = $inv->location->name ?? 'Unknown';
+                            $locationCode = $inv->location->code ?? '';
+                        }
+
                         return [
-                            'storage_bin_id' => $inv->storage_bin_id,
-                            'storage_bin_name' => $inv->storageBin->name ?? $inv->storageBin->bin_code ?? 'Unknown',
-                            'batch_number' => $inv->batch_number,
-                            'serial_number' => $inv->serial_number,
-                            'expiry_date' => $inv->expiry_date,
-                            'quantity_available' => $inv->quantity,
+                            'location_id' => $inv->location_id,
+                            'storage_bin_name' => $locationCode ? "{$locationCode} - {$locationName}" : $locationName,
+                            'batch_number' => $inv->batch_number ?? '',
+                            'lot_number' => $inv->lot_number ?? '',
+                            'serial_number' => $inv->serial_number ?? '',
+                            'expiry_date' => $inv->expiry_date ? $inv->expiry_date->format('Y-m-d') : '',
+                            'quantity_available' => (float) $inv->quantity_available,
                         ];
                     })->values()->all()
                 ];
-            })->filter()->values(); // Remove null items
-
-            Log::info('Items processed', [
-                'total_items' => $items->count()
-            ]);
+            })->filter()->values();
 
             return response()->json([
                 'success' => true,
-                'data' => $items
+                'data' => $items,
+                'debug' => [
+                    'total_items' => $items->count(),
+                    'warehouse_id' => $warehouseId,
+                    'product_ids' => $productIds
+                ]
             ]);
 
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
-            Log::error('Sales order not found', [
-                'sales_order_id' => $salesOrderId
-            ]);
-            
             return response()->json([
                 'success' => false,
                 'message' => 'Sales order not found'
@@ -247,8 +236,11 @@ class PickingOrderController extends Controller
         } catch (\Exception $e) {
             Log::error('Error getting sales order items', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'sales_order_id' => $salesOrderId
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
+                'sales_order_id' => $salesOrderId,
+                'warehouse_id' => $request->warehouse_id ?? null,
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
@@ -275,9 +267,10 @@ class PickingOrderController extends Controller
                 'items' => 'required|array|min:1',
                 'items.*.sales_order_item_id' => 'required|exists:sales_order_items,id',
                 'items.*.product_id' => 'required|exists:products,id',
-                'items.*.storage_bin_id' => 'required|exists:storage_bins,id',
-                'items.*.quantity_requested' => 'required|integer|min:1',
+                'items.*.location_id' => 'required|exists:warehouse_locations,id',
+                'items.*.quantity_requested' => 'required|numeric|min:0.01',
                 'items.*.batch_number' => 'nullable|string|max:100',
+                'items.*.lot_number' => 'nullable|string|max:100',
                 'items.*.serial_number' => 'nullable|string|max:100',
                 'items.*.expiry_date' => 'nullable|date',
                 'items.*.unit_of_measure' => 'required|string|max:50',
@@ -287,10 +280,12 @@ class PickingOrderController extends Controller
                 'picking_date.required' => 'Please select a picking date',
                 'items.required' => 'Please add at least one item to pick',
                 'items.min' => 'Please add at least one item to pick',
+                'items.*.location_id.required' => 'Please select a location for all items',
+                'items.*.location_id.exists' => 'Selected location is invalid',
             ]);
 
             // Validate sales order status
-            $salesOrder = SalesOrder::find($validated['sales_order_id']);
+            $salesOrder = SalesOrder::findOrFail($validated['sales_order_id']);
             if ($salesOrder->status !== 'confirmed') {
                 throw ValidationException::withMessages([
                     'sales_order_id' => 'Selected sales order must be in confirmed status.'
@@ -320,20 +315,32 @@ class PickingOrderController extends Controller
             foreach ($validated['items'] as $index => $item) {
                 // Validate inventory availability
                 $inventory = Inventory::where('product_id', $item['product_id'])
-                    ->where('storage_bin_id', $item['storage_bin_id'])
+                    ->where('location_id', $item['location_id'])
                     ->where('warehouse_id', $validated['warehouse_id'])
+                    ->where('stock_status', 'in_stock')
+                    ->where('quality_status', 'good')
                     ->first();
 
-                if (!$inventory || $inventory->quantity < $item['quantity_requested']) {
-                    throw new \Exception("Insufficient inventory for product ID {$item['product_id']} in selected storage bin.");
+                if (!$inventory || $inventory->quantity_available < $item['quantity_requested']) {
+                    throw new \Exception("Insufficient inventory for product ID {$item['product_id']} in selected location. Available: " . ($inventory->quantity_available ?? 0));
+                }
+
+                // Validate quantity_requested tidak melebihi remaining quantity
+                $salesOrderItem = SalesOrderItem::find($item['sales_order_item_id']);
+                $remainingQty = $salesOrderItem->quantity_ordered - $salesOrderItem->quantity_picked;
+                
+                if ($item['quantity_requested'] > $remainingQty) {
+                    $product = Product::find($item['product_id']);
+                    throw new \Exception("Requested quantity ({$item['quantity_requested']}) exceeds remaining quantity ({$remainingQty}) for product: " . ($product->name ?? 'Unknown'));
                 }
 
                 PickingOrderItem::create([
                     'picking_order_id' => $pickingOrder->id,
                     'sales_order_item_id' => $item['sales_order_item_id'],
                     'product_id' => $item['product_id'],
-                    'storage_bin_id' => $item['storage_bin_id'],
+                    'storage_bin_id' => $item['location_id'], // FIXED: location_id disimpan di storage_bin_id
                     'batch_number' => $item['batch_number'] ?? null,
+                    'lot_number' => $item['lot_number'] ?? null,
                     'serial_number' => $item['serial_number'] ?? null,
                     'expiry_date' => $item['expiry_date'] ?? null,
                     'quantity_requested' => $item['quantity_requested'],
@@ -351,7 +358,7 @@ class PickingOrderController extends Controller
                 'created_by' => Auth::id()
             ]);
 
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('success', 'Picking order created successfully!');
 
         } catch (ValidationException $e) {
@@ -362,7 +369,8 @@ class PickingOrderController extends Controller
             
             Log::error('Failed to create picking order', [
                 'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
+                'line' => $e->getLine(),
+                'file' => $e->getFile(),
                 'user_id' => Auth::id()
             ]);
             
@@ -371,9 +379,6 @@ class PickingOrderController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     */
     public function show(PickingOrder $pickingOrder)
     {
         try {
@@ -384,27 +389,23 @@ class PickingOrderController extends Controller
                 'createdBy',
                 'updatedBy',
                 'items.product',
-                'items.storageBin',
+                'items.storageBin', // Ini akan load WarehouseLocation via relasi
                 'items.pickedBy'
             ]);
 
             return view('outbound.picking-orders.show', compact('pickingOrder'));
         } catch (\Exception $e) {
             Log::error('Error loading picking order details: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.index')
+            return redirect()->route('outbound.picking-orders.index')
                 ->with('error', 'Failed to load picking order details.');
         }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     */
     public function edit(PickingOrder $pickingOrder)
     {
         try {
             if (!in_array($pickingOrder->status, ['pending', 'assigned'])) {
-                return redirect()->route('picking-orders.show', $pickingOrder)
+                return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                     ->with('error', 'Only pending or assigned picking orders can be edited.');
             }
 
@@ -416,15 +417,11 @@ class PickingOrderController extends Controller
             return view('outbound.picking-orders.edit', compact('pickingOrder', 'warehouses', 'salesOrders', 'users'));
         } catch (\Exception $e) {
             Log::error('Error loading edit form: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('error', 'Failed to load edit form.');
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, PickingOrder $pickingOrder)
     {
         try {
@@ -455,30 +452,16 @@ class PickingOrderController extends Controller
 
             DB::commit();
 
-            Log::info('Picking order updated', [
-                'picking_order_id' => $pickingOrder->id,
-                'updated_by' => Auth::id()
-            ]);
-
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('success', 'Picking order updated successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Failed to update picking order', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
-            return back()->with('error', 'Failed to update picking order: ' . $e->getMessage())
-                ->withInput();
+            Log::error('Failed to update picking order: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update picking order: ' . $e->getMessage())->withInput();
         }
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(PickingOrder $pickingOrder)
     {
         try {
@@ -489,33 +472,21 @@ class PickingOrderController extends Controller
             $pickingNumber = $pickingOrder->picking_number;
             $pickingOrder->delete();
 
-            Log::info('Picking order deleted', [
-                'picking_number' => $pickingNumber,
-                'deleted_by' => Auth::id()
-            ]);
-
-            return redirect()->route('picking-orders.index')
-                ->with('success', 'Picking order deleted successfully!');
+            return redirect()->route('outbound.picking-orders.index')
+                ->with('success', "Picking order {$pickingNumber} deleted successfully!");
 
         } catch (\Exception $e) {
-            Log::error('Failed to delete picking order', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
+            Log::error('Failed to delete picking order: ' . $e->getMessage());
             return back()->with('error', 'Failed to delete picking order: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Assign picking order to a user.
-     */
+    // ... methods lainnya tetap sama ...
+
     public function assign(Request $request, PickingOrder $pickingOrder)
     {
         try {
-            $validated = $request->validate([
-                'assigned_to' => 'required|exists:users,id',
-            ]);
+            $validated = $request->validate(['assigned_to' => 'required|exists:users,id']);
 
             if ($pickingOrder->status !== 'pending') {
                 return back()->with('error', 'Only pending picking orders can be assigned.');
@@ -528,27 +499,14 @@ class PickingOrderController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Picking order assigned', [
-                'picking_order_id' => $pickingOrder->id,
-                'assigned_to' => $validated['assigned_to'],
-                'assigned_by' => Auth::id()
-            ]);
-
             return back()->with('success', 'Picking order assigned successfully!');
 
         } catch (\Exception $e) {
-            Log::error('Failed to assign picking order', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
+            Log::error('Failed to assign picking order: ' . $e->getMessage());
             return back()->with('error', 'Failed to assign picking order: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Start picking process.
-     */
     public function start(PickingOrder $pickingOrder)
     {
         try {
@@ -562,39 +520,25 @@ class PickingOrderController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Picking process started', [
-                'picking_order_id' => $pickingOrder->id,
-                'started_by' => Auth::id()
-            ]);
-
-            return redirect()->route('picking-orders.execute', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.execute', $pickingOrder)
                 ->with('success', 'Picking process started!');
 
         } catch (\Exception $e) {
-            Log::error('Failed to start picking', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
+            Log::error('Failed to start picking: ' . $e->getMessage());
             return back()->with('error', 'Failed to start picking: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Execute picking process.
-     */
     public function execute(PickingOrder $pickingOrder)
     {
         try {
             if ($pickingOrder->status !== 'in_progress') {
-                return redirect()->route('picking-orders.show', $pickingOrder)
+                return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                     ->with('error', 'Only in-progress picking orders can be executed.');
             }
 
             $pickingOrder->load([
-                'items' => function ($q) {
-                    $q->orderBy('pick_sequence');
-                },
+                'items' => function ($q) { $q->orderBy('pick_sequence'); },
                 'items.product',
                 'items.storageBin',
                 'salesOrder',
@@ -605,15 +549,11 @@ class PickingOrderController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error loading execute view: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('error', 'Failed to load picking execution page.');
         }
     }
 
-    /**
-     * Complete picking order.
-     */
     public function complete(PickingOrder $pickingOrder)
     {
         try {
@@ -621,7 +561,6 @@ class PickingOrderController extends Controller
                 return back()->with('error', 'Only in-progress picking orders can be completed.');
             }
 
-            // Check if all items are picked
             $pendingItems = $pickingOrder->items()->where('status', 'pending')->count();
             if ($pendingItems > 0) {
                 return back()->with('error', "Cannot complete picking order. {$pendingItems} items are still pending.");
@@ -633,27 +572,15 @@ class PickingOrderController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            Log::info('Picking order completed', [
-                'picking_order_id' => $pickingOrder->id,
-                'completed_by' => Auth::id()
-            ]);
-
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('success', 'Picking order completed successfully!');
 
         } catch (\Exception $e) {
-            Log::error('Failed to complete picking order', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
+            Log::error('Failed to complete picking order: ' . $e->getMessage());
             return back()->with('error', 'Failed to complete picking order: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Cancel picking order.
-     */
     public function cancel(PickingOrder $pickingOrder)
     {
         try {
@@ -668,33 +595,19 @@ class PickingOrderController extends Controller
                 'updated_by' => Auth::id(),
             ]);
 
-            // Cancel all pending items
             $pickingOrder->items()->where('status', 'pending')->update(['status' => 'cancelled']);
 
             DB::commit();
-
-            Log::info('Picking order cancelled', [
-                'picking_order_id' => $pickingOrder->id,
-                'cancelled_by' => Auth::id()
-            ]);
 
             return back()->with('success', 'Picking order cancelled successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Failed to cancel picking order', [
-                'picking_order_id' => $pickingOrder->id,
-                'error' => $e->getMessage()
-            ]);
-            
+            Log::error('Failed to cancel picking order: ' . $e->getMessage());
             return back()->with('error', 'Failed to cancel picking order: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Show wave picking interface.
-     */
     public function wave()
     {
         try {
@@ -711,23 +624,14 @@ class PickingOrderController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error loading wave picking page: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.index')
+            return redirect()->route('outbound.picking-orders.index')
                 ->with('error', 'Failed to load wave picking page.');
         }
     }
 
-    /**
-     * Generate batch picking orders (Wave Creation).
-     */
     public function batchGenerate(Request $request)
     {
         try {
-            Log::info('Wave Creation Request', [
-                'all_data' => $request->all(),
-                'picking_order_ids' => $request->input('picking_order_ids'),
-            ]);
-
             $validated = $request->validate([
                 'picking_order_ids' => 'required|array|min:1',
                 'picking_order_ids.*' => 'exists:picking_orders,id',
@@ -751,7 +655,6 @@ class PickingOrderController extends Controller
             foreach ($validated['picking_order_ids'] as $pickingOrderId) {
                 $pickingOrder = PickingOrder::find($pickingOrderId);
                 
-                // Skip if order not found or not in pending status
                 if (!$pickingOrder || $pickingOrder->status !== 'pending') {
                     $skippedCount++;
                     if ($pickingOrder) {
@@ -760,7 +663,6 @@ class PickingOrderController extends Controller
                     continue;
                 }
 
-                // Build notes with wave name
                 $notes = '';
                 if ($request->filled('wave_name')) {
                     $notes = 'Wave: ' . $validated['wave_name'];
@@ -771,7 +673,6 @@ class PickingOrderController extends Controller
                     $notes = $pickingOrder->notes;
                 }
 
-                // Update existing picking order to wave type
                 $pickingOrder->update([
                     'picking_type' => 'wave',
                     'warehouse_id' => $validated['warehouse_id'],
@@ -788,12 +689,6 @@ class PickingOrderController extends Controller
 
             DB::commit();
 
-            Log::info('Wave created successfully', [
-                'updated_count' => $updatedCount,
-                'skipped_count' => $skippedCount,
-                'created_by' => Auth::id()
-            ]);
-
             $message = "Wave created successfully! {$updatedCount} picking order(s) updated.";
             if ($skippedCount > 0) {
                 $message .= " ({$skippedCount} order(s) skipped";
@@ -803,7 +698,7 @@ class PickingOrderController extends Controller
                 $message .= ")";
             }
 
-            return redirect()->route('picking-orders.wave')
+            return redirect()->route('outbound.picking-orders.wave')
                 ->with('success', $message);
                 
         } catch (ValidationException $e) {
@@ -811,28 +706,16 @@ class PickingOrderController extends Controller
             
         } catch (\Exception $e) {
             DB::rollBack();
-            
-            Log::error('Wave Creation Failed', [
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'user_id' => Auth::id()
-            ]);
-            
-            return back()->with('error', 'Failed to create wave: ' . $e->getMessage())
-                ->withInput();
+            Log::error('Wave Creation Failed: ' . $e->getMessage());
+            return back()->with('error', 'Failed to create wave: ' . $e->getMessage())->withInput();
         }
     }
 
-    /**
-     * Print picking order.
-     */
     public function print(PickingOrder $pickingOrder)
     {
         try {
             $pickingOrder->load([
-                'items' => function ($q) {
-                    $q->orderBy('pick_sequence');
-                },
+                'items' => function ($q) { $q->orderBy('pick_sequence'); },
                 'items.product',
                 'items.storageBin',
                 'salesOrder.customer',
@@ -844,8 +727,7 @@ class PickingOrderController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Error loading print view: ' . $e->getMessage());
-            
-            return redirect()->route('picking-orders.show', $pickingOrder)
+            return redirect()->route('outbound.picking-orders.show', $pickingOrder)
                 ->with('error', 'Failed to load print view.');
         }
     }

@@ -1,5 +1,6 @@
 <?php
 // database/migrations/2024_01_01_000020_create_sales_order_items_table.php
+// UPDATE migration yang sudah ada
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -21,6 +22,7 @@ return new class extends Migration
             $table->decimal('tax_rate', 5, 2)->default(0);
             $table->decimal('discount_rate', 5, 2)->default(0);
             $table->decimal('line_total', 15, 2);
+            $table->string('unit_of_measure', 50)->default('PCS'); // TAMBAHKAN INI
             $table->text('notes')->nullable();
             $table->timestamps();
 

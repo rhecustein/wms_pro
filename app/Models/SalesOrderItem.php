@@ -20,6 +20,7 @@ class SalesOrderItem extends Model
         'tax_rate',
         'discount_rate',
         'line_total',
+        'unit_of_measure',
         'notes',
     ];
 
@@ -50,9 +51,19 @@ class SalesOrderItem extends Model
     /**
      * Accessors
      */
+    public function getQuantityAttribute()
+    {
+        return $this->quantity_ordered;
+    }
+
     public function getSubtotalAttribute()
     {
-        return $this->quantity * $this->unit_price;
+        return $this->quantity_ordered * $this->unit_price;
+    }
+
+    public function getDiscountAttribute()
+    {
+        return $this->subtotal * ($this->discount_rate / 100);
     }
 
     public function getTotalAfterDiscountAttribute()
@@ -60,16 +71,60 @@ class SalesOrderItem extends Model
         return $this->subtotal - $this->discount;
     }
 
+    public function getTaxAttribute()
+    {
+        return $this->total_after_discount * ($this->tax_rate / 100);
+    }
+
     public function getRemainingQuantityAttribute()
     {
-        return $this->quantity - ($this->picked_quantity ?? 0);
+        return $this->quantity_ordered - $this->quantity_picked;
+    }
+
+    public function getPickedQuantityAttribute()
+    {
+        return $this->quantity_picked;
     }
 
     public function getPickedPercentageAttribute()
     {
-        if ($this->quantity == 0) {
+        if ($this->quantity_ordered == 0) {
             return 0;
         }
-        return round((($this->picked_quantity ?? 0) / $this->quantity) * 100, 2);
+        return round(($this->quantity_picked / $this->quantity_ordered) * 100, 2);
+    }
+
+    public function getIsFullyPickedAttribute()
+    {
+        return $this->quantity_picked >= $this->quantity_ordered;
+    }
+
+    public function getIsPartiallyPickedAttribute()
+    {
+        return $this->quantity_picked > 0 && $this->quantity_picked < $this->quantity_ordered;
+    }
+
+    public function getUnitOfMeasureAttribute($value)
+    {
+        return $value ?? 'PCS';
+    }
+
+    /**
+     * Scopes
+     */
+    public function scopeFullyPicked($query)
+    {
+        return $query->whereColumn('quantity_picked', '>=', 'quantity_ordered');
+    }
+
+    public function scopePartiallyPicked($query)
+    {
+        return $query->where('quantity_picked', '>', 0)
+                    ->whereColumn('quantity_picked', '<', 'quantity_ordered');
+    }
+
+    public function scopeNotPicked($query)
+    {
+        return $query->where('quantity_picked', 0);
     }
 }
