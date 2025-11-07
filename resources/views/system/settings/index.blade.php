@@ -75,6 +75,9 @@
                     'company' => ['bg' => 'bg-indigo-100', 'hover' => 'group-hover:bg-indigo-200', 'text' => 'text-indigo-600', 'hover-text' => 'group-hover:text-indigo-600'],
                     'appearance' => ['bg' => 'bg-purple-100', 'hover' => 'group-hover:bg-purple-200', 'text' => 'text-purple-600', 'hover-text' => 'group-hover:text-purple-600'],
                     'social' => ['bg' => 'bg-pink-100', 'hover' => 'group-hover:bg-pink-200', 'text' => 'text-pink-600', 'hover-text' => 'group-hover:text-pink-600'],
+                    'email' => ['bg' => 'bg-cyan-100', 'hover' => 'group-hover:bg-cyan-200', 'text' => 'text-cyan-600', 'hover-text' => 'group-hover:text-cyan-600'],
+                    'email_notifications' => ['bg' => 'bg-amber-100', 'hover' => 'group-hover:bg-amber-200', 'text' => 'text-amber-600', 'hover-text' => 'group-hover:text-amber-600'],
+                    'email_templates' => ['bg' => 'bg-lime-100', 'hover' => 'group-hover:bg-lime-200', 'text' => 'text-lime-600', 'hover-text' => 'group-hover:text-lime-600'],
                     'warehouse' => ['bg' => 'bg-orange-100', 'hover' => 'group-hover:bg-orange-200', 'text' => 'text-orange-600', 'hover-text' => 'group-hover:text-orange-600'],
                     'inventory' => ['bg' => 'bg-green-100', 'hover' => 'group-hover:bg-green-200', 'text' => 'text-green-600', 'hover-text' => 'group-hover:text-green-600'],
                     'notifications' => ['bg' => 'bg-yellow-100', 'hover' => 'group-hover:bg-yellow-200', 'text' => 'text-yellow-600', 'hover-text' => 'group-hover:text-yellow-600'],
@@ -108,6 +111,10 @@
                             @if($setting->type === 'boolean')
                                 <span class="px-2 py-1 text-xs font-semibold rounded whitespace-nowrap {{ $setting->actual_value ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600' }}">
                                     {{ $setting->actual_value ? 'Enabled' : 'Disabled' }}
+                                </span>
+                            @elseif($setting->type === 'password')
+                                <span class="text-xs text-gray-400">
+                                    {{ $setting->value ? '••••••••' : 'Not set' }}
                                 </span>
                             @elseif(in_array($setting->type, ['file', 'image']))
                                 <span class="text-xs {{ $setting->value ? 'text-green-600' : 'text-gray-400' }}">
@@ -256,7 +263,7 @@
         
         const form = document.createElement('form');
         form.method = 'POST';
-        form.action = '{{ route("system.settings.clear-cache") }}';
+        form.action = '{{ route("system.settings.cache.clear") }}';
         
         const csrfToken = document.createElement('input');
         csrfToken.type = 'hidden';

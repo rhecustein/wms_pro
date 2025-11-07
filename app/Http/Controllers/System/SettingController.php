@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Config;
 
 class SettingController extends Controller
 {
@@ -18,6 +20,9 @@ class SettingController extends Controller
         'company' => 'Company Information',
         'appearance' => 'Appearance Settings',
         'social' => 'Social Media',
+        'email' => 'Email Configuration',
+        'email_notifications' => 'Email Notifications',
+        'email_templates' => 'Email Templates',
         'warehouse' => 'Warehouse Settings',
         'inventory' => 'Inventory Settings',
         'notifications' => 'Notification Settings',
@@ -32,6 +37,9 @@ class SettingController extends Controller
         'company' => 'fa-building',
         'appearance' => 'fa-palette',
         'social' => 'fa-share-alt',
+        'email' => 'fa-envelope-open-text',
+        'email_notifications' => 'fa-bell',
+        'email_templates' => 'fa-file-alt',
         'warehouse' => 'fa-warehouse',
         'inventory' => 'fa-boxes',
         'notifications' => 'fa-bell',
@@ -61,7 +69,7 @@ class SettingController extends Controller
     public function show(string $group)
     {
         $settings = Setting::where('group', $group)
-            ->orderBy('key')
+            ->orderBy('order')
             ->get();
 
         if ($settings->isEmpty()) {
@@ -101,6 +109,11 @@ class SettingController extends Controller
                 }
             }
 
+            // Update mail configuration if email group
+            if ($group === 'email') {
+                $this->updateMailConfig();
+            }
+
             DB::commit();
             Cache::forget('settings');
 
@@ -116,6 +129,60 @@ class SettingController extends Controller
                 ->withInput()
                 ->with('error', 'Failed to update settings: ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Test email configuration
+     */
+    public function testEmail(Request $request)
+    {
+        $request->validate([
+            'test_email' => 'required|email',
+        ]);
+
+        try {
+            // Update mail configuration
+            $this->updateMailConfig();
+
+            $siteName = Setting::get('site_name', 'WMS Pro');
+            $testEmail = $request->test_email;
+
+            // Send test email
+            Mail::raw(
+                "This is a test email from {$siteName}.\n\nYour email configuration is working correctly!\n\nSent at: " . now()->format('Y-m-d H:i:s'),
+                function ($message) use ($testEmail, $siteName) {
+                    $message->to($testEmail)
+                        ->subject("Test Email - {$siteName}");
+                }
+            );
+
+            return redirect()
+                ->back()
+                ->with('success', 'Test email sent successfully to ' . $testEmail);
+
+        } catch (\Exception $e) {
+            return redirect()
+                ->back()
+                ->with('error', 'Failed to send test email: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Update mail configuration from settings
+     */
+    private function updateMailConfig(): void
+    {
+        $mailSettings = Setting::where('group', 'email')->pluck('value', 'key');
+
+        Config::set('mail.default', $mailSettings->get('mail_driver', 'smtp'));
+        Config::set('mail.mailers.smtp.transport', 'smtp');
+        Config::set('mail.mailers.smtp.host', $mailSettings->get('mail_host'));
+        Config::set('mail.mailers.smtp.port', $mailSettings->get('mail_port'));
+        Config::set('mail.mailers.smtp.username', $mailSettings->get('mail_username'));
+        Config::set('mail.mailers.smtp.password', $mailSettings->get('mail_password'));
+        Config::set('mail.mailers.smtp.encryption', $mailSettings->get('mail_encryption'));
+        Config::set('mail.from.address', $mailSettings->get('mail_from_address'));
+        Config::set('mail.from.name', $mailSettings->get('mail_from_name'));
     }
 
     /**
@@ -366,6 +433,12 @@ class SettingController extends Controller
             return $request->has($key) ? 'true' : 'false';
         }
 
+        // Handle password - only update if not empty
+        if ($setting->type === 'password') {
+            $value = $request->input($key);
+            return !empty($value) ? $value : null;
+        }
+
         // Handle other types
         if ($request->has($key)) {
             $value = $request->input($key);
@@ -373,19 +446,19 @@ class SettingController extends Controller
             // Validate based on type
             switch ($setting->type) {
                 case 'email':
-                    if (!filter_var($value, FILTER_VALIDATE_EMAIL)) {
+                    if (!empty($value) && !filter_var($value, FILTER_VALIDATE_EMAIL)) {
                         throw new \Exception("Invalid email format for {$key}");
                     }
                     break;
                     
                 case 'url':
-                    if (!filter_var($value, FILTER_VALIDATE_URL)) {
+                    if (!empty($value) && !filter_var($value, FILTER_VALIDATE_URL)) {
                         throw new \Exception("Invalid URL format for {$key}");
                     }
                     break;
                     
                 case 'integer':
-                    if (!is_numeric($value)) {
+                    if (!empty($value) && !is_numeric($value)) {
                         throw new \Exception("Invalid number format for {$key}");
                     }
                     break;

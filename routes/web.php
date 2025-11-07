@@ -521,9 +521,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/files', [SettingController::class, 'uploadFile'])->name('upload-file');
             Route::delete('/files/{key}', [SettingController::class, 'deleteFile'])->name('delete-file');
             Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('clear-cache');
+            Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('cache.clear');
             Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
             Route::get('/export', [SettingController::class, 'export'])->name('export');
             Route::post('/import', [SettingController::class, 'import'])->name('import');
+            Route::post('/email/test', [SettingController::class, 'testEmail'])->name('email.test');
         });
         
         // Activity Logs
