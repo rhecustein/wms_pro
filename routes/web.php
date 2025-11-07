@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 // ============================================
 // MASTER DATA CONTROLLERS
@@ -82,12 +84,26 @@ use App\Http\Controllers\Mobile\PickingMobileController;
 use App\Http\Controllers\Mobile\StockCountMobileController;
 use App\Http\Controllers\Mobile\TransferMobileController;
 use App\Http\Controllers\Mobile\PackingMobileController;
-use App\Models\Role;
 
 // ============================================
 // PUBLIC ROUTES
 // ============================================
 Route::get('/', function () {
+    $isInstalled = false;
+    
+    try {
+        if (Schema::hasTable('settings')) {
+            $settingsCount = DB::table('settings')->count();
+            $isInstalled = $settingsCount > 0;
+        }
+    } catch (\Exception $e) {
+        $isInstalled = false;
+    }
+    
+    if (!$isInstalled) {
+        return redirect('/install');
+    }
+    
     return view('welcome');
 })->name('home');
 
@@ -215,19 +231,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('movements/{stockMovement}', [StockMovementController::class, 'show'])->name('movements.show');
         
         // Stock Adjustments - URUTAN SANGAT PENTING!
-        // 1. Routes dengan keyword/action HARUS di atas
         Route::get('adjustments/search-products', [StockAdjustmentController::class, 'searchProducts'])->name('adjustments.search-products');
         Route::get('adjustments/storage-bins/{warehouseId}', [StockAdjustmentController::class, 'getStorageBins'])->name('adjustments.storage-bins');
         Route::get('adjustments/print-list', [StockAdjustmentController::class, 'printList'])->name('adjustments.print-list');
         Route::get('adjustments/export', [StockAdjustmentController::class, 'export'])->name('adjustments.export');
-        
-        // 2. Routes dengan parameter adjustment dan action
         Route::get('adjustments/{adjustment}/print', [StockAdjustmentController::class, 'print'])->name('adjustments.print');
         Route::post('adjustments/{adjustment}/approve', [StockAdjustmentController::class, 'approve'])->name('adjustments.approve');
         Route::post('adjustments/{adjustment}/post', [StockAdjustmentController::class, 'post'])->name('adjustments.post');
         Route::post('adjustments/{adjustment}/cancel', [StockAdjustmentController::class, 'cancel'])->name('adjustments.cancel');
-        
-        // 3. Resource routes HARUS paling bawah
         Route::resource('adjustments', StockAdjustmentController::class);
         
         // Stock Opnames
@@ -259,35 +270,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('purchase-orders/{purchaseOrder}/approve', [PurchaseOrderController::class, 'approve'])->name('purchase-orders.approve');
         
         Route::resource('shipments', InboundShipmentController::class);
+        Route::post('shipments/{shipment}/mark-in-transit', [InboundShipmentController::class, 'markInTransit'])->name('shipments.mark-in-transit');
+        Route::post('shipments/{shipment}/mark-arrived', [InboundShipmentController::class, 'markArrived'])->name('shipments.mark-arrived');
+        Route::post('shipments/{shipment}/start-unloading', [InboundShipmentController::class, 'startUnloading'])->name('shipments.start-unloading');
+        Route::post('shipments/{shipment}/start-inspection', [InboundShipmentController::class, 'startInspection'])->name('shipments.start-inspection');
+        Route::post('shipments/{shipment}/complete-inspection', [InboundShipmentController::class, 'completeInspection'])->name('shipments.complete-inspection');
+        Route::post('shipments/{shipment}/complete', [InboundShipmentController::class, 'complete'])->name('shipments.complete');
+        Route::post('shipments/{shipment}/cancel', [InboundShipmentController::class, 'cancel'])->name('shipments.cancel');
+        Route::get('shipments/{shipment}/print', [InboundShipmentController::class, 'print'])->name('shipments.print');
+        Route::get('shipments/{shipment}/tracking', [InboundShipmentController::class, 'tracking'])->name('shipments.tracking');
         
-        // Status transition routes
-        Route::post('shipments/{shipment}/mark-in-transit', [InboundShipmentController::class, 'markInTransit'])
-            ->name('shipments.mark-in-transit');
-        
-        Route::post('shipments/{shipment}/mark-arrived', [InboundShipmentController::class, 'markArrived'])
-            ->name('shipments.mark-arrived');
-        
-        Route::post('shipments/{shipment}/start-unloading', [InboundShipmentController::class, 'startUnloading'])
-            ->name('shipments.start-unloading');
-        
-        Route::post('shipments/{shipment}/start-inspection', [InboundShipmentController::class, 'startInspection'])
-            ->name('shipments.start-inspection');
-        
-        Route::post('shipments/{shipment}/complete-inspection', [InboundShipmentController::class, 'completeInspection'])
-            ->name('shipments.complete-inspection');
-        
-        Route::post('shipments/{shipment}/complete', [InboundShipmentController::class, 'complete'])
-            ->name('shipments.complete');
-        
-        Route::post('shipments/{shipment}/cancel', [InboundShipmentController::class, 'cancel'])
-            ->name('shipments.cancel');
-        
-        // Additional utility routes
-        Route::get('shipments/{shipment}/print', [InboundShipmentController::class, 'print'])
-            ->name('shipments.print');
-        
-        Route::get('shipments/{shipment}/tracking', [InboundShipmentController::class, 'tracking'])
-            ->name('shipments.tracking');
         // Good Receiving
         Route::resource('good-receivings', GoodReceivingController::class);
         Route::post('good-receivings/{goodReceiving}/start', [GoodReceivingController::class, 'start'])->name('good-receivings.start');
@@ -313,48 +305,28 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Sales Orders CRUD
         Route::resource('sales-orders', SalesOrderController::class);
-        Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])
-            ->name('sales-orders.confirm');
-        Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])
-            ->name('sales-orders.cancel');
-        Route::post('sales-orders/{salesOrder}/generate-picking', [SalesOrderController::class, 'generatePicking'])
-            ->name('sales-orders.generate-picking');
-        Route::get('sales-orders/{salesOrder}/print', [SalesOrderController::class, 'print'])
-            ->name('sales-orders.print');
-            
-        Route::get('sales-orders/ajax/search-customers', [SalesOrderController::class, 'searchCustomers'])
-            ->name('sales-orders.search-customers');
-        Route::get('sales-orders/ajax/search-products', [SalesOrderController::class, 'searchProducts'])
-            ->name('sales-orders.search-products');
-        Route::get('sales-orders/ajax/customer/{id}', [SalesOrderController::class, 'getCustomer'])
-            ->name('sales-orders.get-customer');
-        Route::get('sales-orders/ajax/product/{id}', [SalesOrderController::class, 'getProduct'])
-            ->name('sales-orders.get-product');
+        Route::post('sales-orders/{salesOrder}/confirm', [SalesOrderController::class, 'confirm'])->name('sales-orders.confirm');
+        Route::post('sales-orders/{salesOrder}/cancel', [SalesOrderController::class, 'cancel'])->name('sales-orders.cancel');
+        Route::post('sales-orders/{salesOrder}/generate-picking', [SalesOrderController::class, 'generatePicking'])->name('sales-orders.generate-picking');
+        Route::get('sales-orders/{salesOrder}/print', [SalesOrderController::class, 'print'])->name('sales-orders.print');
+        Route::get('sales-orders/ajax/search-customers', [SalesOrderController::class, 'searchCustomers'])->name('sales-orders.search-customers');
+        Route::get('sales-orders/ajax/search-products', [SalesOrderController::class, 'searchProducts'])->name('sales-orders.search-products');
+        Route::get('sales-orders/ajax/customer/{id}', [SalesOrderController::class, 'getCustomer'])->name('sales-orders.get-customer');
+        Route::get('sales-orders/ajax/product/{id}', [SalesOrderController::class, 'getProduct'])->name('sales-orders.get-product');
 
         // Picking Orders Routes
         Route::prefix('picking-orders')->name('picking-orders.')->group(function () {
-            
-            // ========================================
-            // PENTING: Route AJAX harus DI ATAS!
-            // ========================================
             Route::get('sales-order/{salesOrderId}/items', [PickingOrderController::class, 'getSalesOrderItems'])->name('get-items');
-            
-            // Static routes (sebelum dynamic routes)
             Route::get('wave/create', [PickingOrderController::class, 'wave'])->name('wave');
             Route::post('wave/generate', [PickingOrderController::class, 'batchGenerate'])->name('batch-generate');
             Route::get('pending/list', [PickingOrderController::class, 'pending'])->name('pending');
             Route::get('create', [PickingOrderController::class, 'create'])->name('create');
-            
-            // CRUD routes
             Route::get('/', [PickingOrderController::class, 'index'])->name('index');
             Route::post('/', [PickingOrderController::class, 'store'])->name('store');
-            
-            // Dynamic routes (harus di bawah)
             Route::get('{pickingOrder}', [PickingOrderController::class, 'show'])->name('show');
             Route::get('{pickingOrder}/edit', [PickingOrderController::class, 'edit'])->name('edit');
             Route::put('{pickingOrder}', [PickingOrderController::class, 'update'])->name('update');
             Route::delete('{pickingOrder}', [PickingOrderController::class, 'destroy'])->name('destroy');
-            
             Route::post('{pickingOrder}/assign', [PickingOrderController::class, 'assign'])->name('assign');
             Route::post('{pickingOrder}/start', [PickingOrderController::class, 'start'])->name('start');
             Route::get('{pickingOrder}/execute', [PickingOrderController::class, 'execute'])->name('execute');
@@ -433,11 +405,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         
         // Vehicle Routes
         Route::prefix('vehicles')->name('vehicles.')->group(function () {
-            // Special routes (harus di atas resource routes)
             Route::get('/export', [VehicleController::class, 'export'])->name('export');
             Route::get('/print', [VehicleController::class, 'print'])->name('print');
-            
-            // Resource routes
             Route::get('/', [VehicleController::class, 'index'])->name('index');
             Route::get('/create', [VehicleController::class, 'create'])->name('create');
             Route::post('/', [VehicleController::class, 'store'])->name('store');
@@ -446,7 +415,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('update');
             Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('destroy');
         });
-        
         
         // Equipment Management
         Route::get('equipments/{equipment}/history', [EquipmentController::class, 'history'])->name('equipments.history');
@@ -521,7 +489,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::post('/files', [SettingController::class, 'uploadFile'])->name('upload-file');
             Route::delete('/files/{key}', [SettingController::class, 'deleteFile'])->name('delete-file');
             Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('clear-cache');
-            Route::post('/cache/clear', [SettingController::class, 'clearCache'])->name('cache.clear');
             Route::post('/reset/{group?}', [SettingController::class, 'reset'])->name('reset');
             Route::get('/export', [SettingController::class, 'export'])->name('export');
             Route::post('/import', [SettingController::class, 'import'])->name('import');
@@ -608,7 +575,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('utility.label-printer');
         })->name('label-printer');
     });
-});
+
+}); // End auth middleware
 
 // ============================================
 // AUTH ROUTES
