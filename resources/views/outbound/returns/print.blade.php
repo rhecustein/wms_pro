@@ -16,13 +16,16 @@
             font-size: 12px;
             line-height: 1.6;
             color: #333;
-            padding: 20px;
+            padding: 30px;
+            max-width: 210mm;
+            margin: 0 auto;
         }
 
         .header {
-            border-bottom: 3px solid #e74c3c;
+            border-bottom: 3px solid {{ theme_color('primary') }};
             padding-bottom: 20px;
             margin-bottom: 30px;
+            page-break-after: avoid;
         }
 
         .header-content {
@@ -33,13 +36,19 @@
 
         .company-info h1 {
             font-size: 24px;
-            color: #e74c3c;
+            color: {{ theme_color('primary') }};
             margin-bottom: 5px;
         }
 
         .company-info p {
             font-size: 11px;
             color: #666;
+        }
+
+        .company-logo {
+            max-width: 200px;
+            max-height: 80px;
+            margin-bottom: 10px;
         }
 
         .document-info {
@@ -78,6 +87,7 @@
             justify-content: space-between;
             margin-bottom: 30px;
             gap: 20px;
+            page-break-inside: avoid;
         }
 
         .info-box {
@@ -90,9 +100,9 @@
 
         .info-box h3 {
             font-size: 13px;
-            color: #e74c3c;
+            color: {{ theme_color('primary') }};
             margin-bottom: 12px;
-            border-bottom: 2px solid #e74c3c;
+            border-bottom: 2px solid {{ theme_color('primary') }};
             padding-bottom: 5px;
         }
 
@@ -119,7 +129,7 @@
         }
 
         .items-table thead {
-            background: #e74c3c;
+            background: {{ theme_color('primary') }};
             color: white;
         }
 
@@ -145,7 +155,7 @@
             padding: 8px;
             font-size: 11px;
             color: #666;
-            border-left: 3px solid #e74c3c;
+            border-left: 3px solid {{ theme_color('primary') }};
         }
 
         .summary-section {
@@ -156,7 +166,7 @@
 
         .summary-box {
             width: 300px;
-            border: 2px solid #e74c3c;
+            border: 2px solid {{ theme_color('primary') }};
             border-radius: 8px;
             padding: 15px;
             background: #fff5f5;
@@ -173,7 +183,7 @@
             border-bottom: none;
             font-size: 14px;
             font-weight: bold;
-            color: #e74c3c;
+            color: {{ theme_color('primary') }};
         }
 
         .notes-section {
@@ -182,7 +192,7 @@
 
         .notes-section h3 {
             font-size: 13px;
-            color: #e74c3c;
+            color: {{ theme_color('primary') }};
             margin-bottom: 10px;
         }
 
@@ -233,14 +243,78 @@
         @media print {
             body {
                 padding: 0;
+                margin: 0;
             }
 
             .no-print {
-                display: none;
+                display: none !important;
             }
 
             @page {
-                margin: 1cm;
+                size: A4;
+                margin: 3cm 2.5cm;  /* Margin lebih besar: Top/Bottom: 3cm, Left/Right: 2.5cm */
+            }
+
+            /* Add extra padding to content when printing */
+            .header,
+            .info-section,
+            .items-table,
+            .summary-section,
+            .notes-section,
+            .signatures,
+            .footer {
+                padding-left: 5mm;
+                padding-right: 5mm;
+            }
+
+            /* Prevent page breaks inside elements */
+            .info-section,
+            .info-box,
+            .items-table,
+            .summary-section,
+            .notes-section {
+                page-break-inside: avoid;
+            }
+
+            /* Prevent page breaks after headers */
+            h1, h2, h3 {
+                page-break-after: avoid;
+            }
+
+            /* Allow page breaks before new sections */
+            .info-section,
+            .items-table,
+            .summary-section,
+            .signatures {
+                page-break-before: auto;
+            }
+
+            /* Keep table rows together */
+            .items-table tr {
+                page-break-inside: avoid;
+            }
+
+            /* Ensure signatures stay at bottom */
+            .signatures {
+                margin-top: 50px;
+                page-break-inside: avoid;
+            }
+
+            /* Better print quality */
+            * {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+
+            /* Reduce font size slightly for better fit */
+            body {
+                font-size: 11px;
+            }
+
+            /* Adjust table cell padding for print */
+            .items-table th,
+            .items-table td {
+                padding: 8px 6px;
             }
         }
 
@@ -249,7 +323,7 @@
             top: 20px;
             right: 20px;
             padding: 10px 20px;
-            background: #e74c3c;
+            background: {{ theme_color('primary') }};
             color: white;
             border: none;
             border-radius: 5px;
@@ -259,7 +333,7 @@
         }
 
         .print-button:hover {
-            background: #c0392b;
+            background: {{ theme_color('secondary') }};
         }
 
         .condition-badge {
@@ -274,33 +348,54 @@
         .condition-good { background: #d1e7dd; color: #0f5132; }
         .condition-damaged { background: #f8d7da; color: #842029; }
         .condition-expired { background: #fff3cd; color: #856404; }
+        .condition-defective { background: #ffc107; color: #664d03; }
     </style>
 </head>
 <body>
     {{-- Print Button --}}
     <button onclick="window.print()" class="print-button no-print">
-        <i class="fas fa-print"></i> Print Document
+        Print Document
     </button>
 
     {{-- Header --}}
     <div class="header">
         <div class="header-content">
             <div class="company-info">
-                <h1>{{ config('app.name', 'WMS Company') }}</h1>
-                <p>Warehouse Management System</p>
-                <p>Email: info@wms-company.com | Phone: +1 234 567 8900</p>
-                <p>Address: 123 Warehouse Street, Industrial Zone</p>
+                @if(site_logo())
+                    <img src="{{ site_logo() }}" alt="{{ company_name() }}" class="company-logo">
+                @endif
+                <h1>{{ company_name() }}</h1>
+                <p>{{ site_name() }}</p>
+                @php $companyInfo = company_info(); @endphp
+                @if($companyInfo['email'])
+                    <p>Email: {{ $companyInfo['email'] }}</p>
+                @endif
+                @if($companyInfo['phone'])
+                    <p>Phone: {{ $companyInfo['phone'] }}</p>
+                @endif
+                @if($companyInfo['address'])
+                    <p>{{ $companyInfo['address'] }}
+                    @if($companyInfo['city']), {{ $companyInfo['city'] }}@endif
+                    @if($companyInfo['postal_code']) {{ $companyInfo['postal_code'] }}@endif
+                    </p>
+                @endif
             </div>
             <div class="document-info">
                 <h2>RETURN ORDER</h2>
-                <p><strong>Return Number:</strong> {{ $return->return_number }}</p>
-                <p><strong>Date:</strong> {{ $return->return_date->format('d M Y, H:i') }}</p>
+                <p><strong>Return Number:</strong> {{ $return->return_number ?? 'N/A' }}</p>
+                <p><strong>Date:</strong> 
+                    @if($return->return_date)
+                        {{ format_datetime($return->return_date) }}
+                    @else
+                        -
+                    @endif
+                </p>
                 <p><strong>Status:</strong> 
-                    <span class="status-badge status-{{ $return->status }}">
-                        {{ ucfirst($return->status) }}
+                    <span class="status-badge status-{{ $return->status ?? 'pending' }}">
+                        {{ ucfirst($return->status ?? 'Pending') }}
                     </span>
                 </p>
-                <p><strong>Print Date:</strong> {{ now()->format('d M Y, H:i') }}</p>
+                <p><strong>Print Date:</strong> {{ format_datetime(now()) }}</p>
             </div>
         </div>
     </div>
@@ -311,27 +406,27 @@
             <h3>CUSTOMER INFORMATION</h3>
             <div class="info-row">
                 <span class="info-label">Customer Name:</span>
-                <span class="info-value">{{ $return->customer->name }}</span>
+                <span class="info-value">{{ $return->customer->name ?? '-' }}</span>
             </div>
-            @if($return->customer->code)
+            @if(isset($return->customer->code) && $return->customer->code)
                 <div class="info-row">
                     <span class="info-label">Customer Code:</span>
                     <span class="info-value">{{ $return->customer->code }}</span>
                 </div>
             @endif
-            @if($return->customer->email)
+            @if(isset($return->customer->email) && $return->customer->email)
                 <div class="info-row">
                     <span class="info-label">Email:</span>
                     <span class="info-value">{{ $return->customer->email }}</span>
                 </div>
             @endif
-            @if($return->customer->phone)
+            @if(isset($return->customer->phone) && $return->customer->phone)
                 <div class="info-row">
                     <span class="info-label">Phone:</span>
                     <span class="info-value">{{ $return->customer->phone }}</span>
                 </div>
             @endif
-            @if($return->customer->address)
+            @if(isset($return->customer->address) && $return->customer->address)
                 <div class="info-row">
                     <span class="info-label">Address:</span>
                     <span class="info-value">{{ $return->customer->address }}</span>
@@ -343,13 +438,15 @@
             <h3>WAREHOUSE INFORMATION</h3>
             <div class="info-row">
                 <span class="info-label">Warehouse:</span>
-                <span class="info-value">{{ $return->warehouse->name }}</span>
+                <span class="info-value">{{ $return->warehouse->name ?? '-' }}</span>
             </div>
-            <div class="info-row">
-                <span class="info-label">Code:</span>
-                <span class="info-value">{{ $return->warehouse->code }}</span>
-            </div>
-            @if($return->warehouse->address)
+            @if(isset($return->warehouse->code) && $return->warehouse->code)
+                <div class="info-row">
+                    <span class="info-label">Code:</span>
+                    <span class="info-value">{{ $return->warehouse->code }}</span>
+                </div>
+            @endif
+            @if(isset($return->warehouse->address) && $return->warehouse->address)
                 <div class="info-row">
                     <span class="info-label">Address:</span>
                     <span class="info-value">{{ $return->warehouse->address }}</span>
@@ -361,18 +458,18 @@
             <h3>RETURN DETAILS</h3>
             <div class="info-row">
                 <span class="info-label">Return Type:</span>
-                <span class="info-value">{{ ucfirst(str_replace('_', ' ', $return->return_type)) }}</span>
+                <span class="info-value">{{ ucfirst(str_replace('_', ' ', $return->return_type ?? 'N/A')) }}</span>
             </div>
             @if($return->deliveryOrder)
                 <div class="info-row">
                     <span class="info-label">DO Number:</span>
-                    <span class="info-value">{{ $return->deliveryOrder->do_number }}</span>
+                    <span class="info-value">{{ $return->deliveryOrder->do_number ?? '-' }}</span>
                 </div>
             @endif
             @if($return->salesOrder)
                 <div class="info-row">
                     <span class="info-label">SO Number:</span>
-                    <span class="info-value">{{ $return->salesOrder->order_number }}</span>
+                    <span class="info-value">{{ $return->salesOrder->order_number ?? '-' }}</span>
                 </div>
             @endif
             @if($return->disposition)
@@ -381,10 +478,16 @@
                     <span class="info-value">{{ ucfirst($return->disposition) }}</span>
                 </div>
             @endif
+            @if($return->receivedBy)
+                <div class="info-row">
+                    <span class="info-label">Received By:</span>
+                    <span class="info-value">{{ $return->receivedBy->name ?? '-' }}</span>
+                </div>
+            @endif
             @if($return->inspectedBy)
                 <div class="info-row">
                     <span class="info-label">Inspected By:</span>
-                    <span class="info-value">{{ $return->inspectedBy->name }}</span>
+                    <span class="info-value">{{ $return->inspectedBy->name ?? '-' }}</span>
                 </div>
             @endif
         </div>
@@ -395,21 +498,21 @@
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 30%;">Product</th>
+                <th style="width: 25%;">Product</th>
                 <th style="width: 15%;">Batch/Serial</th>
                 <th style="width: 10%;">Qty Returned</th>
                 <th style="width: 10%;">Qty Restocked</th>
                 <th style="width: 12%;">Condition</th>
                 <th style="width: 12%;">Disposition</th>
-                <th style="width: 15%;">Bin Location</th>
+                <th style="width: 11%;">Bin Location</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($return->items as $index => $item)
+            @forelse($return->items as $index => $item)
                 <tr>
                     <td>{{ $index + 1 }}</td>
                     <td>
-                        <strong>{{ $item->product->name }}</strong><br>
+                        <strong>{{ $item->product->name ?? 'Unknown Product' }}</strong><br>
                         <small style="color: #666;">SKU: {{ $item->product->sku ?? '-' }}</small>
                     </td>
                     <td>
@@ -423,31 +526,48 @@
                             <span style="color: #999;">-</span>
                         @endif
                     </td>
-                    <td><strong>{{ number_format($item->quantity_returned) }}</strong></td>
-                    <td>{{ number_format($item->quantity_restocked) }}</td>
+                    <td><strong>{{ number_format($item->quantity_returned ?? 0) }}</strong></td>
+                    <td>{{ number_format($item->quantity_restocked ?? 0) }}</td>
                     <td>
-                        <span class="condition-badge condition-{{ $item->condition }}">
-                            {{ ucfirst($item->condition) }}
+                        <span class="condition-badge condition-{{ $item->condition ?? 'good' }}">
+                            {{ ucfirst($item->condition ?? 'Good') }}
                         </span>
                     </td>
                     <td>{{ $item->disposition ? ucfirst($item->disposition) : '-' }}</td>
-                    <td>{{ $item->restockedToBin ? $item->restockedToBin->bin_code : '-' }}</td>
+                    <td>
+                        @if($item->restockedToBin)
+                            {{ $item->restockedToBin->bin_code ?? '-' }}
+                        @elseif($item->quarantineBin)
+                            {{ $item->quarantineBin->bin_code ?? '-' }} (Q)
+                        @else
+                            -
+                        @endif
+                    </td>
                 </tr>
-                @if($item->return_reason || $item->notes)
+                @if($item->return_reason || $item->inspection_notes || $item->notes)
                     <tr>
                         <td colspan="8" style="padding: 0;">
                             <div class="item-notes">
                                 @if($item->return_reason)
-                                    <strong>Reason:</strong> {{ $item->return_reason }}<br>
+                                    <strong>Return Reason:</strong> {{ $item->return_reason }}<br>
+                                @endif
+                                @if($item->inspection_notes)
+                                    <strong>Inspection Notes:</strong> {{ $item->inspection_notes }}<br>
                                 @endif
                                 @if($item->notes)
-                                    <strong>Notes:</strong> {{ $item->notes }}
+                                    <strong>Additional Notes:</strong> {{ $item->notes }}
                                 @endif
                             </div>
                         </td>
                     </tr>
                 @endif
-            @endforeach
+            @empty
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 20px; color: #999;">
+                        No items found
+                    </td>
+                </tr>
+            @endforelse
         </tbody>
     </table>
 
@@ -456,17 +576,23 @@
         <div class="summary-box">
             <div class="summary-row">
                 <span>Total Items:</span>
-                <span><strong>{{ $return->total_items }}</strong></span>
+                <span><strong>{{ $return->total_items ?? 0 }}</strong></span>
             </div>
             <div class="summary-row">
                 <span>Total Quantity Returned:</span>
-                <span><strong>{{ number_format($return->total_quantity) }}</strong></span>
+                <span><strong>{{ number_format($return->total_quantity ?? 0) }}</strong></span>
             </div>
-            @if($return->refund_amount > 0)
+            @if(isset($return->refund_amount) && $return->refund_amount > 0)
                 <div class="summary-row">
                     <span>Refund Amount:</span>
-                    <span><strong>${{ number_format($return->refund_amount, 2) }}</strong></span>
+                    <span><strong>{{ format_currency($return->refund_amount) }}</strong></span>
                 </div>
+                @if($return->refund_status)
+                    <div class="summary-row">
+                        <span>Refund Status:</span>
+                        <span><strong>{{ ucfirst($return->refund_status) }}</strong></span>
+                    </div>
+                @endif
             @endif
         </div>
     </div>
@@ -489,9 +615,16 @@
             </div>
             <div class="signature-label">
                 @if($return->createdBy)
-                    {{ $return->createdBy->name }}
+                    {{ $return->createdBy->name ?? 'Staff' }}
+                @else
+                    _______________
                 @endif
-                <br>{{ $return->created_at->format('d M Y') }}
+                <br>
+                @if($return->created_at)
+                    {{ format_date($return->created_at) }}
+                @else
+                    _______________
+                @endif
             </div>
         </div>
 
@@ -500,8 +633,17 @@
                 Received By
             </div>
             <div class="signature-label">
-                Warehouse Staff
-                <br>Date: _______________
+                @if($return->receivedBy)
+                    {{ $return->receivedBy->name ?? 'Warehouse Staff' }}
+                @else
+                    Warehouse Staff
+                @endif
+                <br>
+                @if($return->received_at)
+                    {{ format_date($return->received_at) }}
+                @else
+                    Date: _______________
+                @endif
             </div>
         </div>
 
@@ -511,8 +653,23 @@
                     Inspected By
                 </div>
                 <div class="signature-label">
-                    {{ $return->inspectedBy->name }}
-                    <br>{{ $return->inspected_at ? $return->inspected_at->format('d M Y') : '' }}
+                    {{ $return->inspectedBy->name ?? 'Inspector' }}
+                    <br>
+                    @if($return->inspected_at)
+                        {{ format_date($return->inspected_at) }}
+                    @else
+                        _______________
+                    @endif
+                </div>
+            </div>
+        @else
+            <div class="signature-box">
+                <div class="signature-line">
+                    Inspected By
+                </div>
+                <div class="signature-label">
+                    Quality Inspector
+                    <br>Date: _______________
                 </div>
             </div>
         @endif
@@ -530,13 +687,19 @@
 
     {{-- Footer --}}
     <div class="footer">
-        <p>This is a computer-generated document. No signature is required.</p>
-        <p>For any inquiries, please contact our customer service department.</p>
-        <p>&copy; {{ now()->year }} {{ config('app.name') }}. All rights reserved.</p>
+        <p>{{ setting('email_footer_text', 'This is a computer-generated document. No signature is required.') }}</p>
+        @php $companyInfo = company_info(); @endphp
+        @if($companyInfo['email'])
+            <p>For any inquiries, please contact {{ $companyInfo['email'] }}</p>
+        @endif
+        <p>&copy; {{ now()->year }} {{ company_name() }}. All rights reserved.</p>
+        @if($companyInfo['tax_number'])
+            <p>Tax ID: {{ $companyInfo['tax_number'] }}</p>
+        @endif
     </div>
 
     <script>
-        // Auto print when page loads (optional)
+        // Auto print when page loads (optional - uncomment if needed)
         // window.onload = function() { window.print(); }
     </script>
 </body>

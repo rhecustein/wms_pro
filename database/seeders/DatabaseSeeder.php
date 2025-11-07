@@ -3,8 +3,13 @@
 
 namespace Database\Seeders;
 
+use App\Models\Inbound;
+use App\Models\PackingOrder;
+use App\Models\PickingOrder;
+use App\Models\PutawayTask;
 use Illuminate\Database\Seeder;
 use Pest\ArchPresets\Custom;
+use Spatie\LaravelPackageTools\Package;
 
 class DatabaseSeeder extends Seeder
 {
@@ -31,6 +36,19 @@ class DatabaseSeeder extends Seeder
             StockAdjustmentItemSeeder::class,
             StockOpnameSeeder::class,        // Jalankan ini dulu
             StockOpnameItemSeeder::class,  
+            PurchaseOrderSeeder::class,
+            PurchaseOrderItemSeeder::class,
+            InboundShipmentSeeder::class,
+            GoodReceivingSeeder::class,
+            PutawayTaskSeeder::class,
+            SalesOrderSeeder::class,
+            SalesOrderItemSeeder::class,
+            PickingOrderSeeder::class,
+            PickingOrderItemSeeder::class,
+            PackingOrderSeeder::class,
+            PackingOrderItemSeeder::class,
+            DeliveryOrderSeeder::class,
+            DeliveryOrderItemSeeder::class,
         ]);
     }
 }

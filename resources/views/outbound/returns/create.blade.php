@@ -53,11 +53,15 @@
                     <select name="delivery_order_id" id="delivery_order_id" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                         <option value="">Select Delivery Order</option>
                         @foreach($deliveryOrders as $do)
-                            <option value="{{ $do->id }}" {{ old('delivery_order_id') == $do->id ? 'selected' : '' }}>
+                            <option value="{{ $do->id }}" 
+                                    data-customer="{{ $do->customer_id }}"
+                                    data-warehouse="{{ $do->warehouse_id }}"
+                                    {{ old('delivery_order_id') == $do->id ? 'selected' : '' }}>
                                 {{ $do->do_number }} - {{ $do->customer->name }}
                             </option>
                         @endforeach
                     </select>
+                    <p class="text-xs text-gray-500 mt-1">Select if returning from a specific delivery</p>
                 </div>
 
                 {{-- Warehouse --}}
@@ -84,7 +88,7 @@
                         <option value="">Select Customer</option>
                         @foreach($customers as $customer)
                             <option value="{{ $customer->id }}" {{ old('customer_id') == $customer->id ? 'selected' : '' }}>
-                                {{ $customer->name }} - {{ $customer->code ?? '' }}
+                                {{ $customer->name }}{{ $customer->code ? ' - ' . $customer->code : '' }}
                             </option>
                         @endforeach
                     </select>
@@ -162,6 +166,22 @@
 let itemIndex = 0;
 const products = @json($products);
 
+// Auto-fill customer and warehouse from delivery order
+document.getElementById('delivery_order_id').addEventListener('change', function() {
+    const selected = this.options[this.selectedIndex];
+    if (selected.value) {
+        const customerId = selected.getAttribute('data-customer');
+        const warehouseId = selected.getAttribute('data-warehouse');
+        
+        if (customerId) {
+            document.getElementById('customer_id').value = customerId;
+        }
+        if (warehouseId) {
+            document.getElementById('warehouse_id').value = warehouseId;
+        }
+    }
+});
+
 function addItem() {
     const container = document.getElementById('itemsContainer');
     const emptyState = document.getElementById('emptyState');
@@ -182,9 +202,9 @@ function addItem() {
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Product <span class="text-red-500">*</span>
                     </label>
-                    <select name="items[${itemIndex}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <select name="items[${itemIndex}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 product-select" data-index="${itemIndex}">
                         <option value="">Select Product</option>
-                        ${products.map(p => `<option value="${p.id}">${p.name} - ${p.sku || ''}</option>`).join('')}
+                        ${products.map(p => `<option value="${p.id}" data-price="${p.price || 0}">${p.name}${p.sku ? ' - ' + p.sku : ''}</option>`).join('')}
                     </select>
                 </div>
                 
@@ -204,6 +224,7 @@ function addItem() {
                         <option value="good">Good</option>
                         <option value="damaged">Damaged</option>
                         <option value="expired">Expired</option>
+                        <option value="defective">Defective</option>
                     </select>
                 </div>
                 
@@ -217,6 +238,12 @@ function addItem() {
                     <input type="text" name="items[${itemIndex}][serial_number]" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Serial number">
                 </div>
                 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+                    <input type="number" name="items[${itemIndex}][unit_price]" step="0.01" min="0" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="0.00" id="price-${itemIndex}">
+                    <p class="text-xs text-gray-500 mt-1">Leave empty to use product's default price</p>
+                </div>
+                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
                     <textarea name="items[${itemIndex}][return_reason]" rows="2" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" placeholder="Reason for return..."></textarea>
@@ -226,6 +253,16 @@ function addItem() {
     `;
     
     container.insertAdjacentHTML('beforeend', itemHtml);
+    
+    // Add event listener for product selection to auto-fill price
+    const productSelect = document.querySelector(`select[name="items[${itemIndex}][product_id]"]`);
+    productSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const price = selectedOption.getAttribute('data-price');
+        const index = this.getAttribute('data-index');
+        document.getElementById(`price-${index}`).value = price;
+    });
+    
     itemIndex++;
 }
 

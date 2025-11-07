@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class InboundShipment extends Model
 {
@@ -88,6 +89,11 @@ class InboundShipment extends Model
     public function purchaseOrder(): BelongsTo
     {
         return $this->belongsTo(PurchaseOrder::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(InboundShipmentItem::class);
     }
 
     public function warehouse(): BelongsTo

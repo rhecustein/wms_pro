@@ -108,4 +108,14 @@ class DeliveryOrder extends Model
         
         return 'DO-' . str_pad($newNumber, 5, '0', STR_PAD_LEFT);
     }
+
+    public function createdBy()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function updatedBy()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
 }

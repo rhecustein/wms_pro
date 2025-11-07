@@ -103,11 +103,11 @@
                                 <label class="block text-sm font-medium text-gray-700 mb-2">
                                     Product <span class="text-red-500">*</span>
                                 </label>
-                                <select name="items[{{ $index }}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                                <select name="items[{{ $index }}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 product-select" data-index="{{ $index }}">
                                     <option value="">Select Product</option>
                                     @foreach($products as $product)
-                                        <option value="{{ $product->id }}" {{ $item->product_id == $product->id ? 'selected' : '' }}>
-                                            {{ $product->name }} - {{ $product->sku ?? '' }}
+                                        <option value="{{ $product->id }}" data-price="{{ $product->price ?? 0 }}" {{ $item->product_id == $product->id ? 'selected' : '' }}>
+                                            {{ $product->name }}{{ $product->sku ? ' - ' . $product->sku : '' }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -129,6 +129,7 @@
                                     <option value="good" {{ $item->condition === 'good' ? 'selected' : '' }}>Good</option>
                                     <option value="damaged" {{ $item->condition === 'damaged' ? 'selected' : '' }}>Damaged</option>
                                     <option value="expired" {{ $item->condition === 'expired' ? 'selected' : '' }}>Expired</option>
+                                    <option value="defective" {{ $item->condition === 'defective' ? 'selected' : '' }}>Defective</option>
                                 </select>
                             </div>
                             
@@ -140,6 +141,11 @@
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Serial Number</label>
                                 <input type="text" name="items[{{ $index }}][serial_number]" value="{{ $item->serial_number }}" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+                                <input type="number" name="items[{{ $index }}][unit_price]" value="{{ $item->unit_price }}" step="0.01" min="0" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" id="price-{{ $index }}">
                             </div>
                             
                             <div class="md:col-span-2">
@@ -177,6 +183,21 @@
 let itemIndex = {{ count($return->items) }};
 const products = @json($products);
 
+// Add event listeners to existing product selects
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.product-select').forEach(function(select) {
+        select.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const price = selectedOption.getAttribute('data-price');
+            const index = this.getAttribute('data-index');
+            const priceInput = document.getElementById(`price-${index}`);
+            if (priceInput && !priceInput.value) {
+                priceInput.value = price;
+            }
+        });
+    });
+});
+
 function addItem() {
     const container = document.getElementById('itemsContainer');
     const emptyState = document.getElementById('emptyState');
@@ -197,9 +218,9 @@ function addItem() {
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                         Product <span class="text-red-500">*</span>
                     </label>
-                    <select name="items[${itemIndex}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
+                    <select name="items[${itemIndex}][product_id]" required class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500 product-select" data-index="${itemIndex}">
                         <option value="">Select Product</option>
-                        ${products.map(p => `<option value="${p.id}">${p.name} - ${p.sku || ''}</option>`).join('')}
+                        ${products.map(p => `<option value="${p.id}" data-price="${p.price || 0}">${p.name}${p.sku ? ' - ' + p.sku : ''}</option>`).join('')}
                     </select>
                 </div>
                 
@@ -219,6 +240,7 @@ function addItem() {
                         <option value="good">Good</option>
                         <option value="damaged">Damaged</option>
                         <option value="expired">Expired</option>
+                        <option value="defective">Defective</option>
                     </select>
                 </div>
                 
@@ -232,6 +254,11 @@ function addItem() {
                     <input type="text" name="items[${itemIndex}][serial_number]" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500">
                 </div>
                 
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Unit Price</label>
+                    <input type="number" name="items[${itemIndex}][unit_price]" step="0.01" min="0" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500" id="price-${itemIndex}">
+                </div>
+                
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Return Reason</label>
                     <textarea name="items[${itemIndex}][return_reason]" rows="2" class="w-full rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"></textarea>
@@ -241,6 +268,16 @@ function addItem() {
     `;
     
     container.insertAdjacentHTML('beforeend', itemHtml);
+    
+    // Add event listener for new product select
+    const newSelect = document.querySelector(`select[name="items[${itemIndex}][product_id]"]`);
+    newSelect.addEventListener('change', function() {
+        const selectedOption = this.options[this.selectedIndex];
+        const price = selectedOption.getAttribute('data-price');
+        const index = this.getAttribute('data-index');
+        document.getElementById(`price-${index}`).value = price;
+    });
+    
     itemIndex++;
 }
 
